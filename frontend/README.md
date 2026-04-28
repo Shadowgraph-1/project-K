@@ -389,8 +389,8 @@ stateDiagram-v2
 ### Frontend
 
 ```bash
-git clone https://github.com/username/FocusWithMe.git
-cd FocusWithMe/frontend
+git clone https://github.com/Shadowgraph-1/project-K.git
+cd project-K/frontend
 npm install
 npm run dev
 ```
