@@ -1,5 +1,8 @@
 node_modules/
 dist/
+
+# Local IDE/workspace metadata — machine-specific; do not commit
+.cursor/
 *.local
 .env
 .env.*

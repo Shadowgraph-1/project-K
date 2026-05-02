@@ -69,6 +69,7 @@
 ![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
 **Сервер и данные**
 
@@ -82,8 +83,8 @@
 | --------------------- | ---------------------------------------- | -------------------------------------------------- |
 | SPA                   | React 19, TypeScript, Vite               | **Внедрено** (базовый каркас)                      |
 | Управление состоянием | Zustand                                  | Планируется                                        |
-| Маршрутизация         | React Router v7/v6                       | Планируется                                        |
-| Стилизация            | Tailwind CSS _(или иная дизайн-система)_ | Планируется                                        |
+| Маршрутизация         | React Router v6                          | Планируется                                        |
+| Стилизация            | Tailwind CSS v4 (`@tailwindcss/vite`)    | **Внедрено**                                       |
 | API                   | Python, **FastAPI**, Pydantic            | Каркас backend; приложение FastAPI — следующий шаг |
 | СУБД                  | PostgreSQL                               | Планируется                                        |
 | ORM / миграции        | SQLAlchemy, Alembic                      | Планируется                                        |
@@ -312,7 +313,7 @@ stateDiagram-v2
 - [x] Сущности и связи
 - [x] Черновик ER-диаграммы
 - [x] Перечень экранов
-- [ ] Wireframes в Figma (главная, таймер, магазин)
+- [x] Wireframes в Figma (главная, таймер, магазин)
 - [ ] Спецификация REST API (метод, путь, описание)
 - [x] Структура каталогов frontend / backend _(базовый каркас)_
 
