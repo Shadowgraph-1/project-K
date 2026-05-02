@@ -2,6 +2,8 @@
 
 # Focus With Me
 
+<img src="./docs/readme_logo.jpg" alt="Обложка проекта Focus With Me" width="420">
+
 **Веб-платформа продуктивности** с элементами геймификации и виртуальным компаньоном, ориентированная на поддержание фокуса в режиме Pomodoro.
 
 [![Linear — проект](https://img.shields.io/badge/Linear-5E6AD2?style=for-the-badge&logo=linear&logoColor=white)](https://linear.app/project-k-value/project/focus-with-me-1a3e5e26fbfa/overview)
