@@ -1,9 +1,14 @@
-"""Точка входа — подключите ASGI/WSGI (FastAPI, Starlette, Django и т.д.) и запуск (uvicorn, gunicorn, …)."""
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from src.routes.chat import router as chat_router
 
+app = FastAPI()
 
-def main() -> None:
-    pass
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-
-if __name__ == "__main__":
-    main()
+app.include_router(chat_router)

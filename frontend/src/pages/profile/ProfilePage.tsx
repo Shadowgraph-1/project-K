@@ -1,14 +1,11 @@
-import { useAuthStore } from "@/features/auth/model/useAuthStore";
-import { useModalStore } from "@/shared/stores/useModalStore";
-import { MENU_TOOLS } from "@/const/menuSections";
+import { useAuthStore } from "@/entities/user/model/useAuthStore";
+import { useModalStore } from "@/shared/model/useModalStore";
+import { MENU_TOOLS } from "@/shared/config/menuSections";
 import { useRef, useState } from "react";
 import ProfileSummarySection from "./sections/ProfileSummarySection";
-import ProfileCompanionSection from "./sections/ProfileCompanionSection";
 import ProfileHistorySection from "./sections/ProfileHistorySection";
-import ProfileStatsSection from "./sections/ProfileStatsSection";
-import { Header } from "@/shared/ui/Header";
-import Footer from "@/shared/ui/Footer";
-import Assistant from "@/shared/ui/Assistant";
+import { Header } from "@/widgets/header/ui/Header";
+import Footer from "@/widgets/footer/ui/Footer";
 
 function ProfilePage() {
   const user = useAuthStore((state) => state.user);
@@ -55,7 +52,6 @@ function ProfilePage() {
             </div>
           </div>
         </div>
-        <Assistant />
         <Footer />
       </main>
     );
@@ -108,14 +104,11 @@ function ProfilePage() {
 
             <section className="min-h-[420px] flex-1 rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
               {currentMenu === "user" && <ProfileSummarySection />}
-              {currentMenu === "companions" && <ProfileCompanionSection />}
               {currentMenu === "history" && <ProfileHistorySection />}
-              {currentMenu === "stats" && <ProfileStatsSection />}
             </section>
           </div>
         </div>
       </div>
-      <Assistant />
       <Footer />
     </main>
   );

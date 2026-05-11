@@ -4,8 +4,8 @@ import {
   loginSchema,
   registerSchema,
 } from "@/features/auth/model/authSchemas"
-import { useAuthStore } from "@/features/auth/model/useAuthStore"
-import { useModalStore } from "@/shared/stores/useModalStore"
+import { useAuthStore } from "@/entities/user/model/useAuthStore"
+import { useModalStore } from "@/shared/model/useModalStore"
 
 
 

@@ -1,4 +1,4 @@
-﻿import { useAuthStore } from "@/features/auth/model/useAuthStore"
+﻿import { useAuthStore } from "@/entities/user/model/useAuthStore"
 
 function ProfileSummarySection() {
   const user = useAuthStore((state) => state.user)

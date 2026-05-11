@@ -1,3 +1,6 @@
+# Live2D Cubism SDK (local copy; app uses frontend/public/live2d)
+CubismSdkForWeb-*/
+
 node_modules/
 dist/
 *.local
