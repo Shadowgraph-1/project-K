@@ -22,3 +22,5 @@ venv/
 htmlcov/
 *.egg-info/
 .eggs/
+
+/generated/prisma

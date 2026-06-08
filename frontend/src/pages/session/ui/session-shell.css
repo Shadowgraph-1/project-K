@@ -1,0 +1,30 @@
+.session-shell {
+  background-color: var(--background);
+  color: var(--foreground);
+}
+
+.session-panel-scroll {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 55%, transparent)
+    transparent;
+}
+
+.session-panel-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.session-panel-scroll::-webkit-scrollbar-thumb {
+  border-radius: 0;
+  background-color: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
+}
+
+.session-panel-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.session-empty-state {
+  background-color: var(--card);
+  color: var(--card-foreground);
+}

@@ -1,9 +1,8 @@
-import { ArrowUp, History, Paperclip, Plus, X } from "lucide-react";
+import { ArrowUp, Boxes, ChevronDown, ListChecks, Paperclip } from "lucide-react";
 
-import { Button } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/lib/utils";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/shared/ui/tooltip";
 
 import {
   DropdownMenu,
@@ -17,26 +16,21 @@ import {
 type AssistantInputProps = {
   className?: string;
   placeholder?: string;
-  name?: string;
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
   withTasks?: boolean;
   onToggleTasks?: () => void;
-  onToggleHistory?: () => void;
 };
 
 function AssistantInput({
   className,
-  name,
-  placeholder = `Спросите у ${name}`,
+  placeholder = "Спросите ассистента",
   value,
   onChange,
   onSend,
   withTasks = false,
   onToggleTasks,
-  onToggleHistory,
-
 }: AssistantInputProps) {
   const trySend = () => {
     if (!value.trim()) return;
@@ -56,6 +50,26 @@ function AssistantInput({
                   trySend();
                 }}
               >
+                {withTasks ? (
+                  <div className="flex items-center gap-2 border-b border-border/60 bg-muted/30 px-3 py-2">
+                    <ListChecks
+                      className="size-3.5 shrink-0 text-muted-foreground"
+                      aria-hidden
+                    />
+                    <span className="min-w-0 flex-1 text-xs text-muted-foreground">
+                      Учитываются задачи проекта
+                    </span>
+                    {onToggleTasks ? (
+                      <button
+                        type="button"
+                        onClick={onToggleTasks}
+                        className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                      >
+                        Отключить
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
                 <div className="px-3 pt-2.5 pb-1">
                   <Textarea
                     onKeyDown={(e) => {
@@ -75,102 +89,69 @@ function AssistantInput({
                     )}
                   />
                 </div>
-                <div className="flex h-[42px] shrink-0 items-center gap-3 border-border/70 px-3">
+                <div className="flex h-[42px] shrink-0 items-center gap-2 border-border/70 px-3">
                   <div className="flex items-center gap-0.5">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-muted-foreground rounded-full"
-                          aria-label="Добавить файлы"
-                        >
-                          <Paperclip />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" sideOffset={6}>
-                        Добавить файлы
-                      </TooltipContent>
-                    </Tooltip>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="rounded-full text-muted-foreground"
+                      aria-label="Добавить файлы"
+                      title="Добавить файлы"
+                    >
+                      <Paperclip />
+                    </Button>
                     <div className="flex shrink-0 items-center gap-0.5">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="text-muted-foreground rounded-full"
-                                aria-label="Контекст"
-                              >
-                                <Plus />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-40">
-                              <DropdownMenuGroup>
-                                <DropdownMenuLabel>Контекст</DropdownMenuLabel>
-                                <DropdownMenuCheckboxItem
-                                  checked={withTasks}
-                                  onCheckedChange={() => {
-                                    onToggleTasks?.();
-                                  }}
-                                >
-                                  Задачи
-                                </DropdownMenuCheckboxItem>
-                              </DropdownMenuGroup>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" sideOffset={6}>
-                          Контекст
-                        </TooltipContent>
-                      </Tooltip>
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className="text-muted-foreground rounded-full"
-                          aria-label="История"
-                          onClick={() => onToggleHistory?.()}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          className={cn(
+                            buttonVariants({ variant: "ghost", size: "sm" }),
+                            "h-7 gap-1 rounded-md px-2 text-xs font-medium",
+                            withTasks
+                              ? "bg-muted text-foreground"
+                              : "text-muted-foreground",
+                          )}
+                          aria-label="Возможности"
+                          title="Что учитывать в ответе"
                         >
-                          <History />
-                        </Button>
-                      </div>
-                      {withTasks && onToggleTasks ? (
-                        <div className="inline-flex h-7 items-center gap-1 rounded-full border border-border bg-muted px-2 text-xs font-medium text-foreground">
-                          Задачи
-                          <button
-                            type="button"
-                            onClick={onToggleTasks}
-                            className="ml-0.5 rounded-full p-0.5 hover:bg-foreground/10"
-                            aria-label="Убрать задачи из контекста"
-                          >
-                            <X className="size-3" />
-                          </button>
-                        </div>
-                      ) : null}
+                          <Boxes className="size-3.5 shrink-0" aria-hidden />
+                          <span>Возможности</span>
+                          <ChevronDown
+                            className="size-3 shrink-0 opacity-70"
+                            aria-hidden
+                          />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-48" align="start">
+                          <DropdownMenuGroup>
+                            <DropdownMenuLabel>Возможности</DropdownMenuLabel>
+                            <DropdownMenuCheckboxItem
+                              checked={withTasks}
+                              onCheckedChange={() => {
+                                onToggleTasks?.();
+                              }}
+                            >
+                              <ListChecks
+                                className="size-4 text-muted-foreground"
+                                aria-hidden
+                              />
+                              Задачи
+                            </DropdownMenuCheckboxItem>
+                          </DropdownMenuGroup>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                   <div className="min-w-0 flex-1" />
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        type="submit"
-                        size="icon-sm"
-                        variant="default"
-                        className="shrink-0 rounded-full"
-                        aria-label="Отправить"
-                      >
-                        <ArrowUp />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" sideOffset={6}>
-                      Отправить
-                    </TooltipContent>
-                  </Tooltip>
+                  <Button
+                    type="submit"
+                    size="icon-sm"
+                    variant="default"
+                    className="shrink-0 rounded-full"
+                    aria-label="Отправить"
+                    title="Отправить"
+                  >
+                    <ArrowUp />
+                  </Button>
                 </div>
               </form>
             </div>

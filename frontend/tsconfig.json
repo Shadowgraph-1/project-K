@@ -6,8 +6,7 @@
   ],
   "compilerOptions": {
     "paths": {
-      "@/*": ["./src/*"],
-      "@framework/*": ["./src/shared/live2d/framework/*"]
+      "@/*": ["./src/*"]
     }
   }
 }

@@ -1,10 +1,7 @@
-export type TasksView = "line" | "square";
+export type TasksView = "line" | "timeline";
 
-export const VIEW_LAYOUT: Record<TasksView, string> = {
-  line: "flex list-none flex-col gap-3 p-0 mt-2",
-  square:
-    "list-none mt-2 grid h-full min-h-0 grid-cols-1 gap-4 p-0 sm:grid-cols-2 xl:grid-cols-3 auto-rows-[minmax(min(280px,42vh),1fr)] [&>li]:h-full [&>li]:min-h-0",
-};
+export const TASK_LIST_LAYOUT =
+  "flex list-none flex-col gap-3 p-0 mt-2";
 
 export type CompanionSize = "small" | "default" | "large";
 

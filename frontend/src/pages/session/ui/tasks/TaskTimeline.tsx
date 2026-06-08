@@ -1,5 +1,5 @@
-import { MoreHorizontal } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { CalendarDays, MoreHorizontal } from "lucide-react";
+import { buttonVariants } from "@/shared/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,15 +89,31 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
     n > 0 ? `repeat(${n}, minmax(0, 1fr))` : "minmax(0, 1fr)";
 
   return (
-    <div className="w-full min-w-0 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-      <div className="flex items-center justify-between border-b border-zinc-100 px-6 py-4">
-        <h3 className="text-sm font-semibold text-zinc-900">Планировщик задач</h3>
+    <div className="w-full min-w-0 overflow-hidden rounded-3xl border border-border/60 bg-card shadow-sm">
+      <div className="flex items-start justify-between gap-4 border-b border-border/60 bg-muted/20 px-5 py-4">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <CalendarDays className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold tracking-tight text-foreground">
+              Планировщик задач
+            </h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Ближайшие даты, дедлайны и рабочий ритм в одном месте
+            </p>
+          </div>
+        </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="size-8 rounded-lg">
-              <MoreHorizontal className="size-4 text-zinc-500" />
-            </Button>
+          <DropdownMenuTrigger
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon" }),
+              "size-8 rounded-xl text-muted-foreground",
+            )}
+            aria-label="Дополнительно"
+          >
+            <MoreHorizontal className="size-4" />
           </DropdownMenuTrigger>
 
           <DropdownMenuContent align="end">
@@ -108,8 +124,10 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
 
       <div className="w-full min-w-0 px-0">
         {n === 0 ? (
-          <div className="flex h-[220px] items-center justify-center">
-            <p className="text-sm text-zinc-400">Нет диапазона дат</p>
+          <div className="flex h-[240px] items-center justify-center">
+            <p className="rounded-full bg-muted px-3 py-1.5 text-sm text-muted-foreground">
+              Нет диапазона дат
+            </p>
           </div>
         ) : (
           <div
@@ -118,11 +136,11 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
               minHeight:
                 tasksWithDates.length > 0
                   ? tasksWithDates.length * ROW_HEIGHT + 140
-                  : 220,
+                  : 240,
             }}
           >
             <div
-              className="grid w-full border-b border-zinc-100"
+              className="grid w-full border-b border-border/60 bg-background/70"
               style={{ gridTemplateColumns: gridTemplate }}
             >
               {days.map((day) => {
@@ -133,15 +151,16 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
                     key={day.toISOString()}
                     className={cn(
                       "relative min-w-0 px-2 py-4 sm:px-3",
-                      "border-r border-zinc-100 last:border-r-0",
-                      isWeekend(day) &&
-                        "bg-[linear-gradient(45deg,transparent_25%,rgba(0,0,0,0.025)_25%,rgba(0,0,0,0.025)_50%,transparent_50%,transparent_75%,rgba(0,0,0,0.025)_75%)] bg-[length:8px_8px]",
+                      "border-r border-border/50 last:border-r-0",
+                      isWeekend(day) && "bg-muted/25",
                     )}
                   >
                     <div
                       className={cn(
                         "inline-flex max-w-full rounded-full px-2 py-1 text-[11px] font-medium",
-                        todayCol ? "bg-black text-white" : "text-zinc-500",
+                        todayCol
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground",
                       )}
                     >
                       <span className="truncate">{formatDay(day)}</span>
@@ -159,7 +178,7 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
               {days.map((day) => (
                 <div
                   key={`grid-${day.toISOString()}`}
-                  className="min-h-[8px] border-r border-zinc-100 last:border-r-0"
+                  className="min-h-[10px] border-r border-border/40 last:border-r-0"
                 />
               ))}
             </div>
@@ -189,9 +208,9 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
                     <div
                       className={cn(
                         "flex min-w-0 items-center gap-2 rounded-full px-3 py-1.5",
-                        task.done
-                          ? "bg-zinc-100 text-zinc-400"
-                          : "bg-black text-white",
+                        task.checked
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-primary text-primary-foreground shadow-sm",
                       )}
                     >
                       <span className="shrink-0 text-[10px] font-semibold opacity-70">
@@ -201,7 +220,7 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
                       <span
                         className={cn(
                           "min-w-0 truncate text-[10px] font-medium",
-                          task.done && "line-through",
+                          task.checked && "line-through",
                         )}
                       >
                         {task.title}
@@ -214,8 +233,8 @@ function TaskTimeline({ tasks }: TaskTimelineProps) {
 
             {tasksWithDates.length === 0 && (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 top-[72px] flex items-center justify-center">
-                <p className="rounded-lg bg-white/90 px-3 py-2 text-sm text-zinc-400 shadow-sm">
-                  Добавьте задачу чтобы отслеживать её.
+                <p className="text-sm text-muted-foreground">
+                  Добавьте задачу с датой, чтобы увидеть её на планировщике.
                 </p>
               </div>
             )}

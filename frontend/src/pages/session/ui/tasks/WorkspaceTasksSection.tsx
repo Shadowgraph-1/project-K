@@ -1,188 +1,165 @@
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { StickyNote } from "lucide-react";
 import {
-  ChevronDown,
-  ChevronUp,
-  Plus,
-} from "lucide-react";
-import { SortableList } from "@/shared/sortable";
-import type { Tasks } from "@/entities/task/model/useSessionTasks";
-import { Button } from "@/shared/ui/button";
-import { cn } from "@/shared/lib/utils";
-import EmptySession from "./EmptySession";
+  getTaskStatus,
+  type TaskStatus,
+  type Tasks,
+} from "@/entities/task/model/useSessionTasks";
+import EmptySession from "../placeholders/EmptySession";
 import TaskTimeline from "./TaskTimeline";
-import { SortableTaskRow } from "./SortableTaskRow";
 import type { TasksView } from "./sessionWorkspaceTypes";
-import { VIEW_LAYOUT } from "./sessionWorkspaceTypes";
-import { useState } from "react";
-
-const QUEUE_PREVIEW = 3;
+import { WorkspaceTaskSection } from "./WorkspaceTaskSection";
 
 type WorkspaceTasksSectionProps = {
   view: TasksView;
   tasks: Tasks[];
   creating: boolean;
-  onOpenCreate: () => void;
-  onToggle: (id: string) => void;
+  isTaskChecked: (task: Tasks) => boolean;
+  onToggleTaskChecked: (id: string) => void;
+  onOpenCreate?: () => void;
   onRemove: (id: string) => void;
-  onReorderQueue: (nextQueue: Tasks[]) => void;
-  onReorderDone: (nextDone: Tasks[]) => void;
+  onOpenTask: (taskId: string) => void;
+  workspaceName?: string;
 };
+
+type SectionId = "queue" | "done" | "postponed" | "issues";
+
+function TasksEmptyState({ onOpenCreate }: { onOpenCreate?: () => void }) {
+  return (
+    <EmptySession
+      titleName="Список задач пуст"
+      descriptionName={
+        onOpenCreate
+          ? "Добавьте первую задачу, чтобы собрать очередь, сроки и прогресс в одном месте"
+          : "В этом проекте пока нет задач"
+      }
+      action={onOpenCreate}
+      buttonName={onOpenCreate ? "Создать задачу" : undefined}
+      icon={<StickyNote />}
+    />
+  );
+}
 
 export function WorkspaceTasksSection({
   view,
   tasks,
   creating,
+  isTaskChecked,
+  onToggleTaskChecked,
   onOpenCreate,
-  onToggle,
   onRemove,
-  onReorderQueue,
-  onReorderDone,
+  onOpenTask,
+  workspaceName,
 }: WorkspaceTasksSectionProps) {
-  const [queueExpanded, setQueueExpanded] = useState(false);
+  const [manualCollapsed, setManualCollapsed] = useState<
+    Partial<Record<SectionId, true>>
+  >({});
 
-  const doneTasks = tasks.filter((t) => t.done);
-  const queueTasks = tasks.filter((t) => !t.done);
+  const byStatus = useCallback(
+    (status: TaskStatus) => tasks.filter((t) => getTaskStatus(t) === status),
+    [tasks],
+  );
+
+  const queueTasks = useMemo(() => byStatus("В очереди"), [byStatus]);
+  const doneTasks = useMemo(() => byStatus("Выполнено"), [byStatus]);
+  const postponedTasks = useMemo(() => byStatus("Отложено"), [byStatus]);
+  const issuesTasks = useMemo(() => byStatus("Issues"), [byStatus]);
+
+  const sectionCounts = useMemo(
+    () => ({
+      queue: queueTasks.length,
+      done: doneTasks.length,
+      postponed: postponedTasks.length,
+      issues: issuesTasks.length,
+    }),
+    [
+      queueTasks.length,
+      doneTasks.length,
+      postponedTasks.length,
+      issuesTasks.length,
+    ],
+  );
+
+  const countsKey = `${sectionCounts.queue}-${sectionCounts.done}-${sectionCounts.postponed}-${sectionCounts.issues}`;
+  const prevCountsKeyRef = useRef(countsKey);
+
+  useEffect(() => {
+    if (prevCountsKeyRef.current === countsKey) return;
+    prevCountsKeyRef.current = countsKey;
+    setManualCollapsed({});
+  }, [countsKey]);
+
+  const expanded = useMemo(
+    () => ({
+      queue: sectionCounts.queue > 0 && !manualCollapsed.queue,
+      done: sectionCounts.done > 0 && !manualCollapsed.done,
+      postponed: sectionCounts.postponed > 0 && !manualCollapsed.postponed,
+      issues: sectionCounts.issues > 0 && !manualCollapsed.issues,
+    }),
+    [sectionCounts, manualCollapsed],
+  );
+
   const showEmptyState = tasks.length === 0 && !creating;
-  const bothLists = doneTasks.length > 0 && queueTasks.length > 0;
 
-  const sortableListClasses = (variant: TasksView) =>
-    cn(VIEW_LAYOUT[variant], variant === "square" && "lg:min-h-0");
+  const toggleSection = useCallback(
+    (id: SectionId) => {
+      if (sectionCounts[id] === 0) return;
+      setManualCollapsed((prev) => {
+        const isOpen = !prev[id];
+        if (isOpen) return { ...prev, [id]: true };
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
+    },
+    [sectionCounts],
+  );
 
-  const squareListWrap =
-    view === "square" ? "flex min-h-0 flex-1 flex-col" : undefined;
+  const sections = [
+    { id: "queue" as const, title: "В очереди", tasks: queueTasks },
+    { id: "done" as const, title: "Выполнено", tasks: doneTasks },
+    { id: "postponed" as const, title: "Отложено", tasks: postponedTasks },
+    { id: "issues" as const, title: "Issues", tasks: issuesTasks },
+  ];
 
-  const queueVisible =
-    queueExpanded || queueTasks.length <= QUEUE_PREVIEW
-      ? queueTasks
-      : queueTasks.slice(0, QUEUE_PREVIEW);
-
-  const showQueueExpandToggle = queueTasks.length > QUEUE_PREVIEW;
-  const hiddenQueueCount = queueTasks.length - QUEUE_PREVIEW;
-
-  function handleQueueReorder(nextVisible: Tasks[]) {
-    if (queueExpanded || queueTasks.length <= QUEUE_PREVIEW) {
-      onReorderQueue(nextVisible);
-      return;
-    }
-
-    const tail = queueTasks.slice(QUEUE_PREVIEW);
-    onReorderQueue([...nextVisible, ...tail]);
+  if (view === "timeline") {
+    return (
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:min-h-0">
+        {showEmptyState ? (
+          <TasksEmptyState onOpenCreate={onOpenCreate} />
+        ) : (
+          <TaskTimeline tasks={tasks} />
+        )}
+      </section>
+    );
   }
 
   return (
     <section className="flex min-h-0 min-w-0 flex-1 flex-col gap-3 lg:min-h-0">
-      <TaskTimeline tasks={tasks} />
-
       <div
-        className={cn(
-          "flex flex-col gap-6",
-          !showEmptyState && "min-h-0 flex-1",
-        )}
+        className={
+          showEmptyState ? "flex flex-col gap-4" : "flex min-h-0 flex-1 flex-col gap-4"
+        }
       >
         {showEmptyState ? (
-          <div className="flex flex-col items-center justify-center py-16">
-            <EmptySession
-              titleName="Список задач пуст"
-              descriptionName="Добавьте новые задачи"
-              action={onOpenCreate}
-            />
-          </div>
+          <TasksEmptyState onOpenCreate={onOpenCreate} />
         ) : (
-          <>
-            {doneTasks.length > 0 && (
-              <div
-                className={cn(
-                  "flex flex-col gap-2",
-                  bothLists ? "shrink-0" : "min-h-0 flex-1",
-                )}
-              >
-                <p className="shrink-0 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-                  Выполнено {doneTasks.length}
-                </p>
-                <SortableList
-                  items={doneTasks}
-                  onReorder={onReorderDone}
-                  wrapperClassName={squareListWrap}
-                  className={sortableListClasses(view)}
-                >
-                  {(task, index) => (
-                    <SortableTaskRow
-                      key={task.id}
-                      task={task}
-                      index={index}
-                      layout={view}
-                      onToggle={onToggle}
-                      onRemove={onRemove}
-                    />
-                  )}
-                </SortableList>
-              </div>
-            )}
-
-            {queueTasks.length > 0 && (
-              <div className="flex w-full min-h-0 flex-1 flex-col gap-2">
-                <p className="flex shrink-0 flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-                  <span>В очереди {queueTasks.length}</span>
-                </p>
-                <div
-                  className={cn(
-                    "flex flex-col rounded-lg border p-3",
-                    view === "square" && "min-h-0 flex-1",
-                  )}
-                >
-                  <div className="flex shrink-0 items-center justify-end gap-0.5">
-                    <Button type="button" variant="ghost" size="sm">
-                      <Plus />
-                    </Button>
-
-                    {showQueueExpandToggle ? (
-                      <span className="ml-0.5 flex items-center gap-1 border-l border-border/60 pl-2">
-                        {!queueExpanded ? (
-                          <span className="select-none text-[10px] font-medium tabular-nums text-muted-foreground">
-                            +{hiddenQueueCount}
-                          </span>
-                        ) : null}
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-expanded={queueExpanded}
-                          aria-label={
-                            queueExpanded
-                              ? "Показать меньше задач"
-                              : "Показать все задачи"
-                          }
-                          onClick={() => setQueueExpanded((v) => !v)}
-                        >
-                          {queueExpanded ? (
-                            <ChevronUp className="size-3.5" />
-                          ) : (
-                            <ChevronDown className="size-3.5" />
-                          )}
-                        </Button>
-                      </span>
-                    ) : null}
-                  </div>
-                  <SortableList
-                    items={queueVisible}
-                    onReorder={handleQueueReorder}
-                    wrapperClassName={squareListWrap}
-                    className={sortableListClasses(view)}
-                  >
-                    {(task, index) => (
-                      <SortableTaskRow
-                        key={task.id}
-                        task={task}
-                        index={index}
-                        layout={view}
-                        onToggle={onToggle}
-                        onRemove={onRemove}
-                      />
-                    )}
-                  </SortableList>
-                </div>
-              </div>
-            )}
-          </>
+          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+            {sections.map(({ id, title, tasks: sectionTasks }) => (
+              <WorkspaceTaskSection
+                key={id}
+                title={title}
+                tasks={sectionTasks}
+                expanded={expanded[id]}
+                onToggleExpanded={() => toggleSection(id)}
+                onRemoveTask={onRemove}
+                isTaskChecked={isTaskChecked}
+                onToggleTaskChecked={onToggleTaskChecked}
+                onOpenTask={onOpenTask}
+                workspaceName={workspaceName}
+              />
+            ))}
+          </div>
         )}
       </div>
     </section>

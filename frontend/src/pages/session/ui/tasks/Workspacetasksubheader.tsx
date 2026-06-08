@@ -1,15 +1,14 @@
 import { type ReactNode } from "react";
 import {
   ArrowUpDown,
-  Download,
+  CalendarDays,
   Filter,
-  Grid2X2Icon,
+  List,
   Plus,
-  Users,
+  Trash2,
 } from "lucide-react";
-import { Button } from "@/shared/ui/button";
+import { Button, buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/shared/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,228 +16,179 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
 } from "@/shared/ui/dropdown-menu";
+import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import type { TasksView } from "./sessionWorkspaceTypes";
+import { CollaborationButton } from "../workspace/CollaborationButton";
+import type { WorkspaceRole } from "@/shared/lib/workspace-permissions";
+import { ToolbarIsland } from "../layout/ToolbarIsland";
 
 export type WorkspaceTaskSubheaderProps = {
-  doneCount: number;
   totalCount: number;
-  onCreate: () => void;
+  onCreate?: () => void;
   trailingActions?: ReactNode;
   className?: string;
   view?: TasksView;
   onViewChange?: (variant: TasksView) => void;
+  onRemoveAll?: () => void | Promise<void>;
+  collaboration?: {
+    workspaceId?: string;
+    workspaceTitle?: string;
+    myRole?: WorkspaceRole;
+  };
 };
 
+const VIEW_OPTIONS = [
+  { value: "line", label: "Список", icon: List },
+  { value: "timeline", label: "Даты", icon: CalendarDays },
+] satisfies { value: TasksView; label: string; icon: typeof List }[];
+
 function WorkspaceTaskSubheader({
-  doneCount,
   totalCount,
   onCreate,
   className,
   view,
   onViewChange,
+  onRemoveAll,
+  collaboration,
 }: WorkspaceTaskSubheaderProps) {
   return (
     <div
       className={cn(
-        "flex w-full shrink-0 flex-col gap-2 border-border/80 bg-muted/15 py-2.5",
+        "flex w-full shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border/50 pb-2",
         className,
       )}
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="text-sm font-semibold tracking-tight text-foreground">
-            Задачи
-          </span>
-          <span className="rounded-lg bg-muted px-1.5 py-0.5 text-[11px] tabular-nums text-muted-foreground">
-            {doneCount}/{totalCount}
-          </span>
+      <ToolbarIsland aria-label="Вид задач">
+        <div role="tablist" className="flex items-center">
+        {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => {
+          const active = (view || "line") === value;
+          return (
+            <Button
+              key={value}
+              type="button"
+              role="tab"
+              variant="ghost"
+              size="sm"
+              aria-selected={active}
+              className={cn(
+                "h-7 min-w-0 rounded-none px-2.5 text-xs font-medium",
+                active
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground",
+              )}
+              onClick={() => onViewChange?.(value)}
+            >
+              <Icon className="size-3.5" aria-hidden />
+              <span>{label}</span>
+            </Button>
+          );
+        })}
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="icon"
-                variant="ghost"
-                className="size-7"
-                aria-label="Команда"
-              >
-                <Users className="size-3.5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Команда</TooltipContent>
-          </Tooltip>
+      </ToolbarIsland>
 
-          <div
-            className="mx-1 hidden h-4 w-px bg-border sm:block"
-            aria-hidden
-          />
+      <div className="flex shrink-0 items-center gap-2">
+        {collaboration ? (
+          <ToolbarIsland aria-label="Участники проекта">
+            <CollaborationButton
+              variant="island"
+              workspaceId={collaboration.workspaceId}
+              workspaceTitle={collaboration.workspaceTitle}
+              myRole={collaboration.myRole}
+            />
+          </ToolbarIsland>
+        ) : null}
 
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="size-7"
-                    aria-label="Экспорт задач"
-                  >
-                    <Grid2X2Icon className="size-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Вид</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Вид
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuRadioGroup
-                value={view || "line"}
-                onValueChange={(v) => onViewChange?.(v as TasksView)}
-              >
-                <DropdownMenuRadioItem value="square">
-                  Компактный
-                </DropdownMenuRadioItem>
-                <DropdownMenuRadioItem value="line">
-                  Расширенный
-                </DropdownMenuRadioItem>
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <ToolbarIsland aria-label="Действия с задачами" className="gap-0">
+        {onCreate ? (
+          <Button
+            type="button"
+            size="icon-sm"
+            variant="ghost"
+            className="size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+            aria-label="Добавить задачу"
+            title="Добавить задачу"
+            onClick={onCreate}
+          >
+            <Plus className="size-3.5" />
+          </Button>
+        ) : null}
 
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="size-7"
-                    aria-label="Экспорт задач"
-                  >
-                    <Download className="size-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Скачать</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Экспорт
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-xs">
-                Скачать как .txt
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-xs">
-                Скачать как .pdf
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon-sm" }),
+              "size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            )}
+            aria-label="Фильтр"
+            title="Фильтр"
+          >
+            <Filter className="size-3.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              Фильтрация
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-xs">Все задачи</DropdownMenuItem>
+            <DropdownMenuItem className="text-xs">
+              Только активные
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-xs">
+              Только выполненные
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <div
-            className="mx-1 hidden h-4 w-px bg-border sm:block"
-            aria-hidden
-          />
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon-sm" }),
+              "size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+            )}
+            aria-label="Сортировка"
+            title="Сортировка"
+          >
+            <ArrowUpDown className="size-3.5" />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+              Сортировка
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="text-xs">
+              По дате добавления
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-xs">По названию</DropdownMenuItem>
+            <DropdownMenuItem className="text-xs">
+              Сначала активные
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="size-7"
-                    aria-label="Фильтр"
-                  >
-                    <Filter className="size-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Фильтрация</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Фильтрация
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-xs">
-                Все задачи
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-xs">
-                Только активные
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-xs">
-                Только выполненные
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <DropdownMenu>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="ghost"
-                    className="size-7"
-                    aria-label="Сортировка"
-                  >
-                    <ArrowUpDown className="size-3.5" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">Сортировка</TooltipContent>
-            </Tooltip>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                Сортировка
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-xs">
-                По дате добавления
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-xs">
-                По названию
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-xs">
-                Сначала активные
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          <div
-            className="mx-1 hidden h-4 w-px bg-border sm:block"
-            aria-hidden
-          />
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-7 gap-1 px-2 text-xs"
-                onClick={onCreate}
-                aria-label="Добавить задачу"
-              >
-                <Plus className="size-3" />
-                Добавить
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Новая задача</TooltipContent>
-          </Tooltip>
-        </div>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant="ghost"
+          className="size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-destructive"
+          aria-label="Удалить все задачи"
+          title="Удалить все задачи"
+          disabled={!onRemoveAll || totalCount === 0}
+          onClick={async () => {
+            if (!onRemoveAll) return;
+            const confirmed = await notifyConfirm({
+              title: "Удалить все задачи?",
+              description: `Будет удалено: ${totalCount}`,
+              confirmLabel: "Удалить",
+              cancelLabel: "Отмена",
+            });
+            if (!confirmed) return;
+            await onRemoveAll();
+          }}
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
+        </ToolbarIsland>
       </div>
     </div>
   );

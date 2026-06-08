@@ -1,32 +1,34 @@
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/shared/ui/sidebar";
 import { useLocation, useParams } from "react-router-dom";
-import { useCallback, useMemo, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { useModalStore } from "@/shared/model/useModalStore";
 import { useAssistantChat } from "@/widgets/assistant/model/useAssistantChat";
-import { useSessionTasks } from "@/entities/task/model/useSessionTasks";
-import AppSidebar from "./ui/AppSidebar";
 import {
-  SESSION_CHARACTERS,
-  live2dModelIndexForCharacter,
-} from "./model/sessionConstants";
-import { SessionPageHeader } from "./ui/SessionPageHeader";
-import { SessionMainArea } from "./ui/SessionMainArea";
-import { SessionAssistantDock } from "./ui/SessionAssistantDock";
-import { useSessionCompanionChatStore } from "@/shared/model/useSessionCompanionChatStore";
+  getTaskStatus,
+  useSessionTasks,
+} from "@/entities/task/model/useSessionTasks";
+import AppSidebar from "./ui/layout/AppSidebar";
+import { SessionPageHeader } from "./ui/layout/SessionPageHeader";
+import { SessionMainArea } from "./ui/layout/SessionMainArea";
+import { AssistantFloatingPanel } from "./ui/widgets/AssistantFloatingPanel";
+import {
+  isMembersHubPath,
+  isProjectMembersPath,
+  isSessionTasksPath,
+  SESSION_PATHS,
+} from "./model/sessionPaths";
+import { useSessionSecondarySidebarStore } from "@/shared/model/useSessionSecondarySidebarStore";
+import without_login from "@/assets/wo_login.jpg";
+import { Button } from "@/shared/ui/button";
+import "./ui/session-shell.css";
 
-const EMPTY_TASK: never[] = [];
+const EMPTY_TASK: { title: string; done: boolean; description?: string }[] =
+  [];
 
 function SessionPage() {
-  const [character, setCharacter] = useState("nekko");
   const [withTask, setWithTask] = useState(false);
-
-  const [historyOpen, setHistoryOpen] = useState(false);
-
-  const handleSessionHomeClick = useCallback(() => {
-    useSessionCompanionChatStore.getState().setShowChat(false);
-  }, []);
 
   const openLogin = useModalStore((state) => state.openLogin);
   const openRegister = useModalStore((state) => state.openRegister);
@@ -36,67 +38,127 @@ function SessionPage() {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
-  const selectedCharacter = SESSION_CHARACTERS.find((c) => c.id === character);
 
-  const { cardId } = useParams();
+  const { workspaceId } = useParams<{ workspaceId?: string }>();
   const location = useLocation();
-  const isNewWorkspace = location.pathname === "/session/workspace/new";
-  const inWorkspaceFlow = Boolean(cardId) || isNewWorkspace;
+  const isNewWorkspace = location.pathname === SESSION_PATHS.workspaceNew;
+  const onTasksPage = isSessionTasksPath(location.pathname);
+  const onMembersPage = isProjectMembersPath(location.pathname);
+  const onMembersHub = isMembersHubPath(location.pathname);
+  const setSecondaryOpen = useSessionSecondarySidebarStore((s) => s.setOpen);
 
-  const { question, setQuestion, answer, error, askAssistant, history } =
-    useAssistantChat({
-      tasks: withTask ? tasks : EMPTY_TASK,
-      characterId: character,
-    });
+  useEffect(() => {
+    if (!onTasksPage) setSecondaryOpen(false);
+  }, [onTasksPage, setSecondaryOpen]);
+  const inWorkspaceFlow =
+    isNewWorkspace ||
+    Boolean(workspaceId) ||
+    onTasksPage ||
+    onMembersPage ||
+    onMembersHub;
 
-  const modelIndex = useMemo(
-    () => live2dModelIndexForCharacter(character),
-    [character],
-  );
+  const {
+    question,
+    setQuestion,
+    answer,
+    error,
+    askAssistant,
+    history,
+    loading,
+  } = useAssistantChat({
+    tasks: withTask
+      ? tasks.map((t) => ({
+          title: t.title,
+          done: getTaskStatus(t) === "Выполнено",
+          description: t.description || undefined,
+        }))
+      : EMPTY_TASK,
+  });
 
   return (
-    <div className="h-dvh overflow-hidden">
+    <div className="session-shell h-dvh overflow-hidden">
       <TooltipProvider>
         <SidebarProvider
-          defaultOpen={false}
+          defaultOpen
+          keyboardShortcut={false}
           className="h-full min-h-0"
+          style={{ "--sidebar-width": "244px" } as CSSProperties}
         >
           <AppSidebar />
-          <SidebarInset className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <SessionPageHeader
-              inWorkspaceFlow={inWorkspaceFlow}
-              onSessionHomeClick={handleSessionHomeClick}
-              isAuthenticated={isAuthenticated}
-              hasUser={Boolean(user)}
-              onOpenLogin={openLogin}
-              onOpenRegister={openRegister}
-              character={character}
-              onCharacterChange={setCharacter}
-              selectedCharacter={selectedCharacter}
-            />
+          <SidebarInset className="session-panel-scroll flex min-h-0 flex-1 flex-col overflow-hidden border-border bg-background md:m-2 md:ml-0 md:rounded-none md:border md:shadow-none">
+            <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                <SessionPageHeader
+                  isAuthenticated={isAuthenticated}
+                  hasUser={Boolean(user)}
+                  onOpenLogin={openLogin}
+                  onOpenRegister={openRegister}
+                />
 
-            <SessionMainArea
-              inWorkspaceFlow={inWorkspaceFlow}
-              isNewWorkspace={isNewWorkspace}
-              modelIndex={modelIndex}
-              character={character}
-              onCharacterChange={setCharacter}
-            />
+                {isAuthenticated && user ? (
+                  <SessionMainArea
+                    inWorkspaceFlow={inWorkspaceFlow}
+                    isNewWorkspace={isNewWorkspace}
+                  />
+                ) : (
+                  <div className="session-panel-scroll flex min-h-0 flex-1 flex-col items-center justify-center overflow-y-auto px-6 py-10">
+                    <div className="session-empty-state flex w-full max-w-md flex-col items-center gap-8 bg-card p-8 text-center">
+                      <div className="space-y-3">
+                        <p className="text-[15px] font-semibold tracking-tight text-foreground">
+                          Войдите, чтобы продолжить
+                        </p>
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          Создайте учётную запись или войдите в существующую —
+                          так сохранятся проекты и задачи.
+                        </p>
+                      </div>
+                      <img
+                        src={without_login}
+                        alt=""
+                        className="w-full max-w-[280px] rounded-none border border-border bg-card object-cover shadow-sm"
+                      />
+                      <div className="flex flex-wrap items-center justify-center gap-3">
+                        <Button
+                          type="button"
+                          className="min-w-[140px] rounded-none"
+                          onClick={openLogin}
+                        >
+                          Войти
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="min-w-[140px] rounded-none"
+                          onClick={openRegister}
+                        >
+                          Регистрация
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-            {isAuthenticated && user ? (
-              <SessionAssistantDock
-                error={error}
-                answer={answer}
-                assistantName={selectedCharacter?.name}
-                historyOpen={historyOpen}
-                onHistoryOpenChange={setHistoryOpen}
-                history={history}
-                selectedCharacter={selectedCharacter}
-                question={question}
-                onQuestionChange={setQuestion}
-                onSend={() => void askAssistant()}
-                withTask={withTask}
-                onToggleWithTask={() => setWithTask((v) => !v)}
+            {onTasksPage ? (
+              <AssistantFloatingPanel
+                chat={
+                  isAuthenticated && user
+                    ? {
+                        error,
+                        answer,
+                        history,
+                        question,
+                        onQuestionChange: setQuestion,
+                        onSend: () => void askAssistant(),
+                        withTask,
+                        onToggleWithTask: () => setWithTask((v) => !v),
+                        loading,
+                        userLabel:
+                          user.name?.trim() ||
+                          user.email.split("@")[0] ||
+                          "Вы",
+                      }
+                    : null
+                }
               />
             ) : null}
           </SidebarInset>

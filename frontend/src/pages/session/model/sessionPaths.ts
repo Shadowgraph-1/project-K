@@ -1,39 +1,43 @@
-/** Маршруты раздела «Сессия» — совпадают с `App.tsx`. */
+import { matchPath } from "react-router-dom";
+
 export const SESSION_PATHS = {
   root: "/",
-  sessionRoot: "/session",
-  tasks: "/session/tasks",
-  projects: "/session/projects",
-  kanban: "/session/kanban",
-  teamMembers: "/session/team/members",
-  teamSprints: "/session/team/sprints",
-  workspaceNew: "/session/workspace/new",
-  workspace: (cardId: string) => `/session/workspace/${cardId}`,
+  sessionRoot: "/projects",
+  membersHub: "/projects/members",
+  tasks: "/projects/tasks",
+  workspaceNew: "/projects/workspace/new",
+  project: (workspaceId: string) => `/project/${workspaceId}`,
+  projectMembers: (workspaceId: string) => `/project/${workspaceId}/members`,
+  projectTask: (workspaceId: string, taskId: string) =>
+    `/project/${workspaceId}/${taskId}`,
 } as const;
 
-export const SESSION_ROUTE_PLACEHOLDERS: Record<
-  string,
-  { title: string; description: string }
-> = {
-  [SESSION_PATHS.tasks]: {
-    title: "Задачи",
-    description:
-      "Общий список всех issues по воркспейсам. Здесь будет таблица, фильтры и пагинация.",
-  },
-  [SESSION_PATHS.projects]: {
-    title: "Проекты",
-    description: "Список проектов внутри воркспейса и их статусы.",
-  },
-  [SESSION_PATHS.kanban]: {
-    title: "Канбан",
-    description: "Доска по статусам с перетаскиванием карточек.",
-  },
-  [SESSION_PATHS.teamMembers]: {
-    title: "Участники",
-    description: "Кто состоит в текущем воркспейсе и роли.",
-  },
-  [SESSION_PATHS.teamSprints]: {
-    title: "Спринты",
-    description: "Циклы, даты и задачи внутри спринта.",
-  },
-};
+export function isMembersHubPath(pathname: string) {
+  return pathname === SESSION_PATHS.membersHub;
+}
+
+export function isSessionProjectsListPath(pathname: string) {
+  return pathname === SESSION_PATHS.sessionRoot;
+}
+
+export function isProjectMembersPath(pathname: string) {
+  return matchPath("/project/:workspaceId/members", pathname) !== null;
+}
+
+export function isSessionTasksPath(pathname: string) {
+  if (isProjectMembersPath(pathname)) return false;
+  if (isMembersHubPath(pathname)) return false;
+  if (pathname === SESSION_PATHS.sessionRoot) return false;
+  if (pathname === SESSION_PATHS.workspaceNew) return false;
+  return pathname === SESSION_PATHS.tasks || pathname.startsWith("/project/");
+}
+
+export function isProjectTaskDetailsPath(pathname: string) {
+  return matchPath("/project/:workspaceId/:taskId", pathname) !== null;
+}
+
+export function isProjectWorkspacePath(pathname: string) {
+  return (
+    matchPath({ path: "/project/:workspaceId", end: true }, pathname) !== null
+  );
+}
