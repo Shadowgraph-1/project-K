@@ -1,141 +1,72 @@
-import { useLocation } from "react-router-dom";
-import { Bell, Bot } from "lucide-react";
-import { Button } from "@/shared/ui/button";
-import { SidebarTrigger, useSidebar } from "@/shared/ui/sidebar";
-import { useSessionSecondarySidebarStore } from "@/shared/model/useSessionSecondarySidebarStore";
-import { useState } from "react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-} from "@/shared/ui/sheet";
-import NotifysCenter from "../widgets/NotifysCenter";
-import { useNotifys } from "@/entities/notification/model/useNotifys";
-import { isSessionTasksPath } from "../../model/sessionPaths";
-import { WorkspaceCollaborationDialog } from "../workspace/WorkspaceCollaborationDialog";
-import { useInvitesQuery } from "@/entities/workspace/model/useInvitesQuery";
-import { SessionBreadcrumbs } from "./SessionBreadcrumbs";
+import type { ReactNode } from "react";
+
+import { sessionPageTitle } from "@/pages/session/lib/session-styles";
+import { cn } from "@/shared/lib/utils";
 
 type SessionPageHeaderProps = {
-  isAuthenticated: boolean;
-  hasUser: boolean;
-  onOpenLogin: () => void;
-  onOpenRegister: () => void;
+  title: string;
+  actions?: ReactNode;
+  children?: ReactNode;
+  /** Inline caption for `toolbar` variant (e.g. task count). */
+  meta?: ReactNode;
+  className?: string;
+  variant?: "default" | "toolbar";
 };
 
 export function SessionPageHeader({
-  isAuthenticated,
-  hasUser,
+  title,
+  actions,
+  children,
+  meta,
+  className,
+  variant = "default",
 }: SessionPageHeaderProps) {
-  const { pathname } = useLocation();
-  const secondaryOpen = useSessionSecondarySidebarStore((s) => s.open);
-  const toggleSecondarySidebar = useSessionSecondarySidebarStore(
-    (s) => s.toggle,
-  );
-
-  const { data: incoming } = useInvitesQuery();
-  const inviteCount = incoming?.length ?? 0;
-
-  const [openCenter, setOpenCenter] = useState(false);
-
-  const toastCount = useNotifys((s) => s.notifys.length);
-  const notifyCount = toastCount + inviteCount;
-
-  const inSession =
-    isAuthenticated &&
-    hasUser &&
-    (pathname.startsWith("/projects") || pathname.startsWith("/project"));
-  const onTasks = isSessionTasksPath(pathname);
-  const showNotifications = inSession;
-  const showAssistant = inSession && onTasks;
-
-  const { state: sidebarState } = useSidebar();
-  const sidebarExpanded = sidebarState === "expanded";
+  const isToolbar = variant === "toolbar";
 
   return (
-    <>
-      <header className="flex min-h-12 w-full shrink-0 items-center justify-between gap-3 border-b border-border/40 bg-background/95 px-3 py-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
-          <SidebarTrigger
-            className="size-7 shrink-0 rounded-md text-muted-foreground hover:bg-muted/60"
-            title={sidebarExpanded ? "Свернуть меню" : "Развернуть меню"}
-            aria-label={
-              sidebarExpanded
-                ? "Свернуть боковую панель"
-                : "Развернуть боковую панель"
-            }
-          />
-          <SessionBreadcrumbs />
+    <header
+      className={cn(
+        "flex w-full justify-between gap-3",
+        isToolbar
+          ? "items-center pb-3"
+          : "flex-col gap-4 pb-6 sm:flex-row sm:items-end",
+        className,
+      )}
+    >
+      {isToolbar ? (
+        <div className="flex min-w-0 items-center gap-2">
+          <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
+            {title}
+          </h1>
+          {meta ? (
+            <>
+              <span
+                className="shrink-0 text-muted-foreground/35"
+                aria-hidden
+              >
+                ·
+              </span>
+              <p className="shrink-0 text-sm text-muted-foreground">{meta}</p>
+            </>
+          ) : null}
+          {children}
         </div>
-
-        {inSession ? (
-          <div className="flex shrink-0 items-center gap-1">
-            {showNotifications ? (
-              <Button
-                type="button"
-                size="icon-sm"
-                className="relative size-7 overflow-visible rounded-md text-muted-foreground hover:bg-muted/60"
-                variant="ghost"
-                onClick={() => setOpenCenter(true)}
-                aria-expanded={openCenter}
-                aria-controls="session-notifications-sheet"
-                title={
-                  notifyCount > 0
-                    ? `Уведомления (${notifyCount})`
-                    : "Уведомления"
-                }
-                aria-label={
-                  notifyCount > 0
-                    ? `Уведомления, в списке ${notifyCount}`
-                    : "Уведомления"
-                }
-              >
-                <Bell className="size-3.5 shrink-0" aria-hidden />
-                {notifyCount > 0 ? (
-                  <span className="pointer-events-none absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-emerald-500 ring-2 ring-background" />
-                ) : null}
-              </Button>
-            ) : null}
-            {showAssistant ? (
-              <Button
-                type="button"
-                size="sm"
-                variant={secondaryOpen ? "secondary" : "outline"}
-                className="h-7 gap-1.5 px-2.5 text-xs font-medium"
-                aria-pressed={secondaryOpen}
-                title={secondaryOpen ? "Скрыть Kono AI" : "Kono AI"}
-                aria-label={secondaryOpen ? "Скрыть Kono AI" : "Открыть Kono AI"}
-                onClick={() => toggleSecondarySidebar()}
-              >
-                <Bot className="size-3.5 shrink-0" aria-hidden />
-                <span className="leading-none">Kono AI</span>
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-      </header>
-
-      <WorkspaceCollaborationDialog />
-
-      <Sheet open={openCenter} onOpenChange={setOpenCenter}>
-        <SheetContent
-          id="session-notifications-sheet"
-          side="right"
-          className="flex w-full flex-col p-0 sm:max-w-md"
+      ) : (
+        <div className="flex min-w-0 flex-col gap-3">
+          <h1 className={sessionPageTitle}>{title}</h1>
+          {children}
+        </div>
+      )}
+      {actions ? (
+        <div
+          className={cn(
+            "flex shrink-0 items-center gap-2",
+            !isToolbar && "self-end",
+          )}
         >
-          <SheetHeader className="shrink-0 border-b border-border/60 p-4 text-left">
-            <SheetTitle>Уведомления</SheetTitle>
-            <SheetDescription className="text-xs">
-              История оповещений в этой сессии
-            </SheetDescription>
-          </SheetHeader>
-          <div className="flex min-h-0 flex-1 flex-col">
-            <NotifysCenter />
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+          {actions}
+        </div>
+      ) : null}
+    </header>
   );
 }

@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ChevronDown, LogOut, Plus, UserMinus, Users } from "lucide-react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Check, ChevronDown, LogOut, Plus, UserMinus } from "lucide-react";
 
 import {
   canPerformWorkspaceAction,
@@ -9,26 +9,35 @@ import {
 } from "@/shared/lib/workspace-permissions";
 import { notify } from "@/shared/lib/notify";
 import { Button } from "@/shared/ui/button";
-import { SESSION_PATHS } from "../../model/sessionPaths";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/shared/ui/dropdown-menu";
+import { SESSION_PATHS, parseWorkspaceParams } from "../../model/sessionPaths";
 import { InviteMemberDialog } from "../workspace/InviteMemberDialog";
 import { WorkspaceMemberRow } from "../workspace/WorkspaceMemberRow";
-import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/shared/ui/empty";
-import { useWorkspaceQuery } from "@/entities/workspace/model/useWorkspaceStoreQuery";
+import EmptySession from "../placeholders/EmptySession";
+import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
+import { findWorkspaceByPublicKey } from "@/entities/workspace/lib/resolve-workspace";
 import {
   useInvalidateWorkspaceMembers,
   useLeaveWorkspaceMutation,
   useRemoveWorkspaceMemberMutation,
   useWorkspaceMembersQuery,
-} from "@/entities/workspace/model/useWorkspaceMembersQuery";
+} from "@/entities/workspace/model/use-workspace-members-query";
 import { KonoLoader } from "@/shared/ui/kono-loader";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
+import {
+  sessionField,
+  sessionPillOutline,
+  sessionRowHover,
+  sessionSurface,
+} from "@/pages/session/lib/session-styles";
+import { SessionPageHeader } from "@/pages/session/ui/layout/SessionPageHeader";
+import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
+import { cn } from "@/shared/lib/utils";
 
 const ROLE_LABELS: Record<WorkspaceRole, string> = {
   OWNER: "Владелец",
@@ -58,8 +67,8 @@ function MemberRoleBadge({ role, interactive = false }: MemberRoleBadgeProps) {
     <span
       className={
         interactive
-          ? "inline-flex h-7 min-w-[7.5rem] items-center justify-between gap-1 rounded-none border border-border bg-muted/30 px-2 text-[11px] font-medium text-muted-foreground"
-          : "inline-flex h-7 items-center rounded-none border border-border/60 bg-muted/20 px-2 text-[11px] font-medium text-muted-foreground"
+          ? "inline-flex h-7 min-w-[7.5rem] items-center justify-between gap-1 rounded-full bg-muted/35 px-2.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/35"
+          : "inline-flex h-7 items-center rounded-full bg-muted/25 px-2.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border/30"
       }
     >
       {ROLE_LABELS[role]}
@@ -71,24 +80,50 @@ function MemberRoleBadge({ role, interactive = false }: MemberRoleBadgeProps) {
 }
 
 export function WorkspaceMembersPage() {
-  const { workspaceId } = useParams<{ workspaceId: string }>();
+  const { pathname } = useLocation();
+  const { publicKey } = parseWorkspaceParams(pathname);
   const [inviteOpen, setInviteOpen] = useState(false);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data, isLoading } = useWorkspaceMembersQuery(workspaceId ?? "");
+  const { data: workspaces = [], isLoading: workspacesLoading } =
+    useWorkspaceQuery();
+  const currentWorkspace = findWorkspaceByPublicKey(workspaces, publicKey);
+  const workspaceId = currentWorkspace?.id ?? "";
+
+  const { data, isLoading: membersLoading } = useWorkspaceMembersQuery(
+    workspaceId,
+    { enabled: Boolean(workspaceId) },
+  );
   const members = data?.members ?? [];
   const pendingInvites = data?.pendingInvites ?? [];
 
-  const removeMember = useRemoveWorkspaceMemberMutation(workspaceId ?? "");
+  const removeMember = useRemoveWorkspaceMemberMutation(workspaceId);
   const leaveWorkspace = useLeaveWorkspaceMutation();
   const invalidateMembers = useInvalidateWorkspaceMembers();
-
-  const { data: workspaces = [] } = useWorkspaceQuery();
-  const currentWorkspace = workspaces.find((w) => w.id === workspaceId);
   const workspaceTitle = currentWorkspace?.title ?? "Проект";
   const myRole = currentWorkspace?.myRole;
   const canManage = canPerformWorkspaceAction(myRole, "manage_members");
   const canLeave = currentWorkspace?.kind === "shared";
+
+  useEffect(() => {
+    if (searchParams.get("invite") !== "1" || !canManage) return;
+
+    const id = window.setTimeout(() => {
+      setInviteOpen(true);
+    }, 0);
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("invite");
+        return next;
+      },
+      { replace: true },
+    );
+
+    return () => window.clearTimeout(id);
+  }, [searchParams, setSearchParams, canManage]);
 
   async function handleRemoveMember(userId: number, userName: string) {
     const confirmed = await notifyConfirm({
@@ -143,26 +178,33 @@ export function WorkspaceMembersPage() {
     }
   }
 
-  if (!workspaceId) {
+  if (!publicKey) {
     return (
-      <Empty className="session-empty-state min-h-[min(420px,60vh)]">
-        <EmptyHeader>
-          <EmptyMedia variant="icon">
-            <Users className="size-5" />
-          </EmptyMedia>
-          <EmptyTitle>Выберите проект</EmptyTitle>
-          <EmptyDescription>
-            Откройте список проектов и выберите, чью команду хотите посмотреть
-          </EmptyDescription>
-        </EmptyHeader>
-        <EmptyContent>
-          <Button asChild variant="outline" className="rounded-none">
-            <Link to={SESSION_PATHS.membersHub}>К выбору проекта</Link>
-          </Button>
-        </EmptyContent>
-      </Empty>
+      <EmptySession
+        titleName="Выберите проект"
+        descriptionName="Откройте список и выберите команду"
+        footerAction={{
+          label: "К выбору проекта",
+          onClick: () => navigate(SESSION_PATHS.membersHub),
+        }}
+      />
     );
   }
+
+  if (!workspacesLoading && !currentWorkspace) {
+    return (
+      <EmptySession
+        titleName="Проект не найден"
+        descriptionName="Нет доступа или ссылка устарела"
+        footerAction={{
+          label: "К выбору проекта",
+          onClick: () => navigate(SESSION_PATHS.membersHub),
+        }}
+      />
+    );
+  }
+
+  const isLoading = workspacesLoading || membersLoading;
 
   if (isLoading) {
     return (
@@ -174,39 +216,50 @@ export function WorkspaceMembersPage() {
 
   return (
     <>
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-        <header className="border-b border-border pb-5">
-          <p className="font-mono text-[10px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
-            Kono · Команда
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-[1.75rem]">
-            Участники
-          </h1>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-3">
+        <SessionPageHeader title="Участники">
           {workspaces.length > 0 ? (
-            <label className="mt-3 flex max-w-sm flex-col gap-1.5">
+            <div className="mt-3 flex max-w-sm flex-col gap-1.5">
               <span className="text-xs text-muted-foreground">Проект</span>
-              <select
-                value={workspaceId}
-                onChange={(event) =>
-                  navigate(SESSION_PATHS.projectMembers(event.target.value))
-                }
-                className="h-8 w-full border border-border bg-background px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                {workspaces.map((workspace) => (
-                  <option key={workspace.id} value={workspace.id}>
-                    {workspace.title}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className={cn(
+                    sessionField,
+                    "flex h-9 w-full items-center justify-between gap-2 px-3 text-sm",
+                  )}
+                >
+                  <span className="truncate">{workspaceTitle}</span>
+                  <ChevronDown className="size-4 shrink-0 opacity-50" aria-hidden />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="max-h-64 min-w-[var(--radix-dropdown-menu-trigger-width)] overflow-y-auto"
+                >
+                  {workspaces.map((workspace) => (
+                    <DropdownMenuItem
+                      key={workspace.id}
+                      className="cursor-pointer"
+                      onSelect={() =>
+                        navigate(SESSION_PATHS.workspaceMembers(workspace.publicKey))
+                      }
+                    >
+                      <span className="truncate">{workspace.title}</span>
+                      {workspace.publicKey === publicKey ? (
+                        <Check className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
+                      ) : null}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           ) : (
             <p className="mt-2 text-sm text-muted-foreground">
               Проект «{workspaceTitle}» · роли, приглашения и доступ
             </p>
           )}
-        </header>
+        </SessionPageHeader>
 
-        <section className="flex flex-col gap-3 border border-border bg-card p-4">
+        <section className={cn(sessionSurface, "flex flex-col gap-3 p-4")}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-foreground">
@@ -221,7 +274,7 @@ export function WorkspaceMembersPage() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="gap-1.5 rounded-none"
+                className="gap-1.5 rounded-full"
                 onClick={() => setInviteOpen(true)}
               >
                 <Plus className="size-4" />
@@ -234,55 +287,57 @@ export function WorkspaceMembersPage() {
             <p className="text-xs text-muted-foreground">Пока никого</p>
           ) : (
             <ul className="flex flex-col gap-0.5">
-              {members.map((member) => (
-                <li
-                  key={member.userId}
-                  className="rounded-none border border-transparent px-1 py-0.5 transition-colors hover:border-border/50 hover:bg-muted/20"
-                >
-                  <WorkspaceMemberRow
-                    name={member.name}
-                    trailing={
-                      <div className="flex items-center gap-1">
-                        {member.isOwner ? (
-                          <MemberRoleBadge role="OWNER" />
-                        ) : (
-                          <>
-                            <MemberRoleBadge
-                              role={member.role as WorkspaceRole}
-                              interactive
-                            />
-                            {canManage ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="size-7 rounded-none text-muted-foreground hover:text-destructive"
-                                aria-label={`Удалить ${member.name}`}
-                                title="Удалить из проекта"
-                                disabled={removeMember.isPending}
-                                onClick={() =>
-                                  void handleRemoveMember(
-                                    member.userId,
-                                    member.name,
-                                  )
-                                }
-                              >
-                                <UserMinus className="size-3.5" />
-                              </Button>
-                            ) : null}
-                          </>
-                        )}
-                      </div>
-                    }
-                  />
-                </li>
-              ))}
+              {members.map((member) => {
+                const memberRole = member.role as WorkspaceRole;
+
+                return (
+                  <li
+                    key={member.userId}
+                    className={cn("rounded-xl px-1 py-0.5", sessionRowHover)}
+                  >
+                    <WorkspaceMemberRow
+                      name={member.name}
+                      trailing={
+                        <div className="flex items-center gap-1">
+                          {member.isOwner ? (
+                            <MemberRoleBadge role="OWNER" />
+                          ) : (
+                            <>
+                              <MemberRoleBadge role={memberRole} interactive />
+                              {canManage ? (
+                                <SessionTooltip label="Удалить из проекта">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon-sm"
+                                    className="size-7 rounded-full text-muted-foreground hover:text-destructive"
+                                    aria-label={`Удалить ${member.name}`}
+                                    disabled={removeMember.isPending}
+                                    onClick={() =>
+                                      void handleRemoveMember(
+                                        member.userId,
+                                        member.name,
+                                      )
+                                    }
+                                  >
+                                    <UserMinus className="size-3.5" />
+                                  </Button>
+                                </SessionTooltip>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
+                      }
+                    />
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>
 
         {canManage ? (
-          <section className="flex flex-col gap-3 border border-border bg-card p-4">
+          <section className={cn(sessionSurface, "flex flex-col gap-3 p-4")}>
             <div>
               <h2 className="text-sm font-semibold text-foreground">
                 Ожидают ответа
@@ -301,7 +356,7 @@ export function WorkspaceMembersPage() {
                 {pendingInvites.map((invite) => (
                   <li
                     key={invite.id}
-                    className="rounded-none border border-transparent px-1 py-0.5 hover:border-border/50 hover:bg-muted/20"
+                    className={cn("rounded-xl px-1 py-0.5", sessionRowHover)}
                   >
                     <WorkspaceMemberRow
                       name={invite.name}
@@ -312,16 +367,17 @@ export function WorkspaceMembersPage() {
                             role={invite.role as WorkspaceRole}
                             interactive
                           />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon-sm"
-                            className="size-7 rounded-none text-muted-foreground hover:text-destructive"
-                            aria-label="Отменить приглашение"
-                            title="Отменить приглашение"
-                          >
-                            <UserMinus className="size-3.5" />
-                          </Button>
+                          <SessionTooltip label="Отменить приглашение">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              className="size-7 rounded-md text-muted-foreground hover:text-destructive"
+                              aria-label="Отменить приглашение"
+                            >
+                              <UserMinus className="size-3.5" />
+                            </Button>
+                          </SessionTooltip>
                         </div>
                       }
                     />
@@ -333,12 +389,15 @@ export function WorkspaceMembersPage() {
         ) : null}
 
         {canLeave ? (
-          <section className="border border-border bg-card p-4">
+          <section className={cn(sessionSurface, "p-4")}>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="w-full gap-1.5 rounded-none text-destructive hover:text-destructive"
+              className={cn(
+                "w-full gap-1.5 text-destructive hover:text-destructive",
+                sessionPillOutline,
+              )}
               disabled={leaveWorkspace.isPending}
               onClick={() => void handleLeave(workspaceTitle)}
             >

@@ -1,4 +1,4 @@
-import type { Workspace } from "../model/useWorkspaceStoreQuery";
+import type { Workspace } from "../model/workspace";
 
 export type WorkspaceKind = Workspace["kind"];
 

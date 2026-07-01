@@ -1,45 +1,52 @@
-import { Link } from "react-router-dom"
-import video404 from "../../assets/404page/404video.mp4"
-import page404 from "../../assets/404page/404page.png"
+import { Link } from "react-router-dom";
+
+import notFoundImage from "@/assets/404page/404.jpg";
+import "./not-found.css";
 
 function NotFoundPage() {
   return (
-    <main className="relative min-h-dvh overflow-hidden bg-black">
-      <video
-        src={video404}
-        poster={page404}
-        className="absolute inset-0 h-full w-full object-cover"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="metadata"
-      />
+    <main className="nf-page" aria-labelledby="not-found-title">
 
-      <div className="absolute inset-0 bg-black/35" />
 
-      <div className="relative z-10 flex min-h-dvh items-end justify-center px-4 pb-8 text-center sm:pb-12">
-        <section
-          aria-labelledby="not-found-title"
-          className="flex w-full max-w-md flex-col items-center gap-4 rounded-3xl border border-white/20 bg-white/30 px-6 py-6 shadow-2xl shadow-black/25 backdrop-blur-md"
-        >
-          <h1
-            id="not-found-title"
-            className="text-3xl font-bold text-neutral-950"
-          >
-            Страница потерялась
+      <div className="nf-layout">
+        <figure className="nf-figure">
+          <img
+            src={notFoundImage}
+            alt="Девочки ищут страницу с лупами в цветущем поле"
+            className="nf-image"
+            width={960}
+            height={640}
+            loading="eager"
+            decoding="async"
+          />
+        </figure>
+
+        <div className="nf-content">
+          <p className="nf-code" aria-hidden>
+            404
+          </p>
+
+          <h1 id="not-found-title" className="nf-title">
+            Страница ушла в путешествие
           </h1>
 
-          <Link
-            to="/"
-            className="inline-flex rounded-xl bg-neutral-950 px-5 py-3 text-sm font-medium text-white transition hover:bg-neutral-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-950"
-          >
-            На главную
-          </Link>
-        </section>
+          <p className="nf-text">
+            Кагуя и Лилли уже на её следе — пока нашли только луга и цветы.
+            Может, она спряталась в другом проекте?
+          </p>
+
+          <div className="nf-actions">
+            <Link to="/" className="nf-btn nf-btn--primary">
+              Вернуться домой
+            </Link>
+            <Link to="/projects" className="nf-btn nf-btn--ghost">
+              К проектам
+            </Link>
+          </div>
+        </div>
       </div>
     </main>
-  )
+  );
 }
 
-export default NotFoundPage
+export default NotFoundPage;

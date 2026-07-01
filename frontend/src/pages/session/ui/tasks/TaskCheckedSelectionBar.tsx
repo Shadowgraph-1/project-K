@@ -1,5 +1,5 @@
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
   CheckCircle2,
   Circle,
@@ -11,11 +11,10 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/shared/lib/utils";
+import { sessionToolbarIconButton } from "@/pages/session/lib/session-styles";
+import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
 import { Button, buttonVariants } from "@/shared/ui/button";
-import {
-  TASK_STATUSES,
-  type TaskStatus,
-} from "@/entities/task/model/useSessionTasks";
+import { TASK_STATUSES, type TaskStatus } from "@/shared/constants/task-statuses";
 
 import {
   DropdownMenu,
@@ -30,6 +29,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
+import { TASK_STATUS_LABELS } from "@/shared/constants/task-statuses";
 
 type TaskCheckedSelectionBarProps = {
   count: number;
@@ -46,13 +46,13 @@ function selectedLabel(n: number) {
 
 function TaskStatusIcon({ status }: { status: TaskStatus }) {
   switch (status) {
-    case "Выполнено":
+    case "DONE":
       return <CheckCircle2 className="size-4 text-emerald-500" />;
-    case "Отложено":
+    case "DEFERRED":
       return <PauseCircle className="size-4 text-amber-500" />;
-    case "Issues":
+    case "ISSUES":
       return <CircleAlert className="size-4 text-red-500" />;
-    case "В очереди":
+    case "TODO":
     default:
       return <Circle className="size-4 text-muted-foreground" />;
   }
@@ -65,7 +65,13 @@ export function TaskCheckedSelectionBar({
   onStatusSelected,
   className,
 }: TaskCheckedSelectionBarProps) {
+  const prefersReducedMotion = useReducedMotion();
   if (typeof document === "undefined") return null;
+
+  const hiddenVariant = { opacity: 0, y: 16, scale: 0.95 };
+  const visibleVariant = { opacity: 1, y: 0, scale: 1 };
+  const initialVariant = prefersReducedMotion ? visibleVariant : hiddenVariant;
+  const exitVariant = prefersReducedMotion ? visibleVariant : hiddenVariant;
 
   return createPortal(
     <AnimatePresence>
@@ -74,13 +80,13 @@ export function TaskCheckedSelectionBar({
           key="task-selection-bar"
           role="toolbar"
           aria-label="Выбранные задачи"
-          initial={{ opacity: 0, y: 16, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 16, scale: 0.95 }}
+          initial={initialVariant}
+          animate={visibleVariant}
+          exit={exitVariant}
           transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
           className={cn(
             "pointer-events-auto fixed bottom-6 left-1/2 z-50 -translate-x-1/2",
-            "flex h-9 items-center gap-1 rounded-lg border border-border/70 bg-background px-1.5 shadow-md ring-1 ring-black/5 dark:ring-white/10",
+            "flex h-9 items-center gap-1 rounded-xl bg-background/95 px-1.5 shadow-md ring-1 ring-border/35",
             className,
           )}
         >
@@ -95,16 +101,18 @@ export function TaskCheckedSelectionBar({
             <>
               <div className="h-4 w-px shrink-0 bg-border/70" aria-hidden />
               <DropdownMenu>
-                <DropdownMenuTrigger
-                  className={cn(
-                    buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                    "size-7 rounded-md text-muted-foreground",
-                  )}
-                  aria-label="Действия с выбранными"
-                  title="Действия с выбранными"
-                >
-                  <Settings2 className="size-3.5" />
-                </DropdownMenuTrigger>
+                <SessionTooltip label="Действия с выбранными" side="top">
+                  <DropdownMenuTrigger
+                    className={cn(
+                      buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                      "size-7 rounded-md",
+                      sessionToolbarIconButton,
+                    )}
+                    aria-label="Действия с выбранными"
+                  >
+                    <Settings2 className="size-3.5" />
+                  </DropdownMenuTrigger>
+                </SessionTooltip>
                 <DropdownMenuContent
                   side="top"
                   align="center"
@@ -129,7 +137,7 @@ export function TaskCheckedSelectionBar({
                               onSelect={() => void onStatusSelected?.(status)}
                             >
                               <TaskStatusIcon status={status} />
-                              {status}
+                              {TASK_STATUS_LABELS[status]}
                             </DropdownMenuItem>
                           ))}
                         </DropdownMenuSubContent>
@@ -161,16 +169,21 @@ export function TaskCheckedSelectionBar({
 
           <div className="h-4 w-px shrink-0 bg-border/70" aria-hidden />
 
-          <Button
-            type="button"
-            aria-label="Снять выделение"
-            onClick={onClear}
-            variant="ghost"
-            size="icon-sm"
-            className="size-7 rounded-md text-muted-foreground"
-          >
-            <X className="size-3.5" />
-          </Button>
+          <SessionTooltip label="Снять выделение" side="top">
+            <Button
+              type="button"
+              aria-label="Снять выделение"
+              onClick={onClear}
+              variant="ghost"
+              size="icon-sm"
+              className={cn(
+                "size-7 rounded-md",
+                sessionToolbarIconButton,
+              )}
+            >
+              <X className="size-3.5" />
+            </Button>
+          </SessionTooltip>
         </motion.div>
       ) : null}
     </AnimatePresence>,

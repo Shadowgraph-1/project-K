@@ -184,6 +184,7 @@ export function InviteMemberDialog({
 
         <div className="flex flex-col gap-3">
           <Input
+            type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Поиск по нику"
@@ -208,14 +209,14 @@ export function InviteMemberDialog({
               {candidates.map((user) => (
                 <li
                   key={user.id}
-                  className="flex items-center justify-between gap-2 rounded-lg border border-border/50 px-2.5 py-2"
+                  className="flex items-center justify-between gap-2 rounded-xl bg-muted/30 px-2.5 py-2 ring-1 ring-border/20"
                 >
                   <span className="truncate text-sm font-medium">{user.name}</span>
                   <Button
                     type="button"
                     size="sm"
                     variant="outline"
-                    className="h-7 shrink-0 gap-1 text-xs"
+                    className="h-7 shrink-0 gap-1 rounded-full text-xs"
                     disabled={sendingUserId === user.id}
                     onClick={() => void handleSendInvite(user)}
                   >

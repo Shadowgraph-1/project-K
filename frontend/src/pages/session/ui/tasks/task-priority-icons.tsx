@@ -1,10 +1,30 @@
 import { cn } from "@/shared/lib/utils";
-import type { TaskPriority } from "@/entities/task/model/useSessionTasks";
+import type { TaskPriority } from "@/entities/task/model/types";
+import { normalizeTaskPriority } from "@/entities/task/model/task-priority";
+
+export { normalizeTaskPriority };
 
 type IconProps = {
   className?: string;
 };
 
+export function TaskPriorityFieldIcon({ className }: IconProps) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      role="img"
+      aria-hidden
+      className={cn("shrink-0 text-muted-foreground", className)}
+      fill="currentColor"
+    >
+      <rect x="1" y="8" width="3" height="6" rx="1" />
+      <rect x="6" y="5" width="3" height="9" rx="1" />
+      <rect x="11" y="2" width="3" height="12" rx="1" />
+    </svg>
+  );
+}
 
 export function NoPriorityIcon({ className }: IconProps) {
   return (
@@ -130,22 +150,4 @@ export function TaskPriorityIcon({
 export function getTaskPriorityLabel(priority?: TaskPriority | null) {
   const option = TASK_PRIORITY_OPTIONS.find((o) => o.value === (priority ?? null));
   return option?.label ?? "Без приоритета";
-}
-
-const LEGACY_PRIORITY_MAP: Record<string, TaskPriority> = {
-  Срочно: "Срочный",
-  Срочный: "Срочный",
-  Высокий: "Высокий",
-  Фокус: "Средний",
-  Средний: "Средний",
-  Работа: "Средний",
-  Низкий: "Низкий",
-  Личное: "Низкий",
-  Быстрый: "Низкий",
-};
-
-
-export function normalizeTaskPriority(tags?: string | null): TaskPriority | null {
-  if (!tags?.trim()) return null;
-  return LEGACY_PRIORITY_MAP[tags.trim()] ?? null;
 }

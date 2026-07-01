@@ -1,5 +1,5 @@
 import { useCollaborationModalStore } from "@/shared/model/useCollaborationModalStore";
-import { useWorkspaceQuery } from "@/entities/workspace/model/useWorkspaceStoreQuery";
+import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
 import {
   Dialog,
   DialogContent,

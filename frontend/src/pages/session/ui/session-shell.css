@@ -1,6 +1,115 @@
+html.session-theme-changing,
+html.session-theme-changing * {
+  transition: none !important;
+}
+
+html.session-theme-active {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --sidebar: oklch(0.975 0 0);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
+  --sidebar-accent: oklch(0.965 0.004 264 / 0.55);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: oklch(0.922 0 0 / 0.55);
+  --sidebar-ring: var(--ring);
+
+  color-scheme: light;
+}
+
+html.session-theme-active.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(1 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(1 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(1 0 0);
+  --primary: oklch(1 0 0);
+  --primary-foreground: oklch(0.145 0 0);
+  --secondary: oklch(0.22 0.005 264);
+  --secondary-foreground: oklch(0.89 0.005 264);
+  --muted: oklch(0.22 0.005 264);
+  --muted-foreground: oklch(0.62 0.01 264);
+  --accent: oklch(0.25 0.005 264);
+  --accent-foreground: oklch(1 0 0);
+  --destructive: oklch(0.65 0.2 25);
+  --border: oklch(0.28 0.005 264);
+  --input: oklch(0.28 0.005 264);
+  --ring: oklch(0.55 0 0);
+  --sidebar: oklch(0.145 0 0);
+  --sidebar-foreground: oklch(0.89 0.005 264);
+  --sidebar-primary: oklch(1 0 0);
+  --sidebar-primary-foreground: oklch(0.145 0 0);
+  --sidebar-accent: oklch(0.22 0.005 264);
+  --sidebar-accent-foreground: oklch(1 0 0);
+  --sidebar-border: oklch(0.28 0.005 264);
+  --sidebar-ring: oklch(0.55 0 0);
+
+  color-scheme: dark;
+}
+
 .session-shell {
   background-color: var(--background);
   color: var(--foreground);
+}
+
+.session-sidebar-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-radius: 0.75rem;
+  padding: 2px;
+  background-color: color-mix(in oklch, var(--muted) 45%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--border) 55%, transparent);
+}
+
+.session-sidebar-footer-btn {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 0.625rem;
+  color: color-mix(in oklch, var(--sidebar-foreground) 65%, transparent);
+  background: transparent;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.session-sidebar-footer-btn:hover {
+  color: var(--sidebar-foreground);
+  background-color: color-mix(in oklch, var(--foreground) 6%, transparent);
+}
+
+.session-sidebar-footer-btn--active {
+  color: var(--sidebar-foreground);
+  background-color: var(--background);
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 65%, transparent);
+}
+
+html.session-theme-active.dark .session-sidebar-footer-btn--active {
+  background-color: var(--card);
 }
 
 .session-panel-scroll {
@@ -24,7 +133,455 @@
   background: transparent;
 }
 
-.session-empty-state {
-  background-color: var(--card);
-  color: var(--card-foreground);
+.task-details-layout [data-panel] > div {
+  overflow: hidden !important;
 }
+
+.minimal-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 40%, transparent)
+    transparent;
+}
+
+.minimal-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.minimal-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background-color: color-mix(in oklch, var(--muted-foreground) 40%, transparent);
+}
+
+.minimal-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.session-empty-state {
+  color: var(--foreground);
+}
+
+html.session-theme-active.dark .session-empty-state {
+  background-color: transparent;
+  box-shadow: none;
+}
+
+.task-list-row + .task-list-row {
+  box-shadow: inset 0 1px 0 color-mix(in oklch, var(--border) 55%, transparent);
+}
+
+.session-main-sidebar [data-slot="sidebar-inner"] {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.session-main-sidebar [data-slot="sidebar-container"] {
+  padding: 0.5rem;
+}
+
+.session-sidebar-section + .session-sidebar-section {
+  margin-top: 0;
+}
+
+.session-sidebar-section-header {
+  display: flex;
+  width: 100%;
+  height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-radius: 0.625rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--sidebar-foreground);
+  transition: color 200ms ease, background-color 200ms ease;
+}
+
+.session-sidebar-section-header:hover {
+  background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
+}
+
+.session-sidebar-section-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding-top: 0;
+}
+
+.session-sidebar-link {
+  display: flex;
+  min-width: 0;
+  height: 2rem;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: color-mix(in oklch, var(--sidebar-foreground) 70%, transparent);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.session-sidebar-link:hover {
+  background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
+  color: var(--sidebar-foreground);
+}
+
+.session-sidebar-link[data-active="true"] {
+  background-color: var(--background);
+  color: var(--sidebar-foreground);
+  font-weight: 500;
+}
+
+.dark .session-sidebar-link[data-active="true"] {
+  background-color: color-mix(in oklch, var(--muted) 80%, transparent);
+}
+
+.session-sidebar-link svg {
+  flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.session-sidebar-workspace-link {
+  gap: 0.5rem;
+  padding-right: 0.375rem;
+}
+
+.session-sidebar-workspace-link:hover .session-sidebar-row-delete {
+  opacity: 1;
+}
+
+.session-sidebar-workspace-nav {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  overflow: hidden;
+  color: inherit;
+}
+
+.session-sidebar-workspace-nav:hover {
+  color: inherit;
+}
+
+.session-sidebar-workspace-chevron {
+  display: inline-flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: -0.125rem;
+  border-radius: 0.375rem;
+  color: color-mix(in oklch, var(--sidebar-foreground) 60%, transparent);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.session-sidebar-workspace-chevron:hover {
+  background-color: color-mix(in oklch, var(--foreground) 8%, transparent);
+  color: var(--sidebar-foreground);
+}
+
+.session-sidebar-workspace-link[data-active="true"] .session-sidebar-workspace-chevron {
+  color: var(--sidebar-foreground);
+}
+
+.session-sidebar-row-delete {
+  display: flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  border-radius: 0.375rem;
+  color: color-mix(in oklch, var(--sidebar-foreground) 55%, transparent);
+  opacity: 0;
+  transition: opacity 200ms ease, background-color 200ms ease, color 200ms ease;
+}
+
+.session-sidebar-row-delete:hover {
+  background-color: color-mix(in oklch, var(--destructive) 12%, transparent);
+  color: var(--destructive);
+}
+
+.session-sidebar-nested-task-link {
+  gap: 0.4375rem;
+  padding-right: 0.375rem;
+}
+
+.session-sidebar-nested-task-link:hover .session-sidebar-row-delete {
+  opacity: 1;
+}
+
+.session-sidebar-nested-nav {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  align-items: center;
+  overflow: hidden;
+  color: inherit;
+}
+
+.session-sidebar-nested-nav:hover {
+  color: inherit;
+}
+
+.session-sidebar-nested {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 0.125rem 0 0.125rem 1.125rem;
+}
+
+.session-sidebar-nested-link {
+  display: flex;
+  min-width: 0;
+  height: 1.75rem;
+  align-items: center;
+  gap: 0.4375rem;
+  border-radius: 0.625rem;
+  padding: 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: color-mix(in oklch, var(--sidebar-foreground) 65%, transparent);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.session-sidebar-nested-link:hover {
+  background-color: color-mix(in oklch, var(--foreground) 5%, transparent);
+  color: var(--sidebar-foreground);
+}
+
+.session-sidebar-nested-link[data-active="true"] {
+  background-color: var(--background);
+  color: var(--sidebar-foreground);
+  font-weight: 500;
+}
+
+.dark .session-sidebar-nested-link[data-active="true"] {
+  background-color: color-mix(in oklch, var(--muted) 80%, transparent);
+}
+
+.session-sidebar-nested-link svg {
+  flex-shrink: 0;
+}
+
+.session-sidebar-collapse-arrow {
+  flex-shrink: 0;
+  transition: transform 180ms ease;
+}
+
+.session-sidebar-collapse-arrow[data-open="false"] {
+  transform: rotate(-90deg);
+}
+
+
+.session-kanban-board {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 0.25rem 0.75rem;
+}
+
+.session-kanban-columns {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  width: max-content;
+  min-width: 100%;
+}
+
+.session-kanban-column {
+  display: flex;
+  height: 100%;
+  width: 21.75rem;
+  flex-shrink: 0;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.session-kanban-column-header {
+  display: flex;
+  height: 3.125rem;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0 0.75rem 0 0.5rem;
+}
+
+.session-kanban-column-title {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--foreground);
+}
+
+.session-kanban-column-count {
+  font-size: 0.8125rem;
+  line-height: 1.25rem;
+  color: color-mix(in oklch, var(--muted-foreground) 90%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.session-kanban-column-body {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+  overflow-y: auto;
+  margin: 0 0.375rem;
+  border-radius: 1rem;
+  background-color: color-mix(in oklch, var(--muted) 40%, var(--background));
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 28%, transparent);
+  padding: 0.375rem;
+}
+
+.session-kanban-empty {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  color: color-mix(in oklch, var(--muted-foreground) 80%, transparent);
+}
+
+.session-kanban-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.375rem;
+  border-radius: 0.75rem;
+  border: 0;
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  background-color: color-mix(in oklch, var(--card) 92%, var(--background));
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 30%, transparent);
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 120ms ease;
+}
+
+.session-kanban-card:hover {
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 45%, transparent);
+}
+
+.session-kanban-card:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--ring) 70%, transparent);
+  outline-offset: 1px;
+}
+
+.session-kanban-card--done {
+  background-color: color-mix(in oklch, var(--card) 88%, var(--muted));
+}
+
+.session-kanban-card--done .session-kanban-card-title,
+.session-kanban-card--done .session-kanban-card-key {
+  color: color-mix(in oklch, var(--muted-foreground) 95%, transparent);
+}
+
+.session-kanban-card-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.session-kanban-card-content {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.session-kanban-card-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  color: color-mix(in oklch, var(--muted-foreground) 88%, transparent);
+}
+
+.session-kanban-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.375rem;
+}
+
+.session-kanban-card-title {
+  min-width: 0;
+  flex: 1;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  color: var(--foreground);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.session-kanban-card-avatar {
+  height: 1.125rem;
+  width: 1.125rem;
+  flex-shrink: 0;
+}
+
+.session-kanban-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 1.25rem;
+  color: color-mix(in oklch, var(--muted-foreground) 88%, transparent);
+}
+
+.session-kanban-card-date {
+  font-size: 0.6875rem;
+  line-height: 1rem;
+}
+
+.timeline-flow-panel {
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 75%, transparent);
+}
+
+.timeline-flow-grid {
+  min-width: max(100%, 36rem);
+  display: flex;
+}
+
+.timeline-flow-segment {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.timeline-flow-segment + .timeline-flow-segment {
+  box-shadow: inset 1px 0 0 color-mix(in oklch, var(--border) 60%, transparent);
+}
+
+.timeline-flow-segment:hover,
+.timeline-flow-segment--active {
+  background-color: color-mix(in oklch, var(--muted) 35%, transparent);
+}
+
+.timeline-flow-segment--empty:hover,
+.timeline-flow-segment--empty.timeline-flow-segment--active {
+  background-color: color-mix(in oklch, var(--muted) 20%, transparent);
+}
+
+.timeline-flow-segment:focus-visible {
+  outline: 1px solid color-mix(in oklch, var(--foreground) 25%, transparent);
+  outline-offset: -1px;
+  z-index: 1;
+}
+

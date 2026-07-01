@@ -8,11 +8,10 @@ import {
 } from "@/shared/ui/dialog";
 import { Input } from "@/shared/ui/input";
 import { Button } from "@/shared/ui/button";
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
+import { UserAvatar } from "@/entities/user/ui/UserAvatar";
 import { useState, type ReactNode } from "react";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
-import { avatarColorClass } from "@/shared/lib/avatar-colors";
-import { cn } from "@/shared/lib/utils";
+import { FIELD_LIMITS } from "@/shared/constants/field-limits";
 
 function getUserLabel(user: { name?: string; email?: string } | null) {
   return user?.name?.trim() || user?.email || "Вы";
@@ -61,11 +60,7 @@ function DialogUpdateTask({ trigger, onSubmit }: DialogUpdateTaskProps) {
 
         <div className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Avatar className="size-[18px]">
-              <AvatarFallback className={cn("text-[9px] font-semibold", avatarColorClass(label))}>
-                {label.slice(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
+            <UserAvatar name={user?.name} email={user?.email} size={16} />
             <span className="text-sm text-muted-foreground">{label}</span>
           </div>
           <Input
@@ -74,6 +69,7 @@ function DialogUpdateTask({ trigger, onSubmit }: DialogUpdateTaskProps) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             disabled={isSubmitting}
+            maxLength={FIELD_LIMITS.taskTitle}
             onKeyDown={(e) => {
               if (e.key === "Enter") void handleSubmit();
             }}

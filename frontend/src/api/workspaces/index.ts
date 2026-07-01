@@ -6,6 +6,7 @@ export type WorkspaceKind = "owned" | "shared";
 export type WorkspaceApiItem = {
   id: string;
   name: string;
+  publicKey: string;
   myRole: WorkspaceRole;
   kind?: WorkspaceKind;
 };
@@ -22,5 +23,12 @@ export async function createWorkspaceOnApi(name: string) {
 
 export async function deleteWorkspaceOnApi(id: string) {
   const { data } = await api.delete(`/workspaces/${id}`);
+  return data;
+}
+
+export async function deleteAllWorkspacesOnApi() {
+  const { data } = await api.delete<{ ok: true; deletedCount: number }>(
+    "/workspaces",
+  );
   return data;
 }

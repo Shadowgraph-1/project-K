@@ -39,6 +39,17 @@ export function isActivityReply(item: TaskActivity) {
   return Boolean(getActivityMetadata(item).parentActivityId);
 }
 
+export function getActivityEntityName(item: TaskActivity) {
+  const body = item.body?.trim();
+  if (body) return body;
+
+  const meta = getActivityMetadata(item);
+  if (meta.to?.trim()) return meta.to.trim();
+  if (item.title?.trim()) return item.title.trim();
+
+  return null;
+}
+
 export function formatActivityActionText(item: TaskActivity) {
   if (!isActivityType(item.type)) {
     return item.title;
@@ -91,7 +102,7 @@ export function ActivityActionIcon({
       }
       return <ArrowRightLeft className={cn(iconClass, "text-amber-500")} aria-hidden />;
     case Activity.UPDATE_CREATED:
-      return <MessageSquarePlus className={cn(iconClass, "text-violet-500")} aria-hidden />;
+      return <MessageSquarePlus className={cn(iconClass, "text-rose-500")} aria-hidden />;
     default:
       return <ArrowRightLeft className={cn(iconClass, "text-muted-foreground")} aria-hidden />;
   }

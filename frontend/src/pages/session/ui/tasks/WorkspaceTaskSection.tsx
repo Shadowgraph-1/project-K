@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { ChevronRight } from "lucide-react";
-import type { Tasks } from "@/entities/task/model/useSessionTasks";
+import type { Task } from "@/entities/task/model/types";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { TaskRow } from "./TaskRow";
@@ -8,14 +8,13 @@ import { TASK_LIST_LAYOUT } from "./sessionWorkspaceTypes";
 
 export type WorkspaceTaskSectionProps = {
   title: string;
-  tasks: Tasks[];
+  tasks: Task[];
   expanded: boolean;
   onToggleExpanded: () => void;
   onRemoveTask: (id: string) => void;
-  isTaskChecked: (task: Tasks) => boolean;
+  isTaskChecked: (task: Task) => boolean;
   onToggleTaskChecked: (id: string) => void;
   onOpenTask: (taskId: string) => void;
-  workspaceName?: string;
   headerActions?: ReactNode;
 };
 
@@ -28,12 +27,11 @@ export function WorkspaceTaskSection({
   isTaskChecked,
   onToggleTaskChecked,
   onOpenTask,
-  workspaceName,
   headerActions,
 }: WorkspaceTaskSectionProps) {
   return (
     <section className="flex flex-col gap-1">
-      <div className="flex w-full items-center justify-between gap-2 rounded-none border border-border bg-muted/35 p-0.5 transition-colors hover:border-border hover:bg-muted/50">
+      <div className="flex w-full items-center justify-between gap-2 rounded-xl bg-muted/40 p-0.5 ring-1 ring-border/30 transition-colors hover:bg-muted/50">
         <Button
           type="button"
           variant="ghost"
@@ -74,7 +72,6 @@ export function WorkspaceTaskSection({
             <TaskRow
               key={task.id}
               task={task}
-              workspaceName={workspaceName}
               isChecked={isTaskChecked(task)}
               onToggleChecked={onToggleTaskChecked}
               onRemove={onRemoveTask}

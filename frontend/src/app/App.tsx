@@ -1,43 +1,32 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 
-import { LoginForm } from "@/features/auth/ui/login-form";
 import { HomePage } from "@/pages/home/HomePage";
-import NotFoundPage from "@/pages/not-found/NotFoundPage";
-import SessionPage from "@/pages/session/SessionPage";
-import { useModalStore } from "@/shared/model/useModalStore";
-import {
-  Dialog,
-  DialogContent,
-} from "@/shared/ui/dialog";
 import { Toaster } from "@/shared/ui/sonner";
+import { RequireAdmin } from "@/shared/lib/require-admin";
+
+const AuthPage = lazy(() =>
+  import("@/pages/auth/AuthPage").then((m) => ({ default: m.AuthPage })),
+);
+const NotFoundPage = lazy(() => import("@/pages/not-found/NotFoundPage"));
+const SessionPage = lazy(() => import("@/pages/session/SessionPage"));
 
 function RootLayout() {
-  const authModalMode = useModalStore((state) => state.authModalMode);
-  const closeAuthModal = useModalStore((state) => state.closeAuthModal);
-
   return (
     <div className="flex min-h-svh flex-col bg-background font-sans text-foreground antialiased">
       <Outlet />
       <Toaster />
-      <Dialog
-        open={authModalMode !== null}
-        onOpenChange={(open) => {
-          if (!open) closeAuthModal();
-        }}
-      >
-        <DialogContent
-          showCloseButton
-          className={
-            authModalMode === "login"
-              ? "max-h-[min(90dvh,900px)] max-w-[calc(100%-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-3xl"
-              : "max-h-[min(90dvh,900px)] max-w-[calc(100%-2rem)] gap-0 overflow-y-auto p-0 sm:max-w-md"
-          }
-        >
-          {authModalMode ? (
-            <LoginForm mode={authModalMode} />
-          ) : null}
-        </DialogContent>
-      </Dialog>
+    </div>
+  );
+}
+
+function RouteFallback() {
+  return (
+    <div
+      className="flex min-h-svh items-center justify-center bg-background"
+      aria-hidden
+    >
+      <div className="size-5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground/70" />
     </div>
   );
 }
@@ -47,14 +36,42 @@ const router = createBrowserRouter([
     element: <RootLayout />,
     children: [
       { path: "/", element: <HomePage /> },
-      { path: "/projects/workspace/new", element: <SessionPage /> },
-      { path: "/project/:workspaceId/members", element: <SessionPage /> },
-      { path: "/project/:workspaceId/:taskId", element: <SessionPage /> },
-      { path: "/project/:workspaceId", element: <SessionPage /> },
-      { path: "/projects/members", element: <SessionPage /> },
-      { path: "/projects/tasks", element: <SessionPage /> },
-      { path: "/projects", element: <SessionPage /> },
-      { path: "*", element: <NotFoundPage /> },
+      { path: "/login", element: <AuthPage mode="login" /> },
+      { path: "/register", element: <AuthPage mode="register" /> },
+      {
+        path: "/projects/admin",
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <RequireAdmin>
+              <SessionPage />
+            </RequireAdmin>
+          </Suspense>
+        ),
+      },
+      {
+        path: "/projects/*",
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <SessionPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "/workspaces/*",
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <SessionPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: "*",
+        element: (
+          <Suspense fallback={<RouteFallback />}>
+            <NotFoundPage />
+          </Suspense>
+        ),
+      },
     ],
   },
 ]);

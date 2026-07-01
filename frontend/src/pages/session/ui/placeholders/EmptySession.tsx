@@ -1,43 +1,45 @@
-import type { ReactNode } from "react";
-import { Button } from "@/shared/ui/button";
 import {
-  Empty,
-  EmptyContent,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/shared/ui/empty";
+  SessionEmptyPage,
+  type SessionEmptyAction,
+  type SessionEmptySuggestion,
+} from "./SessionEmptyPage";
 
 type EmptySessionProps = {
   titleName?: string;
   descriptionName?: string;
   action?: () => void;
-  icon?: ReactNode;
   buttonName?: string;
+  className?: string;
+  suggestions?: SessionEmptySuggestion[];
+  secondaryAction?: SessionEmptyAction;
+  footerAction?: SessionEmptyAction;
 };
 
 export default function EmptySession({
-  titleName,
+  titleName = "",
   descriptionName,
   action,
-  icon,
   buttonName,
+  className,
+  suggestions,
+  secondaryAction,
+  footerAction,
 }: EmptySessionProps) {
+  const resolvedFooter =
+    footerAction ??
+    (action && buttonName ? { label: buttonName, onClick: action } : undefined);
+
   return (
-    <Empty className="session-empty-state">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">{icon}</EmptyMedia>
-        <EmptyTitle>{titleName}</EmptyTitle>
-        <EmptyDescription>{descriptionName}</EmptyDescription>
-      </EmptyHeader>
-      {action && buttonName ? (
-        <EmptyContent>
-          <Button type="button" className="rounded-none" onClick={action}>
-            {buttonName}
-          </Button>
-        </EmptyContent>
-      ) : null}
-    </Empty>
+    <SessionEmptyPage
+      title={titleName}
+      description={descriptionName}
+      suggestions={suggestions}
+      footerAction={resolvedFooter}
+      secondaryAction={secondaryAction}
+      className={className}
+    />
   );
 }
+
+export type { SessionEmptySuggestion, SessionEmptyAction };
+export { SessionEmptyPage };

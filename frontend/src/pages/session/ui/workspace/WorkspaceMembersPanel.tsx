@@ -9,14 +9,15 @@ import {
   useRemoveWorkspaceMemberMutation,
   useUpdateWorkspaceMemberRoleMutation,
   useWorkspaceMembersQuery,
-} from "@/entities/workspace/model/useWorkspaceMembersQuery";
-import { useWorkspaceQuery } from "@/entities/workspace/model/useWorkspaceStoreQuery";
+} from "@/entities/workspace/model/use-workspace-members-query";
+import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
 import {
   canPerformWorkspaceAction,
   type WorkspaceRole,
 } from "@/shared/lib/workspace-permissions";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { notify } from "@/shared/lib/notify";
+import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
 import { Button } from "@/shared/ui/button";
 import { KonoLoader } from "@/shared/ui/kono-loader";
 import {
@@ -64,8 +65,8 @@ function MemberRoleBadge({
       className={cn(
         "inline-flex h-7 min-w-[7.5rem] items-center px-2 text-[11px] font-medium text-muted-foreground",
         interactive
-          ? "justify-between gap-1 rounded-md border border-border bg-muted/40"
-          : "justify-center rounded-md border border-border/60 bg-muted/25",
+          ? "justify-between gap-1 rounded-full bg-muted/35 ring-1 ring-border/35"
+          : "justify-center rounded-full bg-muted/25 ring-1 ring-border/30",
       )}
     >
       {ROLE_LABELS[role]}
@@ -201,9 +202,11 @@ export function WorkspaceMembersPanel({
     try {
       await leaveWorkspace.mutateAsync(workspaceId);
       onLeaveSuccess?.();
+      const publicKey = resolvedWorkspace?.publicKey;
       if (
-        pathname === SESSION_PATHS.project(workspaceId) ||
-        pathname.startsWith(`${SESSION_PATHS.project(workspaceId)}/`)
+        publicKey &&
+        (pathname === SESSION_PATHS.workspace(publicKey) ||
+          pathname.startsWith(`${SESSION_PATHS.workspace(publicKey)}/`))
       ) {
         navigate(SESSION_PATHS.sessionRoot);
       }
@@ -252,7 +255,7 @@ export function WorkspaceMembersPanel({
           ) : members.length === 0 ? (
             <p className="text-sm text-muted-foreground">Пока никого</p>
           ) : (
-            <ul className="flex max-h-56 flex-col gap-0.5 overflow-y-auto rounded-md border border-border/60 p-1">
+            <ul className="flex max-h-56 flex-col gap-0.5 overflow-y-auto rounded-xl bg-muted/25 p-1 ring-1 ring-border/25">
               {members.map((member) => (
                 <li
                   key={member.userId}
@@ -278,23 +281,24 @@ export function WorkspaceMembersPanel({
                               }
                             />
                             {canManage ? (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon-sm"
-                                className="size-7 text-muted-foreground hover:text-destructive"
-                                aria-label={`Удалить ${member.name}`}
-                                title="Удалить из проекта"
-                                disabled={removeMember.isPending}
-                                onClick={() =>
-                                  void handleRemoveMember(
-                                    member.userId,
-                                    member.name,
-                                  )
-                                }
-                              >
-                                <UserMinus className="size-3.5" />
-                              </Button>
+                              <SessionTooltip label="Удалить из проекта">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon-sm"
+                                  className="size-7 text-muted-foreground hover:text-destructive"
+                                  aria-label={`Удалить ${member.name}`}
+                                  disabled={removeMember.isPending}
+                                  onClick={() =>
+                                    void handleRemoveMember(
+                                      member.userId,
+                                      member.name,
+                                    )
+                                  }
+                                >
+                                  <UserMinus className="size-3.5" />
+                                </Button>
+                              </SessionTooltip>
                             ) : null}
                           </>
                         )}

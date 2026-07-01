@@ -60,10 +60,10 @@ const Toaster = (props: ToasterProps) => {
       offset={offset ?? "20px"}
       richColors={richColors ?? false}
       theme="light"
-      className={cn("toaster group", className)}
+      className={cn("toaster group !z-[100]", className)}
       gap={gap ?? 10}
       icons={{ ...SONNER_ICONS, ...userIcons }}
-      style={{ ...toasterCssVars, ...(userStyle as React.CSSProperties) }}
+      style={{ ...toasterCssVars, zIndex: 100, ...(userStyle as React.CSSProperties) }}
       toastOptions={{
         ...userToastOptions,
         classNames: {

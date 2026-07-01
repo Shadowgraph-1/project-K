@@ -15,6 +15,7 @@ import {
   FieldLabel,
 } from "@/shared/ui/field";
 import { Spinner } from "@/shared/ui/spinner";
+import { FIELD_LIMITS } from "@/shared/constants/field-limits";
 
 import { Plus} from "lucide-react";
 
@@ -99,6 +100,7 @@ export function CreateTaskModal({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 disabled={isSubmitting}
+                maxLength={FIELD_LIMITS.taskTitle}
               />
             </Field>
 

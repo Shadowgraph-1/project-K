@@ -1,22 +1,21 @@
 import { useMemo } from "react";
 import { Box, ChevronRight, Users } from "lucide-react";
 
-import type { Workspace } from "@/entities/workspace/model/useWorkspaceStoreQuery";
+import type { Workspace } from "@/entities/workspace/model/workspace";
 import { partitionWorkspaces } from "@/entities/workspace/lib/partition-workspaces";
-import type { Tasks } from "@/entities/task/model/useSessionTasks";
 
 import { WorkspaceHubGroup } from "./WorkspaceListSection";
 import { Button } from "@/shared/ui/button";
 
 type WorkspaceHubPickerProps = {
   workspaces: Workspace[];
-  allTasks: Tasks[];
-  onSelect: (workspaceId: string) => void;
+  getTaskCount: (workspaceId: string) => number;
+  onSelect: (publicKey: string) => void;
 };
 
 export function WorkspaceHubPicker({
   workspaces,
-  allTasks,
+  getTaskCount,
   onSelect,
 }: WorkspaceHubPickerProps) {
   const { owned, shared } = useMemo(
@@ -25,15 +24,15 @@ export function WorkspaceHubPicker({
   );
 
   function renderWorkspaceButton(ws: Workspace) {
-    const taskCount = allTasks.filter((t) => t.workspaceId === ws.id).length;
+    const taskCount = getTaskCount(ws.id);
 
     return (
       <Button
         key={ws.id}
         type="button"
         variant="ghost"
-        className="flex h-auto w-full min-w-0 items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/25 px-4 py-3 text-left hover:bg-muted/40"
-        onClick={() => onSelect(ws.id)}
+        className="flex h-auto w-full min-w-0 items-center justify-between gap-3 rounded-2xl bg-muted/40 px-4 py-3 text-left ring-1 ring-border/30 hover:bg-muted/55"
+        onClick={() => onSelect(ws.publicKey)}
       >
         <span className="flex min-w-0 items-center gap-2.5">
           <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">

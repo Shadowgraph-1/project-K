@@ -1,52 +1,61 @@
-import chibi from "../../../../assets/chibi.jpg";
+import { HOME_DEMO_VIDEOS } from "@/shared/config/demo-videos";
+
+import { DemoScrollShowcase } from "@/pages/home/ui/components/DemoScrollShowcase";
+import { HomeGlowCard } from "@/pages/home/ui/components/HomeGlowCard";
 import { SECTION_ID } from "@/shared/config/sectionIds";
 
-function AboutKonoSection() {
+const HIGHLIGHTS = [
+  {
+    title: "Проекты и задачи",
+    description: "Список, канбан и даты — всё в одном рабочем пространстве.",
+  },
+  {
+    title: "Kono AI",
+    description: "Контекстный помощник рядом.",
+  },
+  {
+    title: "Командная работа",
+    description: "Роли, приглашения и общий прогресс по проекту.",
+  },
+] as const;
+
+export default function AboutKonoSection() {
   return (
     <section
       id={SECTION_ID.ABOUT}
-      className="scroll-mt-20 border-t border-neutral-100 bg-neutral-50 px-4 py-16 md:py-24"
+      className="scroll-mt-20 border-t border-white/8 bg-black py-20 sm:py-28"
     >
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-10 md:flex-row md:items-center md:justify-between md:gap-12 lg:gap-16">
-        <div className="min-w-0 flex-1">
-          <p
-            className="font-mono text-[10px] font-medium uppercase tracking-[0.25em] text-neutral-400"
-            data-aos="fade-right"
-            data-aos-duration="650"
-          >
-            Что такое Kono
-          </p>
-          <h2
-            className="mt-5 max-w-3xl text-pretty text-xl font-medium leading-snug tracking-tight text-neutral-950 sm:text-2xl sm:leading-tight md:text-[1.75rem]"
-            data-aos="zoom-in-up"
-            data-aos-delay="120"
-            data-aos-duration="850"
-          >
-            Kono — таск-трекер с AI-компаньоном для небольших команд. Задачи,
-            подзадачи, список и лента дат — плюс чат прямо в проекте.
+      <div className="mx-auto w-full px-4 lg:px-6 xl:max-w-7xl">
+        <div className="max-w-3xl" data-aos="fade-up">
+          <p className="text-sm font-medium text-white/40">Что такое Kono</p>
+          <h2 className="mt-4 text-pretty text-3xl font-medium tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-[1.08]">
+            Менеджер задач, который не мешает думать
           </h2>
+          <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/45 sm:text-lg">
+            Kono собирает проекты, задачи и AI в одном месте. Создайте пространство, добавьте задачи и работайте в ритме,
+            который подходит вам.
+          </p>
         </div>
 
         <div
-          className="relative w-full max-w-sm shrink-0 md:max-w-md lg:max-w-88"
-          data-aos="fade-left"
-          data-aos-delay="180"
-          data-aos-duration="850"
+          className="home-about-highlights mt-12 grid gap-4 sm:grid-cols-3 sm:gap-5"
+          data-aos="fade-up"
+          data-aos-delay="80"
         >
-          <div className="relative overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-[0_24px_60px_-20px_rgba(0,0,0,0.12)]">
-            <img
-              src={chibi}
-              alt="Kono AI-компаньоны"
-              width={1328}
-              height={1488}
-              className="block h-auto w-full"
-              decoding="async"
+          {HIGHLIGHTS.map((item, index) => (
+            <HomeGlowCard
+              key={item.title}
+              title={item.title}
+              subtitle={item.description}
+              accent={index === 1}
             />
-          </div>
+          ))}
+        </div>
+
+        <div className="mt-16 border-t border-white/8 pt-16 sm:mt-20 sm:pt-24">
+          <DemoScrollShowcase items={HOME_DEMO_VIDEOS} />
         </div>
       </div>
     </section>
   );
 }
-
-export default AboutKonoSection;

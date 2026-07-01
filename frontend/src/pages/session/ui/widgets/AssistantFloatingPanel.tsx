@@ -1,23 +1,10 @@
-import { useState } from "react";
 import { createPortal } from "react-dom";
-import {
-  Bot,
-  KeyRound,
-  ListChecks,
-  Settings,
-  X,
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bot, KeyRound, Settings, X } from "lucide-react";
 
+import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import AssistantInput from "@/widgets/assistant/ui/AssistantInput";
 import { Button, buttonVariants } from "@/shared/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,9 +13,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { Input } from "@/shared/ui/input";
 import { useSessionSecondarySidebarStore } from "@/shared/model/useSessionSecondarySidebarStore";
+import { normalizeAssistantText } from "@/shared/lib/normalize-assistant-text";
 import { cn } from "@/shared/lib/utils";
+import { sessionToolbarIconButton } from "@/pages/session/lib/session-styles";
+import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
+
 
 export type AssistantFloatingPanelChatProps = {
   error: string;
@@ -165,20 +155,16 @@ function AssistantChatMessages({
         </div>
       ) : null}
 
-      <div
-        className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-0.5 [scrollbar-gutter:stable]"
-      >
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-0.5 [scrollbar-gutter:stable]">
         {turns.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
             <div className="flex size-10 items-center justify-center rounded-full bg-muted">
               <Bot className="size-5 text-muted-foreground" />
             </div>
             <div className="space-y-1">
-              <p className="text-sm font-medium text-foreground">
-                Kono AI
-              </p>
+              <p className="text-sm font-medium text-foreground">Kono AI</p>
               <p className="text-xs text-muted-foreground">
-                Спросите про задачи или попросите помочь с планом
+                Спросите про задачи проекта
               </p>
             </div>
           </div>
@@ -192,7 +178,9 @@ function AssistantChatMessages({
             {turn.user ? <UserChatMessage>{turn.user}</UserChatMessage> : null}
             {turn.assistant ? (
               <AssistantChatMessage muted={turn.thinking}>
-                {turn.assistant}
+                {turn.thinking
+                  ? turn.assistant
+                  : normalizeAssistantText(turn.assistant)}
               </AssistantChatMessage>
             ) : null}
           </div>
@@ -203,123 +191,99 @@ function AssistantChatMessages({
 }
 
 export function AssistantFloatingPanel({ chat }: AssistantFloatingPanelProps) {
+  const navigate = useNavigate();
   const open = useSessionSecondarySidebarStore((s) => s.open);
+  const panel = useSessionSecondarySidebarStore((s) => s.panel);
   const setOpen = useSessionSecondarySidebarStore((s) => s.setOpen);
-  const [aiSettingsOpen, setAiSettingsOpen] = useState(false);
 
-  if (!open || typeof document === "undefined") return null;
+  if (typeof document === "undefined" || !open || panel !== "assistant") {
+    return null;
+  }
 
   return createPortal(
     <>
-      <div
-        role="dialog"
-        aria-modal="false"
-        aria-label="Kono AI"
-        className="fixed z-50 flex flex-col overflow-hidden rounded-xl border border-border bg-background shadow-2xl"
-        style={{
-          width: 400,
-          height: 600,
-          bottom: 24,
-          right: 24,
-        }}
-      >
-        <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b border-border px-3">
-          <div className="flex min-w-0 items-center gap-2">
-            <span className="truncate text-sm font-medium text-foreground">
-              Kono AI
-            </span>
-          </div>
-          <div className="flex shrink-0 items-center gap-0.5">
-            <DropdownMenu>
+        <div
+          role="dialog"
+          aria-modal="false"
+          aria-label="Kono AI"
+          className="fixed z-50 flex animate-in flex-col overflow-hidden rounded-2xl border-0 bg-background/95 shadow-[0_24px_70px_-16px_rgba(0,0,0,0.4)] ring-1 ring-border/35 backdrop-blur-xl fade-in slide-in-from-bottom-3 duration-200"
+          style={{
+            width: 400,
+            height: 600,
+            bottom: 24,
+            right: 24,
+          }}
+        >
+      <div className="flex h-12 shrink-0 items-center justify-between gap-2 px-4 shadow-[inset_0_-1px_0_0_color-mix(in_oklch,var(--border)_30%,transparent)]">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="truncate text-sm font-medium text-foreground">
+            Kono AI
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-0.5">
+          <DropdownMenu>
+            <SessionTooltip label="Настройки AI">
               <DropdownMenuTrigger
                 className={cn(
                   buttonVariants({ variant: "ghost", size: "icon-sm" }),
-                  "size-7 text-muted-foreground",
+                  "size-7",
+                  sessionToolbarIconButton,
                 )}
                 aria-label="Настройки AI"
-                title="Настройки AI"
               >
                 <Settings className="size-3.5" />
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>AI настройки</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setAiSettingsOpen(true)}>
-                  <KeyRound className="size-4" />
-                  Подключить API ключ
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ListChecks className="size-4" />
-                  Мои подключения
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            </SessionTooltip>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>AI настройки</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onSelect={() => navigate(SESSION_PATHS.llmKeys)}
+              >
+                <KeyRound className="size-4" />
+                API ключи
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <SessionTooltip label="Закрыть">
             <Button
               type="button"
               variant="ghost"
               size="icon-sm"
-              className="size-7 text-muted-foreground"
+              className={cn("size-7", sessionToolbarIconButton)}
               aria-label="Закрыть чат"
-              title="Закрыть"
               onClick={() => setOpen(false)}
             >
               <X className="size-3.5" />
             </Button>
-          </div>
-        </div>
-
-        <div className="flex min-h-0 flex-1 flex-col gap-3 px-3 py-3">
-          {!chat ? (
-            <p className="text-xs text-muted-foreground">
-              Войдите в аккаунт, чтобы открыть чат компаньона.
-            </p>
-          ) : (
-            <AssistantChatMessages chat={chat} />
-          )}
-        </div>
-
-        <div className="shrink-0 border-t border-border p-2">
-          {chat ? (
-            <AssistantInput
-              className="mx-0 max-w-none"
-              placeholder="Спросите Kono AI…"
-              value={chat.question}
-              onChange={chat.onQuestionChange}
-              onSend={chat.onSend}
-              withTasks={chat.withTask}
-              onToggleTasks={chat.onToggleWithTask}
-            />
-          ) : null}
+          </SessionTooltip>
         </div>
       </div>
 
-      <Dialog open={aiSettingsOpen} onOpenChange={setAiSettingsOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Подключить AI API</DialogTitle>
-            <DialogDescription>
-              Добавьте свой API ключ, чтобы использовать внешнюю модель вместо
-              стандартной Kono AI.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3">
-            <Input placeholder="Название, например OpenRouter" />
-            <Input placeholder="Base URL, например https://openrouter.ai/api/v1" />
-            <Input placeholder="Модель, например openai/gpt-4o-mini" />
-            <Input type="password" placeholder="API key" />
-          </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setAiSettingsOpen(false)}
-            >
-              Отмена
-            </Button>
-            <Button type="button">Сохранить</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 py-4">
+        {!chat ? (
+          <p className="text-xs text-muted-foreground">
+            Войдите в аккаунт, чтобы открыть чат компаньона.
+          </p>
+        ) : (
+          <AssistantChatMessages chat={chat} />
+        )}
+      </div>
+
+      <div className="shrink-0 p-2.5 shadow-[inset_0_1px_0_0_color-mix(in_oklch,var(--border)_30%,transparent)]">
+        {chat ? (
+          <AssistantInput
+            className="mx-0 max-w-none"
+            placeholder="Спросите Kono AI…"
+            value={chat.question}
+            onChange={chat.onQuestionChange}
+            onSend={chat.onSend}
+            withTasks={chat.withTask}
+            onToggleTasks={chat.onToggleWithTask}
+          />
+        ) : null}
+      </div>
+        </div>
     </>,
     document.body,
   );

@@ -1,9 +1,26 @@
 import { api } from "../client";
-import type { TaskPriority, Tasks } from "@/entities/task/model/useSessionTasks";
+import type {
+  Task,
+  TaskPriority,
+  TaskStatus,
+} from "@/entities/task/model/types";
+
+
+export type TaskDTO = {
+  id: string;
+  title: string;
+  description: string;
+  tags: string | null;
+  startDate: string | null;
+  dueDate: string | null;
+  creator: string | null;
+  status: TaskStatus;
+  workspaceId: string;
+};
 
 export type TaskPatch = Partial<
   Pick<
-    Tasks,
+    Task,
     | "title"
     | "description"
     | "startDate"
@@ -12,16 +29,15 @@ export type TaskPatch = Partial<
     | "status"
   >
 > & {
-  /** Pass `""` to clear priority stored in `tags`. */
   tags?: TaskPriority | "";
 };
 
-export async function getTaskOnApi(workspace_id: string) {
-  const { data } = await api.get(`/tasks?workspaceId=${workspace_id}`);
-  return data;
-}
+export type TaskListParams = {
+  workspaceId: string;
+  status?: TaskStatus;
+};
 
-export async function createTaskOnApi(payload: {
+export type CreateTaskPayload = {
   title: string;
   description?: string;
   tags?: string;
@@ -29,22 +45,42 @@ export async function createTaskOnApi(payload: {
   dueDate?: string;
   creator?: string;
   workspaceId: string;
-}) {
-  const { data } = await api.post("/tasks", payload);
+};
+
+export async function getTaskOnApi({
+  workspaceId,
+  status,
+}: TaskListParams): Promise<TaskDTO[]> {
+  const { data } = await api.get<TaskDTO[]>("/tasks", {
+    params: {
+      workspaceId,
+      ...(status ? { status } : {}),
+    },
+  });
   return data;
 }
 
-export async function deleteTaskOnApi(id: string) {
-  const { data } = await api.delete(`/tasks/${id}`);
+export async function createTaskOnApi(
+  payload: CreateTaskPayload,
+): Promise<TaskDTO> {
+  const { data } = await api.post<TaskDTO>("/tasks", payload);
   return data;
 }
 
-export async function deleteAllTasksInWorkspaceOnApi(workspaceId: string) {
-  const { data } = await api.delete(`/tasks?workspaceId=${workspaceId}`);
-  return data;
+export async function deleteTaskOnApi(id: string): Promise<void> {
+  await api.delete(`/tasks/${id}`);
 }
 
-export async function updateTaskOnAPI(id: string, patch: TaskPatch) {
-  const { data } = await api.patch(`/tasks/${id}`, patch);
+export async function deleteAllTasksInWorkspaceOnApi(
+  workspaceId: string,
+): Promise<void> {
+  await api.delete(`/tasks?workspaceId=${workspaceId}`);
+}
+
+export async function updateTaskOnAPI(
+  id: string,
+  patch: TaskPatch,
+): Promise<TaskDTO> {
+  const { data } = await api.patch<TaskDTO>(`/tasks/${id}`, patch);
   return data;
 }

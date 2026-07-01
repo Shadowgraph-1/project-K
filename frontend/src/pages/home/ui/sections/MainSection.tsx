@@ -1,6 +1,7 @@
-import { ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
-import avatar from "../../../../assets/hero-duo.jpg";
+import { ArrowRight } from "lucide-react";
+
+import { HomePreviewCards } from "@/pages/home/ui/components/HomePreviewCards";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { SECTION_ID } from "@/shared/config/sectionIds";
 import { Button } from "@/shared/ui/button";
@@ -14,74 +15,62 @@ function MainSection() {
   };
 
   return (
-    <section className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-neutral-950 px-4 pb-24 pt-8 md:pb-28 md:pt-12">
-      <div className="pointer-events-none absolute -top-40 left-1/2 h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-neutral-700/20 blur-[140px]" />
+    <section className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-black px-4 py-24 md:py-28">
+      <div className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[640px] -translate-x-1/2 rounded-full bg-neutral-600/15 blur-[120px]" />
 
-      <div className="relative mx-auto flex w-full max-w-6xl flex-col items-center gap-12 lg:flex-row lg:items-center lg:justify-between lg:gap-16">
-        <div className="max-w-xl lg:max-w-136">
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-14 sm:gap-16 lg:max-w-7xl">
+        <div className="w-full max-w-3xl text-center">
           <h1
-            className="text-balance text-4xl font-semibold tracking-[-0.03em] text-white sm:text-[3.25rem] sm:leading-[1.07]"
+            className="text-balance text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl"
             data-aos="fade-up"
             data-aos-duration="900"
           >
-            Управляй проектами.{" "}
-            <span className="text-neutral-500">Работай с командой.</span>{" "}
-            Спрашивай компаньона.
+            Проекты и задачи
+            <br />
+            для всей команды
           </h1>
 
-          <div
-            className="mt-8 flex flex-wrap items-center gap-3"
+          <p
+            className="mx-auto mt-5 max-w-lg text-pretty text-lg leading-relaxed text-white/40"
             data-aos="fade-up"
-            data-aos-delay="120"
+            data-aos-delay="80"
+            data-aos-duration="800"
+          >
+            Список, лента дат, подзадачи и чат с компаньоном.
+          </p>
+
+          <div
+            className="mt-9 flex flex-wrap items-center justify-center gap-3"
+            data-aos="fade-up"
+            data-aos-delay="140"
             data-aos-duration="800"
           >
             <Button
               asChild
               size="lg"
-              className="h-10 rounded-none bg-white px-6 text-neutral-950 hover:bg-neutral-200"
+              className="h-11 rounded-full bg-white px-6 text-neutral-950 hover:bg-neutral-200"
             >
-              <Link to={SESSION_PATHS.sessionRoot}>Открыть проекты</Link>
+              <Link to={SESSION_PATHS.sessionRoot}>
+                Открыть проекты
+                <ArrowRight className="size-4" />
+              </Link>
             </Button>
             <Button
               type="button"
               variant="outline"
               size="lg"
               onClick={() => sectionScroll(SECTION_ID.FEATURES)}
-              className="h-10 rounded-none border-white/20 bg-transparent px-6 text-white shadow-none hover:bg-white/10 hover:text-white"
+              className="h-11 rounded-full border-white/15 bg-transparent px-6 text-white shadow-none hover:bg-white/[0.05] hover:text-white"
             >
               Возможности
             </Button>
           </div>
         </div>
 
-        <div
-          className="relative w-full max-w-md shrink-0 lg:max-w-lg"
-          data-aos="fade-left"
-          data-aos-delay="180"
-          data-aos-duration="1000"
-        >
-          <div className="absolute -inset-6 rounded-[32px] bg-gradient-to-br from-neutral-800/60 to-neutral-950 blur-2xl" />
-          <div className="relative overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900 shadow-[0_32px_80px_-24px_rgba(0,0,0,0.6)] ring-1 ring-white/[0.06]">
-            <img src={avatar} alt="Kono компаньоны" className="w-full object-cover" />
-          </div>
+        <div className="relative w-full">
+          <HomePreviewCards />
         </div>
       </div>
-
-      <Button
-        type="button"
-        variant="ghost"
-        onClick={() => sectionScroll(SECTION_ID.ABOUT)}
-        className="absolute bottom-10 left-1/2 z-10 h-auto -translate-x-1/2 flex-col gap-2 rounded-none px-4 py-2 text-neutral-500 hover:bg-transparent hover:text-neutral-300 md:bottom-14"
-        aria-label="К описанию Kono"
-        data-aos="fade"
-        data-aos-delay="500"
-        data-aos-duration="600"
-      >
-        <span className="font-mono text-[9px] font-medium uppercase tracking-[0.25em]">
-          Ниже
-        </span>
-        <ArrowDown className="size-4 animate-bounce opacity-60" aria-hidden />
-      </Button>
     </section>
   );
 }

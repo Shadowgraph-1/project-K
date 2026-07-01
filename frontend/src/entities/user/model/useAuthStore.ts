@@ -2,29 +2,15 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { resetSessionData } from "@/entities/session/reset-session-data";
 import { clearAuthToken } from "@/shared/lib/auth-token";
+import type { AuthUser } from "@/api/auth";
 
-type AuthUser = {
-  name: string;
-  email: string;
-};
-
-type RegisterPayload = {
-  name: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-};
-
-type LoginPayload = {
-  email: string;
-  password: string;
-};
+export const AUTH_STORAGE_KEY = "focus-with-me-auth";
 
 type AuthStore = {
   user: AuthUser | null;
   isAuthenticated: boolean;
-  register: (payload: RegisterPayload | AuthUser) => void;
-  login: (payload: LoginPayload | AuthUser) => void;
+  register: (user: AuthUser) => void;
+  login: (user: AuthUser) => void;
   logout: () => void;
 };
 
@@ -35,40 +21,24 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       isAuthenticated: false,
 
-      register: (payload) => {
+      register: (user) => {
         resetSessionData();
-        set({
-          user: {
-            name: payload.name,
-            email: payload.email,
-          },
-          isAuthenticated: true,
-        });
+        set({ user, isAuthenticated: true });
       },
 
-      login: (payload) => {
+      login: (user) => {
         resetSessionData();
-        const user: AuthUser =
-          "password" in payload
-            ? {
-                name: payload.email.split("@")[0],
-                email: payload.email,
-              }
-            : { name: payload.name, email: payload.email };
         set({ user, isAuthenticated: true });
       },
 
       logout: () => {
         clearAuthToken();
         resetSessionData();
-        set({
-          user: null,
-          isAuthenticated: false,
-        });
+        set({ user: null, isAuthenticated: false });
       },
     }),
     {
-      name: "focus-with-me-auth",
+      name: AUTH_STORAGE_KEY,
     },
   ),
 );

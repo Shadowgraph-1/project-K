@@ -3,6 +3,7 @@ import { ArrowUp, Boxes, ChevronDown, ListChecks, Paperclip } from "lucide-react
 import { Button, buttonVariants } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
 import { cn } from "@/shared/lib/utils";
+import { FIELD_LIMITS } from "@/shared/constants/field-limits";
 
 import {
   DropdownMenu,
@@ -42,16 +43,16 @@ function AssistantInput({
       <div className="flex flex-col gap-1.5">
         <div className="relative ">
           <div className="relative pb-1 pt-0">
-            <div className="chat-composer-card overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+            <div className="chat-composer-card relative overflow-visible rounded-xl border border-border bg-transparent">
               <form
-                className="relative flex flex-col"
+                className="relative flex flex-col overflow-hidden rounded-xl"
                 onSubmit={(e) => {
                   e.preventDefault();
                   trySend();
                 }}
               >
                 {withTasks ? (
-                  <div className="flex items-center gap-2 border-b border-border/60 bg-muted/30 px-3 py-2">
+                  <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
                     <ListChecks
                       className="size-3.5 shrink-0 text-muted-foreground"
                       aria-hidden
@@ -70,25 +71,25 @@ function AssistantInput({
                     ) : null}
                   </div>
                 ) : null}
-                <div className="px-3 pt-2.5 pb-1">
-                  <Textarea
-                    onKeyDown={(e) => {
-                      if (e.key !== "Enter") return;
-                      if (e.shiftKey) return;
-                      e.preventDefault();
-                      trySend();
-                    }}
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    rows={3}
-                    placeholder={placeholder}
-                    className={cn(
-                      "min-h-10 w-full resize-none border-0 bg-transparent text-xs shadow-none",
-                      "placeholder:text-muted-foreground",
-                      "focus-visible:ring-0",
-                    )}
-                  />
-                </div>
+                <Textarea
+                  onKeyDown={(e) => {
+                    if (e.key !== "Enter") return;
+                    if (e.shiftKey) return;
+                    e.preventDefault();
+                    trySend();
+                  }}
+                  value={value}
+                  onChange={(e) => onChange(e.target.value)}
+                  rows={3}
+                  maxLength={FIELD_LIMITS.assistantMessage}
+                  placeholder={placeholder}
+                  className={cn(
+                    "min-h-10 w-full resize-none rounded-none border-0 bg-transparent px-3 pb-1 pt-3 text-xs shadow-none dark:bg-transparent",
+                    !withTasks && "rounded-t-xl",
+                    "placeholder:text-muted-foreground",
+                    "focus-visible:ring-0",
+                  )}
+                />
                 <div className="flex h-[42px] shrink-0 items-center gap-2 border-border/70 px-3">
                   <div className="flex items-center gap-0.5">
                     <Button
@@ -98,6 +99,7 @@ function AssistantInput({
                       className="rounded-full text-muted-foreground"
                       aria-label="Добавить файлы"
                       title="Добавить файлы"
+                      disabled={true}
                     >
                       <Paperclip />
                     </Button>

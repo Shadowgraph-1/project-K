@@ -1,153 +1,92 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useModalStore } from "@/shared/model/useModalStore";
+import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
+import { AUTH_PATHS } from "@/pages/auth/auth-paths";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { SECTION_ID } from "@/shared/config/sectionIds";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-
-type HeaderTheme = "dark" | "light";
-type ActiveSection = "hero" | "about" | "features" | "lines" | "footer";
+import { KonoLogo } from "@/shared/ui/kono-logo";
 
 const NAV_ITEMS = [
-  { id: "about" as const, label: "О Kono", hash: SECTION_ID.ABOUT },
-  { id: "features" as const, label: "Возможности", hash: SECTION_ID.FEATURES },
-  { id: "lines" as const, label: "Как работает", hash: SECTION_ID.LINES },
+  { label: "О Kono", hash: SECTION_ID.ABOUT },
+  { label: "Возможности", hash: SECTION_ID.FEATURES },
+  { label: "Начать", hash: SECTION_ID.START },
 ] as const;
 
-function resolveHeaderState(scrollY: number): {
-  theme: HeaderTheme;
-  active: ActiveSection;
-  elevated: boolean;
-} {
-  const offset = scrollY + 88;
-  const about = document.getElementById(SECTION_ID.ABOUT);
-  const features = document.getElementById(SECTION_ID.FEATURES);
-  const lines = document.getElementById(SECTION_ID.LINES);
-  const footer = document.querySelector("footer");
-
-  const aboutTop = about?.offsetTop ?? Number.POSITIVE_INFINITY;
-  const featuresTop = features?.offsetTop ?? Number.POSITIVE_INFINITY;
-  const linesTop = lines?.offsetTop ?? Number.POSITIVE_INFINITY;
-  const footerTop = footer?.offsetTop ?? Number.POSITIVE_INFINITY;
-
-  let active: ActiveSection = "hero";
-  let theme: HeaderTheme = "dark";
-
-  if (offset >= footerTop) {
-    active = "footer";
-    theme = "dark";
-  } else if (offset >= linesTop) {
-    active = "lines";
-    theme = "light";
-  } else if (offset >= featuresTop) {
-    active = "features";
-    theme = "dark";
-  } else if (offset >= aboutTop) {
-    active = "about";
-    theme = "light";
-  }
-
-  return { theme, active, elevated: scrollY > 12 };
-}
-
 export function Header() {
-  const openRegister = useModalStore((state) => state.openRegister);
-  const openLogin = useModalStore((state) => state.openLogin);
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
+  const location = useLocation();
 
-  const [theme, setTheme] = useState<HeaderTheme>("dark");
-  const [activeSection, setActiveSection] = useState<ActiveSection>("hero");
   const [elevated, setElevated] = useState(false);
+  const activeHash = location.hash.replace("#", "");
 
   useEffect(() => {
-    const update = () => {
-      const next = resolveHeaderState(window.scrollY);
-      setTheme(next.theme);
-      setActiveSection(next.active);
-      setElevated(next.elevated);
-    };
+    const onScroll = () => setElevated(window.scrollY > 12);
 
-    update();
-    window.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const isDark = theme === "dark";
-
   return (
-    <header className="sticky top-0 z-50 px-4 pt-3 sm:px-6">
+    <header className="group fixed inset-x-0 top-0 z-50 text-white duration-200">
       <div
+        aria-hidden
         className={cn(
-          "mx-auto flex max-w-6xl items-center justify-between gap-3 border px-3 py-2 transition-[background-color,border-color,box-shadow,color] duration-300 sm:gap-4 sm:px-4 sm:py-2.5",
-          elevated && "shadow-[0_12px_40px_-20px_rgba(0,0,0,0.45)]",
-          isDark
-            ? "border-white/10 bg-neutral-950/85 text-white backdrop-blur-xl"
-            : "border-neutral-200 bg-white/85 text-neutral-950 backdrop-blur-xl",
+          "pointer-events-none absolute inset-0 -z-10 bg-black/85 backdrop-blur-xl transition-opacity duration-300",
+          elevated ? "opacity-100" : "opacity-0",
         )}
-      >
-        <Link
+      />
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent transition-opacity duration-300",
+          elevated ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <div className="relative mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-4 lg:h-16 lg:px-6">
+        <KonoLogo
+          as="link"
           to="/"
-          className={cn(
-            "shrink-0 text-[15px] font-semibold tracking-tight transition-opacity hover:opacity-70",
-            isDark ? "text-white" : "text-neutral-950",
-          )}
-        >
-          Kono
-        </Link>
+          size="sm"
+          inverted
+          wordmarkClassName="text-white"
+          className="shrink-0"
+        />
 
         <nav
           aria-label="Разделы главной страницы"
-          className="hidden items-center gap-0.5 md:flex"
+          className="ml-4 hidden grow items-center gap-1 lg:flex"
         >
-          {NAV_ITEMS.map(({ id, label, hash }) => {
-            const isActive = activeSection === id;
-
+          {NAV_ITEMS.map(({ label, hash }) => {
+            const isActive = activeHash === hash;
             return (
-              <Button
+              <Link
                 key={hash}
-                asChild
-                variant="ghost"
-                size="sm"
+                to={`/#${hash}`}
                 className={cn(
-                  "rounded-none px-3 font-normal",
-                  isDark
-                    ? cn(
-                        "text-neutral-300 hover:bg-white/10 hover:text-white",
-                        isActive && "bg-white/10 text-white",
-                      )
-                    : cn(
-                        "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950",
-                        isActive && "bg-neutral-100 text-neutral-950",
-                      ),
+                  "px-3 py-1.5 text-sm font-medium transition-colors",
+                  isActive ? "text-white" : "text-white/50 hover:text-white",
                 )}
               >
-                <Link to={`/#${hash}`}>{label}</Link>
-              </Button>
+                {label}
+              </Link>
             );
           })}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {isAuthenticated && user ? (
             <>
               <Button
                 asChild
                 variant="outline"
                 size="sm"
-                className={cn(
-                  "hidden max-w-36 rounded-none sm:inline-flex",
-                  isDark
-                    ? "border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                    : "border-neutral-200 bg-transparent text-neutral-900 hover:bg-neutral-50",
-                )}
+                className="hidden max-w-36 rounded-full border-white/15 bg-transparent text-white/80 hover:bg-white/5 hover:text-white sm:inline-flex"
               >
                 <Link to={SESSION_PATHS.sessionRoot} className="truncate">
                   {user.name}
@@ -158,12 +97,7 @@ export function Header() {
                 variant="outline"
                 size="sm"
                 onClick={logout}
-                className={cn(
-                  "rounded-none",
-                  isDark
-                    ? "border-white/15 bg-transparent text-white hover:bg-white/10 hover:text-white"
-                    : "border-neutral-200 bg-transparent text-neutral-900 hover:bg-neutral-50",
-                )}
+                className="rounded-full border-white/15 bg-transparent text-white/80 hover:bg-white/5 hover:text-white"
               >
                 Выйти
               </Button>
@@ -171,31 +105,19 @@ export function Header() {
           ) : (
             <>
               <Button
-                type="button"
+                asChild
                 variant="ghost"
                 size="sm"
-                onClick={openRegister}
-                className={cn(
-                  "rounded-none",
-                  isDark
-                    ? "text-neutral-300 hover:bg-white/10 hover:text-white"
-                    : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-950",
-                )}
+                className="rounded-full text-white/50 hover:bg-white/8 hover:text-white"
               >
-                Регистрация
+                <Link to={AUTH_PATHS.register}>Регистрация</Link>
               </Button>
               <Button
-                type="button"
+                asChild
                 size="sm"
-                onClick={openLogin}
-                className={cn(
-                  "rounded-none",
-                  isDark
-                    ? "bg-white text-neutral-950 hover:bg-neutral-200"
-                    : "bg-neutral-950 text-white hover:bg-neutral-800",
-                )}
+                className="rounded-full bg-white text-neutral-950 hover:bg-neutral-200"
               >
-                Войти
+                <Link to={AUTH_PATHS.login}>Войти</Link>
               </Button>
             </>
           )}

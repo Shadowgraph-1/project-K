@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
+import { Activity, KeyRound, Shield, Users } from "lucide-react";
+
 import {
-  Box,
-  Home,
-  Users,
-} from "lucide-react";
+  useDeleteAllLlmKeysMutation,
+  useLlmKeysQuery,
+} from "@/hooks/use-llm-key-query";
 import {
   Sidebar,
   SidebarContent,
@@ -12,131 +12,181 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from "@/shared/ui/sidebar";
+import { useAdminAccessQuery } from "@/hooks/use-admin-query";
+import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import {
   isMembersHubPath,
-  isProjectMembersPath,
+  isAdminPath,
+  isLlmKeysPath,
+  isWorkspaceMembersPath,
+  isSystemStatusPath,
   SESSION_PATHS,
 } from "../../model/sessionPaths";
-import { SettingsDialog } from "@/features/settings/ui/settings-dialog";
-import { useAuthStore } from "@/entities/user/model/useAuthStore";
-import { UserAvatar } from "@/entities/user/ui/UserAvatar";
-import { cn } from "@/shared/lib/utils";
+import {
+  sessionSidebarGroupLabel,
+  sessionSidebarLogoButton,
+  sessionSidebarNavButton,
+} from "../../lib/session-styles";
+import { KonoIcon } from "@/shared/ui/kono-logo";
+import { SessionSidebarFooter } from "./SessionSidebarFooter";
+import { AppSidebarProjectsTree } from "./AppSidebarProjectsTree";
+import { AppSidebarNavItem } from "./AppSidebarNavItem";
+import {
+  SidebarLlmKeysNavContextMenuItems,
+  SidebarMembersNavContextMenuItems,
+} from "./sidebar-context-menus";
 
-function isSessionHubPath(pathname: string) {
-  return pathname === SESSION_PATHS.sessionRoot;
-}
-
-const navButtonClass =
-  "rounded-none text-[13px] font-medium text-sidebar-foreground/85 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground data-active:bg-sidebar-accent data-active:text-sidebar-foreground data-active:shadow-none";
 
 function AppSidebar() {
-  const user = useAuthStore((state) => state.user);
-
   const { pathname } = useLocation();
-  const [cabinetOpen, setCabinetOpen] = useState(false);
+  const navigate = useNavigate();
   const membersHref = SESSION_PATHS.membersHub;
+  const { data: adminAccess } = useAdminAccessQuery();
+  const isAdmin = adminAccess?.isAdmin === true;
+
+  const { data: llmKeysData } = useLlmKeysQuery();
+  const deleteAllLlmKeys = useDeleteAllLlmKeysMutation();
+  const llmKeysCount = llmKeysData?.keys.length ?? 0;
+
+  const membersRouteMatch = matchPath(
+    { path: "/workspaces/:publicKey/members", end: true },
+    pathname,
+  );
+  const membersPublicKey = membersRouteMatch?.params.publicKey;
+
+  async function handleDeleteAllLlmKeys() {
+    if (llmKeysCount === 0) return;
+
+    const confirmed = await notifyConfirm({
+      title: "Удалить все ключи?",
+      description: `Будет удалено ключей: ${llmKeysCount}`,
+      confirmLabel: "Удалить",
+      cancelLabel: "Отмена",
+    });
+    if (!confirmed) return;
+    deleteAllLlmKeys.mutate();
+  }
 
   return (
-    <Sidebar collapsible="offcanvas" variant="inset" className="session-main-sidebar border-border">
-      <SidebarContent className="gap-2 px-2.5 pb-2 pt-3">
-        <div className="px-2.5 pb-1">
+    <Sidebar collapsible="offcanvas" variant="inset" className="session-main-sidebar">
+      <SidebarHeader className="gap-2 px-2 pb-1 pt-3">
+        <div className="flex items-center gap-1">
           <Link
             to={SESSION_PATHS.root}
-            className="text-sm font-semibold tracking-tight text-sidebar-foreground transition hover:text-sidebar-foreground/70"
+            aria-label="Kono"
+            className={sessionSidebarLogoButton}
           >
-            Kono
+            <KonoIcon size={32} />
           </Link>
         </div>
-        <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="h-7 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/45">
-            Основная навигация
+      </SidebarHeader>
+
+      <SidebarContent className="minimal-scrollbar gap-5 px-2 py-1 pt-2">
+        <AppSidebarProjectsTree />
+
+        <SidebarGroup className="gap-0.5 p-0 pt-3 first:pt-0">
+          <SidebarGroupLabel className={sessionSidebarGroupLabel}>
+            Настройки
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild size="sm" className={navButtonClass}>
-                  <Link to={SESSION_PATHS.root}>
-                    <Home className="size-4 opacity-80" />
-                    <span>Домой</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  size="sm"
-                  isActive={isSessionHubPath(pathname)}
-                  className={navButtonClass}
-                >
-                  <Link to={SESSION_PATHS.sessionRoot}>
-                    <Box className="size-4 opacity-80" />
-                    <span>Проекты</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <AppSidebarNavItem
+                to={SESSION_PATHS.llmKeys}
+                isActive={isLlmKeysPath(pathname)}
+                icon={<KeyRound />}
+                label="API ключи"
+                menu={
+                  <SidebarLlmKeysNavContextMenuItems
+                    onOpen={() => navigate(SESSION_PATHS.llmKeys)}
+                    onCreate={() =>
+                      navigate(`${SESSION_PATHS.llmKeys}?create=1`)
+                    }
+                    onDeleteAll={() => void handleDeleteAllLlmKeys()}
+                    canDeleteAll={llmKeysCount > 0}
+                  />
+                }
+              />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="h-7 px-2.5 font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-sidebar-foreground/45">
+        <SidebarGroup className="gap-0.5 p-0 pt-3 first:pt-0">
+          <SidebarGroupLabel className={sessionSidebarGroupLabel}>
             Команда
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-0.5">
+              <AppSidebarNavItem
+                to={membersHref}
+                isActive={
+                  isMembersHubPath(pathname) || isWorkspaceMembersPath(pathname)
+                }
+                icon={<Users />}
+                label="Участники"
+                menu={
+                  <SidebarMembersNavContextMenuItems
+                    onOpen={() => navigate(membersHref)}
+                    onOpenProjects={() => navigate(SESSION_PATHS.sessionRoot)}
+                    onInvite={
+                      membersPublicKey
+                        ? () =>
+                            navigate(
+                              `${SESSION_PATHS.workspaceMembers(membersPublicKey)}?invite=1`,
+                            )
+                        : undefined
+                    }
+                  />
+                }
+              />
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="gap-0.5 p-0 pt-3 first:pt-0">
+          <SidebarGroupLabel className={sessionSidebarGroupLabel}>
+            Система
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   asChild
-                  size="sm"
-                  isActive={
-                    isMembersHubPath(pathname) || isProjectMembersPath(pathname)
-                  }
-                  className={navButtonClass}
+                  isActive={isSystemStatusPath(pathname)}
+                  className={sessionSidebarNavButton}
                 >
-                  <Link to={membersHref}>
-                    <Users className="size-4 opacity-80" />
-                    <span>Участники</span>
+                  <Link to={SESSION_PATHS.systemStatus}>
+                    <Activity />
+                    <span>Статус</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              {isAdmin ? (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={isAdminPath(pathname)}
+                    className={sessionSidebarNavButton}
+                  >
+                    <Link to={SESSION_PATHS.admin}>
+                      <Shield />
+                      <span>Админка</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ) : null}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="gap-2 p-2.5 pt-0">
-        <SidebarSeparator className="bg-sidebar-border/80" />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              type="button"
-              size="lg"
-              className={cn(navButtonClass, "h-11 px-2")}
-              onClick={() => setCabinetOpen(true)}
-            >
-              <UserAvatar
-                name={user?.name}
-                email={user?.email}
-                className="size-8 rounded-none ring-1 ring-sidebar-border"
-              />
-              <div className="grid min-w-0 flex-1 gap-0.5 text-left text-xs leading-tight group-data-[collapsible=icon]:hidden">
-                <span className="truncate font-medium text-foreground">
-                  {user?.name ?? "Гость"}
-                </span>
-                <span className="truncate text-[11px] text-muted-foreground">
-                  {user?.email ?? ""}
-                </span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="px-2 py-2">
+        <SessionSidebarFooter pathname={pathname} />
       </SidebarFooter>
-      <SettingsDialog open={cabinetOpen} onOpenChange={setCabinetOpen} />
     </Sidebar>
   );
 }

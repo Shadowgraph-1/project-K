@@ -1,373 +1,349 @@
 import {
-  useCallback,
-  useEffect,
-  useState,
+  forwardRef,
+  type ComponentPropsWithoutRef,
   type KeyboardEvent,
   type MouseEvent,
-  type ReactNode,
+  type PointerEvent,
 } from "react";
+import { Check, Trash2 } from "lucide-react";
 import {
-  Check,
-  CheckCircle2,
-  ChevronRight,
-  Circle,
-  CircleAlert,
-  PauseCircle,
-  Square,
-  SquareCheck,
-  Trash2,
-} from "lucide-react";
-import {
-  getTaskStatus,
-  TASK_STATUSES,
-  useSessionTasks,
-  type Tasks,
-  type TaskStatus,
-} from "@/entities/task/model/useSessionTasks";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+} from "@/shared/ui/context-menu";
 import { cn } from "@/shared/lib/utils";
-import { Button } from "@/shared/ui/button";
 import { UserAvatar } from "@/entities/user/ui/UserAvatar";
-import { updateTaskOnAPI } from "@/api/tasks";
-import { queryKeys } from "@/shared/api/query-keys";
-import { useQueryClient } from "@tanstack/react-query";
-import { notify } from "../widgets/SonnerWidget";
+import { useSaveTaskPatch } from "@/entities/task/model/use-save-task-patch";
+import { normalizeTaskPriority, TaskPriorityIcon, getTaskPriorityLabel } from "./task-priority-icons";
+import { TaskStatusIcon } from "./task-status-icons";
 import {
-  getTaskPriorityLabel,
-  normalizeTaskPriority,
-  TaskPriorityIcon,
-} from "./task-priority-icons";
-
-function TaskCreatorAvatar({ name }: { name: string }) {
-  return (
-    <UserAvatar
-      name={name}
-      className="size-5 ring-1 ring-border/30"
-      fallbackClassName="text-[9px]"
-    />
-  );
-}
+  TaskDateContextMenuFields,
+  type TaskDateField,
+} from "./task-date-picker";
+import {
+  ContextMenuActionItem,
+  linearContextMenuContentClass,
+  TaskDeleteFieldIcon,
+} from "./task-context-menu";
+import type { Task, TaskPriority } from "@/entities/task/model/types";
+import { getTaskStatus } from "@/entities/task/model/types";
+import type { TaskStatus } from "@/shared/constants/task-statuses";
+import { TASK_STATUS_LABELS } from "@/shared/constants/task-statuses";
+import { TASK_ROW_GRID_COLUMNS } from "./sessionWorkspaceTypes";
+import { formatShortDate } from "./task-feed";
+import { Button } from "@/shared/ui/button";
+import {
+  TaskPriorityContextMenuSub,
+  TaskPriorityPickerMenu,
+  TaskStatusContextMenuSub,
+  TaskStatusPickerMenu,
+} from "./task-picker-menus";
+import { SessionTooltip } from "../layout/SessionTooltip";
 
 function taskKey(id: string) {
   const compact = id.replace(/-/g, "").slice(0, 6).toUpperCase();
   return `K-${compact}`;
 }
 
-function taskStatusIconClass(status: TaskStatus) {
-  switch (status) {
-    case "Выполнено":
-      return "text-emerald-500";
-    case "Отложено":
-      return "text-amber-500";
-    case "Issues":
-      return "text-red-500";
-    default:
-      return "text-muted-foreground";
-  }
-}
-
-function TaskStatusIcon({
-  status,
-  className,
-}: {
-  status: TaskStatus;
-  className?: string;
-}) {
-  const iconClassName = cn("shrink-0", taskStatusIconClass(status), className);
-
-  switch (status) {
-    case "Выполнено":
-      return <CheckCircle2 className={iconClassName} aria-hidden />;
-    case "Отложено":
-      return <PauseCircle className={iconClassName} aria-hidden />;
-    case "Issues":
-      return <CircleAlert className={iconClassName} aria-hidden />;
-    case "В очереди":
-    default:
-      return <Circle className={iconClassName} aria-hidden />;
-  }
-}
-
-function formatShortDate(iso: string) {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+function stopRowActivation(event: MouseEvent | PointerEvent) {
+  event.stopPropagation();
 }
 
 export type TaskRowProps = {
-  task: Tasks;
+  task: Task;
   isChecked: boolean;
+  subtaskCount?: number;
   onToggleChecked: (id: string) => void;
   onRemove: (id: string) => void;
   onOpen: (id: string) => void;
-  workspaceName?: string;
 };
 
 function TaskRowMenuItems({
   taskId,
   workspaceId,
   currentStatus,
+  currentPriority,
+  startDate,
+  dueDate,
   onRemove,
 }: {
   taskId: string;
   workspaceId: string;
   currentStatus: ReturnType<typeof getTaskStatus>;
+  currentPriority: TaskPriority | null;
+  startDate?: string;
+  dueDate?: string;
   onRemove: (id: string) => void;
 }) {
-  const queryClient = useQueryClient();
-  const updateTask = useSessionTasks((s) => s.updateTask);
+  const savePatch = useSaveTaskPatch(taskId, workspaceId);
 
-  const handleStatusChange = async (status: TaskStatus) => {
-    try {
-      const updated = await updateTaskOnAPI(taskId, { status });
-      updateTask(taskId, updated);
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.tasks.byWorkspace(workspaceId),
-      });
-    } catch {
-      notify({
-        title: "Ошибка запроса",
-        description: "Статус не изменён, попробуйте ещё раз",
-        variant: "error",
-      });
-    }
-  };
+  const handleStatusChange = (status: TaskStatus) =>
+    void savePatch(
+      { status },
+      { description: "Статус не изменён, попробуйте ещё раз" },
+    );
+
+  const handlePriorityChange = (value: TaskPriority | null) =>
+    void savePatch(
+      { tags: value ?? "" },
+      { description: "Приоритет не изменён, попробуйте ещё раз" },
+    );
+
+  const handleDateChange = (field: TaskDateField, iso: string) =>
+    void savePatch(
+      { [field]: iso },
+      { description: "Дата не изменена, попробуйте ещё раз" },
+    );
 
   return (
     <>
-      <DropdownMenuSub>
-        <DropdownMenuSubTrigger className="cursor-pointer text-xs">
-          Статус
-        </DropdownMenuSubTrigger>
-        <DropdownMenuSubContent className="min-w-36">
-          {TASK_STATUSES.map((status) => (
-            <DropdownMenuItem
-              key={status}
-              className="cursor-pointer text-xs"
-              onSelect={() => void handleStatusChange(status)}
-            >
-              <TaskStatusIcon status={status} className="size-3.5" />
-              {status}
-              {currentStatus === status ? (
-                <Check className="ml-auto size-3.5 shrink-0 text-muted-foreground" />
-              ) : null}
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuSubContent>
-      </DropdownMenuSub>
-      <DropdownMenuSeparator />
-      <DropdownMenuItem
+      <TaskStatusContextMenuSub
+        status={currentStatus}
+        onStatusChange={handleStatusChange}
+      />
+      <TaskPriorityContextMenuSub
+        priority={currentPriority}
+        onPriorityChange={handlePriorityChange}
+      />
+      <TaskDateContextMenuFields
+        startDate={startDate}
+        dueDate={dueDate}
+        onDateChange={handleDateChange}
+      />
+      <ContextMenuSeparator className="my-1" />
+      <ContextMenuActionItem
         variant="destructive"
-        className="cursor-pointer text-xs"
+        icon={<TaskDeleteFieldIcon className="size-4" />}
+        label="Удалить"
         onSelect={() => onRemove(taskId)}
-      >
-        <Trash2 className="size-3" />
-        Удалить
-      </DropdownMenuItem>
+      />
     </>
   );
 }
 
-type TaskRowContextShellProps = {
-  taskId: string;
-  workspaceId: string;
-  status: TaskStatus;
-  onRemove: (id: string) => void;
-  onOpen: (id: string) => void;
-  className?: string;
-  title?: string;
-  children: ReactNode;
-};
-
-function TaskRowContextShell({
-  taskId,
-  workspaceId,
-  status,
-  onRemove,
-  onOpen,
-  className,
-  title,
-  children,
-}: TaskRowContextShellProps) {
-  const [pointer, setPointer] = useState<{ x: number; y: number } | null>(
-    null,
-  );
-
-  useEffect(() => {
-    const closeAll = () => setPointer(null);
-    window.addEventListener("task-row-menu-close", closeAll);
-    return () => window.removeEventListener("task-row-menu-close", closeAll);
-  }, []);
-
-  const handleContextMenu = useCallback(
-    (e: MouseEvent<HTMLLIElement>) => {
-      e.preventDefault();
-      window.dispatchEvent(new Event("task-row-menu-close"));
-      setPointer({ x: e.clientX, y: e.clientY });
-    },
-    [],
-  );
-
-  const handleOpenChange = useCallback((next: boolean) => {
-    if (!next) setPointer(null);
-  }, []);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLLIElement>) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      e.preventDefault();
-      onOpen(taskId);
-    },
-    [onOpen, taskId],
-  );
-
+function TaskRowCheckbox({
+  checked,
+  onToggle,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <>
-      <li
-        title={title}
-        role="button"
-        tabIndex={0}
-        className={className}
-        onClick={() => onOpen(taskId)}
-        onContextMenu={handleContextMenu}
-        onKeyDown={handleKeyDown}
-      >
-        {children}
-      </li>
-
-      {pointer ? (
-        <DropdownMenu
-          key={`${pointer.x}-${pointer.y}`}
-          open
-          onOpenChange={handleOpenChange}
-        >
-          <DropdownMenuTrigger asChild>
-            <span
-              aria-hidden
-              className="pointer-events-none fixed block size-px"
-              style={{ left: pointer.x, top: pointer.y }}
-            />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            sideOffset={4}
-            className="min-w-36"
-            onCloseAutoFocus={(e) => e.preventDefault()}
-          >
-            <TaskRowMenuItems
-              taskId={taskId}
-              workspaceId={workspaceId}
-              currentStatus={status}
-              onRemove={onRemove}
-            />
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ) : null}
-    </>
+    <button
+      type="button"
+      aria-label={checked ? "Снять выделение" : "Выделить задачу"}
+      aria-pressed={checked}
+      className={cn(
+        "flex size-[18px] shrink-0 items-center justify-center rounded-[4px] border transition-[opacity,colors]",
+        checked
+          ? "border-primary bg-primary text-primary-foreground opacity-100"
+          : [
+              "border-border/80 bg-background hover:border-muted-foreground/50",
+              "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100",
+              "focus-visible:pointer-events-auto focus-visible:opacity-100",
+            ],
+      )}
+      onClick={(event) => {
+        event.stopPropagation();
+        onToggle();
+      }}
+    >
+      {checked ? <Check className="size-3" strokeWidth={2.5} /> : null}
+    </button>
   );
 }
+
+const TaskRowIconTrigger = forwardRef<
+  HTMLButtonElement,
+  ComponentPropsWithoutRef<typeof Button>
+>(function TaskRowIconTrigger(
+  { className, onClick, onPointerDown, type = "button", ...props },
+  ref,
+) {
+  return (
+    <Button
+      ref={ref}
+      type={type}
+      variant="ghost"
+      size="icon-xs"
+      className={cn("hover:bg-muted/60", className)}
+      onClick={(event) => {
+        stopRowActivation(event);
+        onClick?.(event);
+      }}
+      onPointerDown={(event) => {
+        stopRowActivation(event);
+        onPointerDown?.(event);
+      }}
+      {...props}
+    />
+  );
+});
 
 export function TaskRow({
   task,
   isChecked,
+  subtaskCount,
   onToggleChecked,
   onRemove,
   onOpen,
-  workspaceName,
 }: TaskRowProps) {
   const status = getTaskStatus(task);
+  const priority = normalizeTaskPriority(task.tags);
   const dateLabel = task.dueDate ?? task.startDate;
+  const priorityLabel = getTaskPriorityLabel(priority);
+  const statusLabel = TASK_STATUS_LABELS[status];
+  const savePatch = useSaveTaskPatch(task.id, task.workspaceId);
+
+  const handleStatusChange = (nextStatus: TaskStatus) =>
+    void savePatch(
+      { status: nextStatus },
+      { description: "Статус не изменён, попробуйте ещё раз" },
+    );
+
+  const handlePriorityChange = (value: TaskPriority | null) =>
+    void savePatch(
+      { tags: value ?? "" },
+      { description: "Приоритет не изменён, попробуйте ещё раз" },
+    );
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    onOpen(task.id);
+  };
 
   return (
-    <TaskRowContextShell
-      taskId={task.id}
-      workspaceId={task.workspaceId}
-      status={status}
-      onRemove={onRemove}
-      onOpen={onOpen}
-      title={task.description || undefined}
-      className={cn(
-        "group flex items-center gap-2 rounded-md border border-transparent",
-        "bg-muted/30 px-2 py-2 transition-colors hover:bg-muted/50",
-        isChecked &&
-          "border-violet-400/35 bg-violet-500/8 ring-1 ring-violet-400/20 hover:bg-violet-500/10",
-      )}
-    >
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-sm"
-        className="size-7 shrink-0 p-0 hover:bg-transparent hover:opacity-60"
-        onClick={(event) => {
-          event.stopPropagation();
-          onToggleChecked(task.id);
-        }}
-      >
-        {isChecked ? (
-          <SquareCheck size={16} className="text-violet-500" />
-        ) : (
-          <Square
-            size={16}
-            className="text-muted-foreground/40"
-            strokeWidth={1.75}
-          />
-        )}
-      </Button>
-
-      <span className="shrink-0 font-mono text-xs tabular-nums text-muted-foreground">
-        {taskKey(task.id)}
-      </span>
-
-      <TaskStatusIcon status={status} className="size-3.5" />
-
-      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden">
-        <span
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <li
+          role="button"
+          tabIndex={0}
+          aria-label={`Открыть задачу ${task.title}`}
           className={cn(
-            "truncate text-sm font-semibold text-foreground",
-            isChecked && "text-foreground",
+            "task-list-row group relative grid h-11 w-full min-w-0 cursor-pointer items-center gap-x-2 rounded-sm px-1",
+            "transition-colors hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+            isChecked && "bg-accent/70 hover:bg-accent/80",
           )}
+          style={{ gridTemplateColumns: TASK_ROW_GRID_COLUMNS }}
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest("button")) return;
+            onOpen(task.id);
+          }}
+          onKeyDown={handleKeyDown}
         >
-          {task.title}
-        </span>
-        {workspaceName ? (
-          <>
-            <ChevronRight
-              className="size-3.5 shrink-0 text-muted-foreground/50"
-              aria-hidden
-            />
-            <span className="truncate text-xs text-muted-foreground">
-              {workspaceName}
-            </span>
-          </>
-        ) : null}
-      </div>
+        <div className="relative z-10 flex items-center justify-center">
+          <TaskRowCheckbox
+            checked={isChecked}
+            onToggle={() => onToggleChecked(task.id)}
+          />
+        </div>
 
-      <div className="ml-1 flex shrink-0 items-center gap-2">
-        {task.tags ? (
-          <span className="flex max-w-32 items-center gap-1 truncate rounded-full border border-border/60 bg-background px-2 py-0.5 text-xs text-muted-foreground">
-            <TaskPriorityIcon
-              priority={normalizeTaskPriority(task.tags)}
-              className="size-3"
-            />
-            {getTaskPriorityLabel(normalizeTaskPriority(task.tags))}
-          </span>
-        ) : null}
-        {task.creator ? <TaskCreatorAvatar name={task.creator} /> : null}
-        {dateLabel ? (
-          <span className="text-xs tabular-nums text-muted-foreground">
-            {formatShortDate(dateLabel)}
-          </span>
-        ) : null}
-      </div>
-    </TaskRowContextShell>
+        <div className="relative z-10 flex items-center justify-center">
+          <TaskPriorityPickerMenu
+            priority={priority}
+            onPriorityChange={handlePriorityChange}
+            tooltipLabel={`Приоритет: ${priorityLabel}`}
+            trigger={
+              <TaskRowIconTrigger aria-label="Изменить приоритет">
+                <TaskPriorityIcon priority={priority} className="size-4" />
+              </TaskRowIconTrigger>
+            }
+          />
+        </div>
+
+        <span className="relative z-10 truncate font-mono text-xs tabular-nums text-muted-foreground">
+          {taskKey(task.id)}
+        </span>
+
+        <div className="relative z-10 flex items-center justify-center">
+          <TaskStatusPickerMenu
+            status={status}
+            onStatusChange={handleStatusChange}
+            tooltipLabel={`Статус: ${statusLabel}`}
+            trigger={
+              <TaskRowIconTrigger aria-label="Изменить статус">
+                <TaskStatusIcon status={status} className="size-3.5" />
+              </TaskRowIconTrigger>
+            }
+          />
+        </div>
+
+        <div className="relative z-10 flex min-w-0 items-center gap-2">
+          {task.description?.trim() ? (
+            <SessionTooltip label={task.description.trim()}>
+              <span className="min-w-0 truncate text-[13px] leading-5 text-foreground">
+                {task.title}
+              </span>
+            </SessionTooltip>
+          ) : (
+            <span className="min-w-0 truncate text-[13px] leading-5 text-foreground">
+              {task.title}
+            </span>
+          )}
+          {task.creator ? (
+            <div className="ml-auto flex shrink-0 items-center opacity-100 transition-opacity group-hover:opacity-100 sm:opacity-70">
+              <UserAvatar
+                name={task.creator}
+                size={16}
+                fallbackClassName="text-[8px]"
+              />
+              <span className="ml-2 text-sm">{task.creator}</span>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="relative z-10 flex items-center justify-end gap-2">
+          {subtaskCount !== undefined ? (
+            <SessionTooltip
+              label={
+                subtaskCount === 0
+                  ? "Нет подзадач"
+                  : `Подзадач: ${subtaskCount}`
+              }
+            >
+              <span className="min-w-[1.25rem] text-center text-xs tabular-nums text-muted-foreground/70">
+                {subtaskCount}
+              </span>
+            </SessionTooltip>
+          ) : null}
+          {dateLabel ? (
+            <SessionTooltip label={dateLabel}>
+              <span className="text-xs tabular-nums text-muted-foreground">
+                {formatShortDate(dateLabel)}
+              </span>
+            </SessionTooltip>
+          ) : null}
+        </div>
+
+        <div className="relative z-10 flex items-center justify-center">
+          <TaskRowIconTrigger
+            aria-label="Удалить задачу"
+            className={cn(
+              "size-7 text-muted-foreground hover:text-destructive",
+              "pointer-events-none opacity-0 group-hover:pointer-events-auto group-hover:opacity-100",
+              "focus-visible:pointer-events-auto focus-visible:opacity-100",
+            )}
+            onClick={() => void onRemove(task.id)}
+          >
+            <Trash2 className="size-3.5" />
+          </TaskRowIconTrigger>
+        </div>
+        </li>
+      </ContextMenuTrigger>
+
+      <ContextMenuContent className={linearContextMenuContentClass}>
+        <TaskRowMenuItems
+          taskId={task.id}
+          workspaceId={task.workspaceId}
+          currentStatus={status}
+          currentPriority={priority}
+          startDate={task.startDate}
+          dueDate={task.dueDate}
+          onRemove={onRemove}
+        />
+      </ContextMenuContent>
+    </ContextMenu>
   );
 }

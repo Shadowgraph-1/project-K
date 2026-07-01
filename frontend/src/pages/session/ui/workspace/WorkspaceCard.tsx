@@ -8,22 +8,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import {
-  getTaskStatus,
-  useSessionTasks,
-} from "@/entities/task/model/useSessionTasks";
+import { getTaskStatus } from "@/entities/task/model/types";
 import { cn } from "@/shared/lib/utils";
+import { sessionToolbarIconButton } from "../../lib/session-styles";
+import { SessionTooltip } from "../layout/SessionTooltip";
 
 import { SESSION_PATHS } from "../../model/sessionPaths";
 import { notify } from "@/shared/lib/notify";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { WORKSPACE_LIST_GRID } from "./workspaceListLayout";
-import { useCollaborationModalStore } from "@/shared/model/useCollaborationModalStore";
-
-import {
-  useDeleteWorkspaceMutation,
-  type Workspace,
-} from "@/entities/workspace/model/useWorkspaceStoreQuery";
+import { useDeleteWorkspaceMutation } from "@/entities/workspace/model/use-workspace-query";
+import type { Workspace } from "@/entities/workspace/model/workspace";
+import { useTasksQuery } from "@/entities/task/model/use-tasks-query";
 
 type WorkspaceCardProps = {
   item: Workspace;
@@ -33,26 +29,20 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const deleteWorkspace = useDeleteWorkspaceMutation();
-  const removeTasksInWorkspace = useSessionTasks(
-    (state) => state.removeTasksInWorkspace,
-  );
-
-  const allTasks = useSessionTasks((state) => state.tasks);
-  const workspaceTasks = allTasks.filter((t) => t.workspaceId === item.id);
+  
+  const { data: workspaceTasks = [] } = useTasksQuery(item.id);
   const total = workspaceTasks.length;
   const completed = workspaceTasks.filter(
-    (task) => getTaskStatus(task) === "Выполнено",
+    (task) => getTaskStatus(task) === "DONE",
   ).length;
   const completionPercent =
     total > 0 ? Math.round((completed / total) * 100) : null;
-
-  const openCollaboration = useCollaborationModalStore((s) => s.openCollaboration);
 
   const isOwned = item.kind === "owned";
   const canDelete = isOwned && item.myRole === "OWNER";
 
   const handleOpen = () => {
-    navigate(SESSION_PATHS.project(item.id));
+    navigate(SESSION_PATHS.workspace(item.publicKey));
   };
 
   async function handleDelete() {
@@ -71,7 +61,6 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
 
     try {
       await deleteWorkspace.mutateAsync(item.id);
-      removeTasksInWorkspace(item.id);
       notify({
         title: "Проект удалён",
         variant: "success",
@@ -86,8 +75,8 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
     }
 
     if (
-      location.pathname === SESSION_PATHS.project(item.id) ||
-      location.pathname.startsWith(`${SESSION_PATHS.project(item.id)}/`)
+      location.pathname === SESSION_PATHS.workspace(item.publicKey) ||
+      location.pathname.startsWith(`${SESSION_PATHS.workspace(item.publicKey)}/`)
     ) {
       navigate(SESSION_PATHS.sessionRoot);
     }
@@ -98,7 +87,7 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
       onClick={handleOpen}
       className={cn(
         WORKSPACE_LIST_GRID,
-        "group min-h-12 cursor-pointer border-b border-border/40 px-3 py-2 text-sm transition-colors hover:bg-muted/40",
+        "group min-h-12 cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-background/45",
       )}
     >
       <div className="flex min-w-0 items-center gap-2">
@@ -131,35 +120,25 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
         {completionPercent !== null ? `${completionPercent}%` : "—"}
       </span>
 
-      <div
-        className="flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon-sm" }),
-              "size-7 text-muted-foreground",
-            )}
-            aria-label="Действия"
-            title="Действия"
-          >
-            <MoreVertical className="size-3.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem
-              onSelect={() => {
-                openCollaboration({
-                  workspaceId: item.id,
-                  workspaceTitle: item.title,
-                  myRole: item.myRole,
-                });
-              }}
-            >
-              <Users className="size-4" />
-              Участники
-            </DropdownMenuItem>
-            {canDelete ? (
+      {canDelete ? (
+        <div
+          className="flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <DropdownMenu>
+            <SessionTooltip label="Действия">
+              <DropdownMenuTrigger
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "icon-sm" }),
+                  "size-7",
+                  sessionToolbarIconButton,
+                )}
+                aria-label="Действия"
+              >
+                <MoreVertical className="size-3.5" />
+              </DropdownMenuTrigger>
+            </SessionTooltip>
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
                 variant="destructive"
                 onSelect={() => void handleDelete()}
@@ -167,10 +146,12 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
                 <Trash2 className="size-4" />
                 Удалить
               </DropdownMenuItem>
-            ) : null}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ) : (
+        <span aria-hidden />
+      )}
     </li>
   );
 }

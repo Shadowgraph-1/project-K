@@ -1,6 +1,6 @@
 export const SECTION_ID = {
   ABOUT: "about",
   FEATURES: "features",
-  LINES: "lines",
+  START: "start",
   MAIN: "main",
 } as const;

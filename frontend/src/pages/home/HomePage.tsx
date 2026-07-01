@@ -3,10 +3,11 @@ import { useLocation } from "react-router-dom";
 import { Header } from "@/widgets/header/ui/Header";
 import AboutKonoSection from "./ui/sections/AboutKonoSection";
 import MainSection from "./ui/sections/MainSection";
-import HowItWorksSection from "./ui/sections/HowItWorksSection";
+import GetStartedSection from "./ui/sections/GetStartedSection";
 import FeaturesSection from "./ui/sections/FeaturesSection";
 import Footer from "@/widgets/footer/ui/Footer";
-import { refreshHomeAos, useHomeAos } from "./model/useHomeAos";
+import { refreshHomeAos, useHomeAos } from "@/hooks/use-home-aos";
+import "./home.css";
 
 export function HomePage() {
   const location = useLocation();
@@ -27,12 +28,12 @@ export function HomePage() {
   }, [location.pathname, location.hash]);
 
   return (
-    <main className="min-h-0 flex flex-1 flex-col bg-neutral-950">
+    <main className="min-h-0 flex flex-1 flex-col bg-black">
       <Header />
       <MainSection />
       <AboutKonoSection />
       <FeaturesSection />
-      <HowItWorksSection />
+      <GetStartedSection />
       <Footer />
     </main>
   );

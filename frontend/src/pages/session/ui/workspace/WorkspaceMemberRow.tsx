@@ -1,16 +1,7 @@
 import type { ReactNode } from "react";
 
-import { Avatar, AvatarFallback } from "@/shared/ui/avatar";
-import { avatarColorClass } from "@/shared/lib/avatar-colors";
+import { UserAvatar } from "@/entities/user/ui/UserAvatar";
 import { cn } from "@/shared/lib/utils";
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
-  }
-  return (parts[0] ?? "?").slice(0, 2).toUpperCase();
-}
 
 type WorkspaceMemberRowProps = {
   name: string;
@@ -32,16 +23,7 @@ export function WorkspaceMemberRow({
         className,
       )}
     >
-      <Avatar className="size-8 shrink-0">
-        <AvatarFallback
-          className={cn(
-            "text-[11px] font-medium",
-            avatarColorClass(name),
-          )}
-        >
-          {initials(name)}
-        </AvatarFallback>
-      </Avatar>
+      <UserAvatar name={name} size={32} />
       <span
         className={cn(
           "min-w-0 flex-1 truncate text-sm",

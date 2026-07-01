@@ -1,0 +1,89 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  clearAdminErrorLogs,
+  fetchAdminAccess,
+  fetchAdminErrorLogs,
+  fetchAdminFeatureFlags,
+  fetchAdminOverview,
+  fetchAdminUsers,
+  updateAdminFeatureFlag,
+  type FeatureFlagKey,
+} from "@/api/admin";
+import { queryKeys } from "@/shared/api/query-keys";
+import { notify } from "@/shared/lib/notify";
+
+export function useAdminAccessQuery() {
+  return useQuery({
+    queryKey: queryKeys.admin.access(),
+    queryFn: fetchAdminAccess,
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+  });
+}
+
+export function useAdminOverviewQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.admin.overview(),
+    queryFn: fetchAdminOverview,
+    enabled,
+    refetchInterval: 30_000,
+    retry: 1,
+  });
+}
+
+export function useAdminUsersQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.admin.users(),
+    queryFn: () => fetchAdminUsers(),
+    enabled,
+  });
+}
+
+export function useAdminErrorLogsQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.admin.errorLogs(),
+    queryFn: () => fetchAdminErrorLogs(),
+    enabled,
+    refetchInterval: 15_000,
+  });
+}
+
+export function useAdminFeatureFlagsQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: queryKeys.admin.featureFlags(),
+    queryFn: fetchAdminFeatureFlags,
+    enabled,
+  });
+}
+
+export function useClearAdminErrorLogsMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: clearAdminErrorLogs,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.errorLogs() });
+      notify({ title: "Журнал ошибок очищен", variant: "success" });
+    },
+    onError: () => {
+      notify({ title: "Не удалось очистить журнал", variant: "error" });
+    },
+  });
+}
+
+export function useUpdateFeatureFlagMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ key, enabled }: { key: FeatureFlagKey; enabled: boolean }) =>
+      updateAdminFeatureFlag(key, enabled),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.admin.featureFlags(),
+      });
+    },
+    onError: () => {
+      notify({ title: "Не удалось обновить флаг", variant: "error" });
+    },
+  });
+}

@@ -23,23 +23,26 @@ Zustand-сторы — **кэш в памяти на сессию** для UI и
 |--------|-----|-----------|
 | Workspaces | `useWorkspaceQuery` | `workspaces` |
 | Incoming invites | `useInvitesQuery` | `invites.incoming` |
-| Tasks по workspace | `useQuery` в `SessionTasksPage` | `tasks.byWorkspace(id)` |
-| Members workspace | `useWorkspaceMembersQuery` | `workspaceMembers(id)` |
+| Tasks по workspace | `useTasksQuery` | `tasks.byWorkspace(id)` |
+| Subtasks по task | `useSubtasksQuery` | `subtasks(taskId)` |
+| Activity по task | `useTaskActivityQuery` | `task-activity(taskId)` |
+| Health | `useHealthQuery` | `health` |
+
+Хуки домена — в `entities/*/model/`. `hooks/index.ts` реэкспортирует workspace-хуки и app-level хуки (health, assistant, invites).
 
 После мутаций — `queryClient.invalidateQueries` по соответствующему key.
 
-## Zustand (клиент / гибрид)
+## Zustand (клиент / UI)
 
 | Стор | Назначение |
 |------|------------|
 | `useAuthStore` | JWT-профиль (persist) |
-| `useSessionTasks` | список задач + `checked` для bulk UI; sync из query в `SessionTasksPage` |
-| `useTeamStore` | команда (пока ручной fetch) |
 | `useNotifys` | история toast в панели |
+| `checkedIds` в `WorkspaceTasksBlock` | bulk-выбор задач (локальный `useState`, не в Task) |
 
 ## Logout
 
-`reset-session-data.ts` — `queryClient.clear()` + очистка zustand-сторов.
+`entities/session/reset-session-data.ts` — `queryClient.clear()` + закрытие модалки collaboration.
 
 ## localStorage
 

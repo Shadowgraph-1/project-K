@@ -1,296 +1,59 @@
-import { useCallback, useEffect, useMemo, useState, memo } from "react";
-import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { LayoutDashboard } from "lucide-react";
+import { useCallback, useMemo, useState, memo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { LayoutGrid, Plus } from "lucide-react";
 
+import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
 import {
-  useSessionTasks,
-  type TaskStatus,
-  type Tasks,
-} from "@/entities/task/model/useSessionTasks";
-import { useWorkspaceQuery } from "@/entities/workspace/model/useWorkspaceStoreQuery";
+  findWorkspaceByPublicKey,
+  getWorkspacePublicKey,
+} from "@/entities/workspace/lib/resolve-workspace";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
+import {
+  useTasksQueries,
+  useTasksQuery,
+  useCreateTaskMutation,
+} from "@/entities/task/model/use-tasks-query";
+import { useWorkspaceTaskHandlers } from "@/entities/task/model/use-workspace-task-handlers";
 
-import WorkspaceTaskSubheader from "./Workspacetasksubheader";
+import { WorkspaceTaskSettingsButton } from "./Workspacetasksubheader";
+import { TaskDetailsPropertiesButton } from "./task-details/TaskDetailsSubheader";
 import { CreateTaskModal } from "./CreateTaskModal";
-import { WorkspaceTasksSection } from "./WorkspaceTasksSection";
-import { TaskCheckedSelectionBar } from "./TaskCheckedSelectionBar";
-
+import { WorkspaceTasksBlock } from "./WorkspaceTasksBlock";
 import {
   resolveCreatorField,
   suggestedCreatorLabel,
 } from "../../lib/sessionWorkspaceUtils";
 import type { TasksView } from "./sessionWorkspaceTypes";
-import { SESSION_PATHS } from "../../model/sessionPaths";
+import {
+  parseWorkspaceParams,
+  SESSION_PATHS,
+} from "../../model/sessionPaths";
 import { notifyWithCenter } from "@/shared/lib/notifyWithCenter";
-import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import EmptySession from "../workspace/EmptySession";
 import { WorkspaceHubPicker } from "../workspace/WorkspaceHubPicker";
 import { Button } from "@/shared/ui/button";
-import {
-  createTaskOnApi,
-  deleteTaskOnApi,
-  deleteAllTasksInWorkspaceOnApi,
-  getTaskOnApi,
-  updateTaskOnAPI,
-} from "@/api/tasks";
 import { WorkspaceHubListSkeleton } from "../workspace/WorkspaceHubListSkeleton";
 import { WorkspaceTasksSkeleton } from "./WorkspaceTasksSkeleton";
 import TaskDetailsPage from "./TaskDetailsPage";
-import { notify } from "../widgets/SonnerWidget";
 import { cn } from "@/shared/lib/utils";
 import { canPerformWorkspaceAction } from "@/shared/lib/workspace-permissions";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { queryKeys } from "@/shared/api/query-keys";
-
-function invalidateWorkspaceTasks(
-  queryClient: ReturnType<typeof useQueryClient>,
-  workspaceId: string,
-) {
-  if (!workspaceId) return;
-  void queryClient.invalidateQueries({
-    queryKey: queryKeys.tasks.byWorkspace(workspaceId),
-  });
-}
-
-function useWorkspaceTaskHandlers(workspaceId: string) {
-  const queryClient = useQueryClient();
-  const removeTask = useSessionTasks((s) => s.removeTask);
-  const removeAllTask = useSessionTasks((s) => s.removeTasksInWorkspace);
-  const tasks = useSessionTasks((s) => s.tasks);
-  const removeTaskCore = useCallback(
-    async (id: string) => {
-      const task = tasks.find((t) => t.id === id);
-      const label = task?.title?.trim() || id;
-      try {
-        await deleteTaskOnApi(id);
-        removeTask(id);
-        invalidateWorkspaceTasks(queryClient, workspaceId);
-        return { ok: true as const, label };
-      } catch {
-        notifyWithCenter({
-          title: "Сервер недоступен",
-          description: "Не удалось удалить задачу. Попробуйте позже",
-          variant: "warning",
-        });
-        return { ok: false as const, label };
-      }
-    },
-    [queryClient, removeTask, tasks, workspaceId],
-  );
-
-  const onRemove = useCallback(
-    async (id: string) => {
-      const task = tasks.find((t) => t.id === id);
-      const label = task?.title?.trim() || id;
-      const confirmed = await notifyConfirm({
-        title: "Удалить задачу?",
-        description: task
-          ? `Будет удалена задача «${label}»`
-          : `Будет удалена задача (id: ${id})`,
-        confirmLabel: "Удалить",
-        cancelLabel: "Отмена",
-      });
-      if (!confirmed) return;
-      const result = await removeTaskCore(id);
-      if (result.ok) {
-        notifyWithCenter({
-          title: "Задача удалена",
-          description: `«${result.label}» удалена`,
-          variant: "success",
-        });
-      }
-    },
-    [removeTaskCore, tasks],
-  );
-  const onRemoveAll = useCallback(async () => {
-    let synced = false;
-    try {
-      await deleteAllTasksInWorkspaceOnApi(workspaceId);
-      synced = true;
-    } catch {
-      notifyWithCenter({
-        title: "Сервер недоступен",
-        description: "Очистили список только в этом браузере",
-        variant: "warning",
-      });
-    }
-    removeAllTask(workspaceId);
-    if (synced) {
-      invalidateWorkspaceTasks(queryClient, workspaceId);
-      notifyWithCenter({
-        title: "Задачи удалены",
-        description: "Список в этом проекте очищен",
-        variant: "success",
-      });
-    }
-  }, [queryClient, workspaceId, removeAllTask]);
-  return {
-    onRemove,
-    onRemoveAll,
-    removeTaskCore,
-  };
-}
-
-type WorkspaceTasksBlockProps = {
-  workspaceId: string;
-  view: TasksView;
-  tasks: Tasks[];
-  creating: boolean;
-  onOpenCreate?: () => void;
-  onOpenTask: (taskId: string) => void;
-};
-
-const WorkspaceTasksBlockInner = memo(function WorkspaceTasksBlockInner({
-  workspaceId,
-  view,
-  tasks,
-  creating,
-  onOpenCreate,
-  onOpenTask,
-}: WorkspaceTasksBlockProps) {
-  const queryClient = useQueryClient();
-  const handlers = useWorkspaceTaskHandlers(workspaceId ?? "");
-
-  const { data: workspace = [] } = useWorkspaceQuery();
-  const workspaceName = workspace.find((w) => w.id === workspaceId)?.title;
-
-  const updateTask = useSessionTasks((t) => t.updateTask);
-  const toggleTaskChecked = useSessionTasks((s) => s.toggleTaskChecked);
-  const clearCheckedInWorkspace = useSessionTasks(
-    (s) => s.clearCheckedInWorkspace,
-  );
-
-  const selectedCount = useMemo(
-    () => tasks.filter((t) => t.checked).length,
-    [tasks],
-  );
-
-  const isTaskChecked = useCallback((task: Tasks) => Boolean(task.checked), []);
-
-  const onToggleTaskChecked = useCallback(
-    (id: string) => {
-      toggleTaskChecked(id);
-    },
-    [toggleTaskChecked],
-  );
-
-  const onClearSelection = useCallback(() => {
-    clearCheckedInWorkspace(workspaceId);
-  }, [clearCheckedInWorkspace, workspaceId]);
-
-  const onDeleteSelected = useCallback(async () => {
-    const selected = tasks.filter((t) => t.checked);
-    if (selected.length === 0) return;
-
-    const confirmed = await notifyConfirm({
-      title: "Удалить выбранные задачи?",
-      description: `Будет удалено: ${selected.length}`,
-      confirmLabel: "Удалить",
-      cancelLabel: "Отмена",
-    });
-    if (!confirmed) return;
-
-    let removed = 0;
-    for (const task of selected) {
-      const result = await handlers.removeTaskCore(task.id);
-      if (result.ok) removed += 1;
-    }
-
-    if (removed > 0) {
-      notifyWithCenter({
-        title: removed === 1 ? "Задача удалена" : `Удалено задач: ${removed}`,
-        variant: "success",
-      });
-      clearCheckedInWorkspace(workspaceId);
-    }
-  }, [tasks, handlers, clearCheckedInWorkspace, workspaceId]);
-
-  const onStatusSelected = useCallback(
-    async (status: TaskStatus) => {
-      const selected = tasks.filter((t) => t.checked);
-      if (selected.length === 0) return;
-
-      try {
-        await Promise.all(
-          selected.map(async (task) => {
-            const updated = await updateTaskOnAPI(task.id, { status });
-            updateTask(task.id, updated);
-          }),
-        );
-
-        clearCheckedInWorkspace(workspaceId);
-        invalidateWorkspaceTasks(queryClient, workspaceId);
-
-        notify({
-          title: "Статус обновлён",
-          description: `Изменено задач: ${selected.length}`,
-          variant: "success",
-        });
-        notifyWithCenter({
-          title: "Статус для задач изменен",
-          description: "Успешно",
-          variant: "success",
-        });
-      } catch {
-        notify({
-          title: "Ошибка запроса",
-          description: "Не удалось изменить статус выбранных задач",
-          variant: "error",
-        });
-      }
-    },
-    [tasks, updateTask, clearCheckedInWorkspace, workspaceId, queryClient],
-  );
-
-  return (
-    <>
-      <section
-        id={`workspace-section-${workspaceId}`}
-        className="flex min-w-0 scroll-mt-24 flex-col gap-2"
-      >
-        <WorkspaceTasksSection
-          view={view}
-          tasks={tasks}
-          creating={creating}
-          workspaceName={workspaceName}
-          isTaskChecked={isTaskChecked}
-          onToggleTaskChecked={onToggleTaskChecked}
-          onOpenCreate={onOpenCreate}
-          onRemove={handlers.onRemove}
-          onOpenTask={onOpenTask}
-        />
-      </section>
-
-      <TaskCheckedSelectionBar
-        count={selectedCount}
-        onClear={onClearSelection}
-        onDeletedSelected={onDeleteSelected}
-        onStatusSelected={onStatusSelected}
-      />
-    </>
-  );
-});
+import type { TaskStatus } from "@/shared/constants/task-statuses";
+import { SessionPageHeader } from "../layout/SessionPageHeader";
 
 function SessionTasksPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const isWorkspaceHub = location.pathname === SESSION_PATHS.tasks;
-  const { workspaceId: routeWorkspaceId, taskId: routeTaskId } = useParams<{
-    workspaceId?: string;
-    taskId?: string;
-  }>();
-
-  const queryClient = useQueryClient();
+  const { publicKey: routePublicKey, taskId: routeTaskId } =
+    parseWorkspaceParams(location.pathname);
 
   const { data: workspaces = [], isLoading: workspacesLoading } =
     useWorkspaceQuery();
 
-  const allTasks = useSessionTasks((s) => s.tasks);
-  const addTask = useSessionTasks((s) => s.addTask);
-  const setTasksForWorkspace = useSessionTasks((s) => s.setTasksForWorkspace);
-
   const user = useAuthStore((state) => state.user);
+  const createTask = useCreateTaskMutation();
 
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | null>(null);
   const [view, setView] = useState<TasksView>("line");
   const [creating, setCreating] = useState(false);
   const [createModalKey, setCreateModalKey] = useState(0);
@@ -298,26 +61,38 @@ function SessionTasksPage() {
     null,
   );
 
-  const { data: fetchedTasks, isLoading: tasksLoading } = useQuery({
-    queryKey: queryKeys.tasks.byWorkspace(routeWorkspaceId ?? ""),
-    queryFn: () => getTaskOnApi(routeWorkspaceId!),
-    enabled: !!routeWorkspaceId && !isWorkspaceHub,
-  });
+  const clearStatusFilter = useCallback(() => setStatusFilter(null), []);
 
-  useEffect(() => {
-    if (!routeWorkspaceId || isWorkspaceHub || fetchedTasks == null) return;
-    setTasksForWorkspace(routeWorkspaceId, fetchedTasks as Tasks[]);
-  }, [fetchedTasks, routeWorkspaceId, isWorkspaceHub, setTasksForWorkspace]);
+  const workspaceIds = useMemo(() => workspaces.map((w) => w.id), [workspaces]);
+  const hubTaskQueries = useTasksQueries(isWorkspaceHub ? workspaceIds : []);
+  const taskCountByWorkspaceId = useMemo(() => {
+    const map = new Map<string, number>();
+    workspaces.forEach((ws, index) => {
+      map.set(ws.id, hubTaskQueries[index]?.data?.length ?? 0);
+    });
+    return map;
+  }, [workspaces, hubTaskQueries]);
+
+  const activeWorkspace = useMemo(
+    () => findWorkspaceByPublicKey(workspaces, routePublicKey),
+    [routePublicKey, workspaces],
+  );
+  const workspaceId = activeWorkspace?.id;
+
+  const { data: tasks = [], isLoading: tasksLoading } = useTasksQuery(
+    isWorkspaceHub ? undefined : workspaceId,
+    statusFilter ? { status: statusFilter } : {},
+  );
 
   const selectedTask = useMemo(
     () =>
       routeTaskId
-        ? (allTasks.find((task) => task.id === routeTaskId) ?? null)
+        ? (tasks.find((task) => task.id === routeTaskId) ?? null)
         : null,
-    [allTasks, routeTaskId],
+    [tasks, routeTaskId],
   );
 
-  const effectiveWorkspaceId = routeWorkspaceId ?? selectedTask?.workspaceId;
+  const tasksInView = isWorkspaceHub || !workspaceId ? [] : tasks;
 
   const selectedTaskWorkspaceName = useMemo(
     () =>
@@ -329,37 +104,33 @@ function SessionTasksPage() {
     [selectedTask, workspaces],
   );
 
-  const activeWorkspace = useMemo(
-    () =>
-      routeWorkspaceId
-        ? workspaces.find((w) => w.id === routeWorkspaceId)
-        : undefined,
-    [routeWorkspaceId, workspaces],
-  );
-
-  const tasksInView = useMemo(() => {
-    if (isWorkspaceHub || !effectiveWorkspaceId) return [];
-    return allTasks.filter((t) => t.workspaceId === effectiveWorkspaceId);
-  }, [allTasks, effectiveWorkspaceId, isWorkspaceHub]);
-
   const openTaskDetails = useCallback(
     (taskId: string) => {
-      const workspaceId =
-        routeWorkspaceId ??
-        allTasks.find((task) => task.id === taskId)?.workspaceId;
-      if (!workspaceId) return;
-      navigate(SESSION_PATHS.projectTask(workspaceId, taskId));
+      const publicKey =
+        routePublicKey ??
+        getWorkspacePublicKey(
+          workspaces,
+          tasks.find((task) => task.id === taskId)?.workspaceId,
+        );
+      if (!publicKey) return;
+      navigate(SESSION_PATHS.workspaceTask(publicKey, taskId));
     },
-    [navigate, routeWorkspaceId, allTasks],
+    [navigate, routePublicKey, tasks, workspaces],
   );
 
   const goBackToWorkspaceTasks = useCallback(() => {
-    if (!effectiveWorkspaceId) {
+    const publicKey =
+      routePublicKey ??
+      getWorkspacePublicKey(
+        workspaces,
+        workspaceId ?? selectedTask?.workspaceId,
+      );
+    if (!publicKey) {
       navigate(SESSION_PATHS.tasks);
       return;
     }
-    navigate(SESSION_PATHS.project(effectiveWorkspaceId));
-  }, [effectiveWorkspaceId, navigate]);
+    navigate(SESSION_PATHS.workspace(publicKey));
+  }, [routePublicKey, workspaceId, selectedTask, workspaces, navigate]);
 
   const openCreateForWorkspace = useCallback((workspaceId: string) => {
     setTargetWorkspaceId(workspaceId);
@@ -368,7 +139,7 @@ function SessionTasksPage() {
   }, []);
 
   const headerOnCreate = useCallback(() => {
-    const id = routeWorkspaceId ?? workspaces[0]?.id;
+    const id = workspaceId ?? workspaces[0]?.id;
     if (!id) {
       notifyWithCenter({
         title: "Нет проектов",
@@ -377,7 +148,7 @@ function SessionTasksPage() {
       });
       return;
     }
-    if (isWorkspaceHub && !routeWorkspaceId) {
+    if (isWorkspaceHub && !routePublicKey) {
       notifyWithCenter({
         title: "Выберите проект",
         description: "Откройте проект, чтобы добавить задачу",
@@ -386,19 +157,13 @@ function SessionTasksPage() {
       return;
     }
     openCreateForWorkspace(id);
-  }, [routeWorkspaceId, workspaces, openCreateForWorkspace, isWorkspaceHub]);
-
-  const orphanGroups = useMemo(() => {
-    const ids = new Set(workspaces.map((w) => w.id));
-    const map = new Map<string, Tasks[]>();
-    for (const t of allTasks) {
-      if (ids.has(t.workspaceId)) continue;
-      const list = map.get(t.workspaceId) ?? [];
-      list.push(t);
-      map.set(t.workspaceId, list);
-    }
-    return map;
-  }, [allTasks, workspaces]);
+  }, [
+    workspaceId,
+    routePublicKey,
+    workspaces,
+    openCreateForWorkspace,
+    isWorkspaceHub,
+  ]);
 
   const totalCount = tasksInView.length;
 
@@ -407,23 +172,76 @@ function SessionTasksPage() {
     "create_task",
   );
   const workspaceTaskHandlers = useWorkspaceTaskHandlers(
-    routeWorkspaceId ?? "",
+    workspaceId ?? "",
+    tasks,
   );
 
-  const showEmptyHub =
-    !workspacesLoading &&
-    workspaces.length === 0 &&
-    orphanGroups.size === 0 &&
-    allTasks.length === 0;
+  const showEmptyHub = !workspacesLoading && workspaces.length === 0;
 
   const showUnknownWorkspace =
     !isWorkspaceHub &&
-    routeWorkspaceId &&
+    routePublicKey &&
     !activeWorkspace &&
     tasksInView.length === 0;
 
   const showUnknownTask =
     Boolean(routeTaskId) && !tasksLoading && !selectedTask;
+
+  const showTasksListHeader =
+    !routeTaskId &&
+    !showEmptyHub &&
+    !showUnknownWorkspace &&
+    (isWorkspaceHub
+      ? !workspacesLoading && workspaces.length > 0
+      : Boolean(activeWorkspace) &&
+        !tasksLoading &&
+        (totalCount > 0 || statusFilter !== null));
+
+  const showTaskSettings =
+    !routeTaskId &&
+    !isWorkspaceHub &&
+    Boolean(activeWorkspace) &&
+    !tasksLoading &&
+    (totalCount > 0 || statusFilter !== null);
+
+  const taskCountLabel = `${totalCount} ${
+    totalCount === 1 ? "задача" : totalCount < 5 ? "задачи" : "задач"
+  }`;
+
+  const createTaskAction = canCreateTask ? (
+    <Button
+      type="button"
+      className="h-8 gap-1 rounded-full px-3.5 text-sm shadow-sm"
+      onClick={headerOnCreate}
+    >
+      <Plus className="size-3.5" aria-hidden />
+      Создать
+    </Button>
+  ) : null;
+
+  const taskListHeaderActions =
+    !isWorkspaceHub && (showTaskSettings || createTaskAction) ? (
+      <>
+        {showTaskSettings ? (
+          <WorkspaceTaskSettingsButton
+            view={view}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            onViewChange={setView}
+            totalCount={totalCount}
+            onCreate={canCreateTask ? headerOnCreate : undefined}
+            onRemoveAll={
+              workspaceId &&
+              totalCount > 0 &&
+              canPerformWorkspaceAction(activeWorkspace?.myRole, "delete_task")
+                ? workspaceTaskHandlers.onRemoveAll
+                : undefined
+            }
+          />
+        ) : null}
+        {createTaskAction}
+      </>
+    ) : undefined;
 
   return (
     <div
@@ -432,43 +250,46 @@ function SessionTasksPage() {
         routeTaskId ? "gap-0 pb-0" : "gap-3 pb-4",
       )}
     >
-      {!routeTaskId ? (
-        <WorkspaceTaskSubheader
-          className="shrink-0"
-          view={view}
-          onViewChange={setView}
-          totalCount={totalCount}
-          collaboration={
-            routeWorkspaceId
-              ? {
-                  workspaceId: routeWorkspaceId,
-                  workspaceTitle: activeWorkspace?.title,
-                  myRole: activeWorkspace?.myRole,
-                }
-              : undefined
+      {routeTaskId && selectedTask ? (
+        <SessionPageHeader
+          title={selectedTask.title}
+          actions={
+            <TaskDetailsPropertiesButton
+              task={selectedTask}
+              workspaceName={selectedTaskWorkspaceName}
+            />
           }
-          onCreate={canCreateTask ? headerOnCreate : undefined}
-          onRemoveAll={
-            routeWorkspaceId &&
-            !isWorkspaceHub &&
-            totalCount > 0 &&
-            canPerformWorkspaceAction(activeWorkspace?.myRole, "delete_task")
-              ? workspaceTaskHandlers.onRemoveAll
-              : undefined
-          }
+          className="shrink-0 border-b border-border/30 px-6 pb-4 pt-4"
+        />
+      ) : showTasksListHeader ? (
+        <SessionPageHeader
+          variant="toolbar"
+          title="Задачи"
+          meta={!isWorkspaceHub ? taskCountLabel : undefined}
+          actions={taskListHeaderActions}
+          className="px-0 pt-0"
         />
       ) : null}
 
       {showEmptyHub ? (
-        <div className="flex flex-1 flex-col items-center justify-center py-12">
-          <EmptySession
-            titleName="Пока нет задач"
-            descriptionName="Создайте проект и добавьте задачи"
-            action={() => navigate(SESSION_PATHS.sessionRoot)}
-            buttonName="К проектам"
-            icon={<LayoutDashboard />}
-          />
-        </div>
+        <EmptySession
+          titleName="Добавьте задачи"
+          descriptionName="Создайте проект и начните с первой задачи"
+          suggestions={[
+            {
+              title: "К проектам",
+              description: "Создайте проект и откройте список задач",
+              icon: <LayoutGrid />,
+              iconClassName:
+                "bg-[#E6F0FC] text-[#296BD6] dark:bg-blue-500/15 dark:text-blue-400",
+              onClick: () => navigate(SESSION_PATHS.sessionRoot),
+            },
+          ]}
+          footerAction={{
+            label: "К проектам",
+            onClick: () => navigate(SESSION_PATHS.sessionRoot),
+          }}
+        />
       ) : (
         <div className="flex w-full min-h-0 min-w-0 flex-1 flex-col">
           <div
@@ -483,8 +304,10 @@ function SessionTasksPage() {
               ) : (
                 <WorkspaceHubPicker
                   workspaces={workspaces}
-                  allTasks={allTasks}
-                  onSelect={(id) => navigate(SESSION_PATHS.project(id))}
+                  getTaskCount={(id) => taskCountByWorkspaceId.get(id) ?? 0}
+                  onSelect={(publicKey) =>
+                    navigate(SESSION_PATHS.workspace(publicKey))
+                  }
                 />
               )
             ) : showUnknownWorkspace ? (
@@ -517,22 +340,22 @@ function SessionTasksPage() {
                 </Button>
               </div>
             ) : routeTaskId && selectedTask ? (
-              <TaskDetailsPage
-                task={selectedTask}
-                workspaceName={selectedTaskWorkspaceName}
-              />
-            ) : routeWorkspaceId ? (
+              <TaskDetailsPage task={selectedTask} />
+            ) : workspaceId ? (
               tasksLoading ? (
                 <WorkspaceTasksSkeleton />
               ) : (
-                <WorkspaceTasksBlockInner
-                  workspaceId={routeWorkspaceId}
+                <WorkspaceTasksBlock
+                  key={statusFilter ?? "all"}
+                  workspaceId={workspaceId}
                   view={view}
                   tasks={tasksInView}
                   creating={creating}
+                  statusFilter={statusFilter}
+                  onClearStatusFilter={clearStatusFilter}
                   onOpenCreate={
                     canCreateTask
-                      ? () => openCreateForWorkspace(routeWorkspaceId)
+                      ? () => openCreateForWorkspace(workspaceId)
                       : undefined
                   }
                   onOpenTask={openTaskDetails}
@@ -563,24 +386,17 @@ function SessionTasksPage() {
           }
 
           try {
-            const createdTask = await createTaskOnApi({
+            const createdTask = await createTask.mutateAsync({
               ...payload,
               workspaceId: wsId,
               creator: resolveCreatorField(payload.creator, user),
             });
 
-            addTask({
-              ...createdTask,
-              status: createdTask.status ?? "В очереди",
-            });
-            invalidateWorkspaceTasks(queryClient, wsId);
             notifyWithCenter({
               title: "Задача создана",
               description: createdTask.title,
               variant: "success",
             });
-
-            navigate(SESSION_PATHS.projectTask(wsId, createdTask.id));
           } catch {
             notifyWithCenter({
               title: "Не удалось создать задачу",

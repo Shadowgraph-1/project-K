@@ -1,197 +1,233 @@
-import { type ReactNode } from "react";
+import { memo, type ComponentType } from "react";
 import {
   ArrowUpDown,
   CalendarDays,
+  Check,
   Filter,
+  Kanban,
   List,
   Plus,
+  Settings2,
   Trash2,
 } from "lucide-react";
-import { Button, buttonVariants } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/shared/ui/popover";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import type { TasksView } from "./sessionWorkspaceTypes";
-import { CollaborationButton } from "../workspace/CollaborationButton";
-import type { WorkspaceRole } from "@/shared/lib/workspace-permissions";
-import { ToolbarIsland } from "../layout/ToolbarIsland";
+import { SessionTooltip } from "../layout/SessionTooltip";
+import { ToolbarIsland, toolbarIslandIconButtonClass } from "../layout/ToolbarIsland";
+import type { TaskStatus } from "@/shared/constants/task-statuses";
 
-export type WorkspaceTaskSubheaderProps = {
+export type WorkspaceTaskSettingsButtonProps = {
   totalCount: number;
   onCreate?: () => void;
-  trailingActions?: ReactNode;
-  className?: string;
   view?: TasksView;
   onViewChange?: (variant: TasksView) => void;
   onRemoveAll?: () => void | Promise<void>;
-  collaboration?: {
-    workspaceId?: string;
-    workspaceTitle?: string;
-    myRole?: WorkspaceRole;
-  };
+  statusFilter?: TaskStatus | null;
+  onStatusFilterChange: (status: TaskStatus | null) => void;
 };
 
 const VIEW_OPTIONS = [
   { value: "line", label: "Список", icon: List },
   { value: "timeline", label: "Даты", icon: CalendarDays },
-] satisfies { value: TasksView; label: string; icon: typeof List }[];
+  { value: "kanban", label: "Канбан", icon: Kanban },
+] satisfies {
+  value: TasksView;
+  label: string;
+  icon: ComponentType<{ className?: string }>;
+}[];
 
-function WorkspaceTaskSubheader({
-  totalCount,
-  onCreate,
-  className,
-  view,
-  onViewChange,
-  onRemoveAll,
-  collaboration,
-}: WorkspaceTaskSubheaderProps) {
+const FILTER_OPTIONS: {
+  value: TaskStatus | null;
+  label: string;
+}[] = [
+  { value: null, label: "Все задачи" },
+  { value: "TODO", label: "Только активные" },
+  { value: "DONE", label: "Только выполненные" },
+];
+
+const SORT_OPTIONS = [
+  "По дате добавления",
+  "По названию",
+  "Сначала активные",
+] as const;
+
+function SettingsOptionRow({
+  label,
+  active,
+  onClick,
+  icon: Icon,
+  destructive,
+  disabled,
+}: {
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+  icon?: ComponentType<{ className?: string }>;
+  destructive?: boolean;
+  disabled?: boolean;
+}) {
   return (
-    <div
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={onClick}
       className={cn(
-        "flex w-full shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-border/50 pb-2",
-        className,
+        "flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-xs transition-colors",
+        active
+          ? "bg-accent text-accent-foreground"
+          : "text-muted-foreground hover:bg-muted/50 hover:text-foreground",
+        destructive && !active && "hover:bg-destructive/10 hover:text-destructive",
+        disabled && "pointer-events-none opacity-50",
       )}
     >
-      <ToolbarIsland aria-label="Вид задач">
-        <div role="tablist" className="flex items-center">
-        {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => {
-          const active = (view || "line") === value;
-          return (
-            <Button
-              key={value}
-              type="button"
-              role="tab"
-              variant="ghost"
-              size="sm"
-              aria-selected={active}
-              className={cn(
-                "h-7 min-w-0 rounded-none px-2.5 text-xs font-medium",
-                active
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent/70 hover:text-accent-foreground",
-              )}
-              onClick={() => onViewChange?.(value)}
-            >
-              <Icon className="size-3.5" aria-hidden />
-              <span>{label}</span>
-            </Button>
-          );
-        })}
-        </div>
-      </ToolbarIsland>
-
-      <div className="flex shrink-0 items-center gap-2">
-        {collaboration ? (
-          <ToolbarIsland aria-label="Участники проекта">
-            <CollaborationButton
-              variant="island"
-              workspaceId={collaboration.workspaceId}
-              workspaceTitle={collaboration.workspaceTitle}
-              myRole={collaboration.myRole}
-            />
-          </ToolbarIsland>
-        ) : null}
-
-        <ToolbarIsland aria-label="Действия с задачами" className="gap-0">
-        {onCreate ? (
-          <Button
-            type="button"
-            size="icon-sm"
-            variant="ghost"
-            className="size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-            aria-label="Добавить задачу"
-            title="Добавить задачу"
-            onClick={onCreate}
-          >
-            <Plus className="size-3.5" />
-          </Button>
-        ) : null}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon-sm" }),
-              "size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-            aria-label="Фильтр"
-            title="Фильтр"
-          >
-            <Filter className="size-3.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              Фильтрация
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-xs">Все задачи</DropdownMenuItem>
-            <DropdownMenuItem className="text-xs">
-              Только активные
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-xs">
-              Только выполненные
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "icon-sm" }),
-              "size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-accent-foreground",
-            )}
-            aria-label="Сортировка"
-            title="Сортировка"
-          >
-            <ArrowUpDown className="size-3.5" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              Сортировка
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-xs">
-              По дате добавления
-            </DropdownMenuItem>
-            <DropdownMenuItem className="text-xs">По названию</DropdownMenuItem>
-            <DropdownMenuItem className="text-xs">
-              Сначала активные
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <Button
-          type="button"
-          size="icon-sm"
-          variant="ghost"
-          className="size-7 rounded-none text-muted-foreground hover:bg-accent hover:text-destructive"
-          aria-label="Удалить все задачи"
-          title="Удалить все задачи"
-          disabled={!onRemoveAll || totalCount === 0}
-          onClick={async () => {
-            if (!onRemoveAll) return;
-            const confirmed = await notifyConfirm({
-              title: "Удалить все задачи?",
-              description: `Будет удалено: ${totalCount}`,
-              confirmLabel: "Удалить",
-              cancelLabel: "Отмена",
-            });
-            if (!confirmed) return;
-            await onRemoveAll();
-          }}
-        >
-          <Trash2 className="size-3.5" />
-        </Button>
-        </ToolbarIsland>
-      </div>
-    </div>
+      {Icon ? <Icon className="size-3.5 shrink-0" aria-hidden /> : null}
+      <span className="flex-1">{label}</span>
+      {active ? (
+        <Check className="size-3.5 shrink-0 opacity-70" aria-hidden />
+      ) : null}
+    </button>
   );
 }
 
-export default WorkspaceTaskSubheader;
+export const WorkspaceTaskSettingsButton = memo(function WorkspaceTaskSettingsButton({
+  totalCount,
+  onCreate,
+  view,
+  onViewChange,
+  onRemoveAll,
+  statusFilter,
+  onStatusFilterChange,
+}: WorkspaceTaskSettingsButtonProps) {
+  const currentView = view ?? "line";
+  const currentOption =
+    VIEW_OPTIONS.find((option) => option.value === currentView) ??
+    VIEW_OPTIONS[0];
+  const hasActiveFilter = statusFilter !== null && statusFilter !== undefined;
+
+  async function handleRemoveAll() {
+    if (!onRemoveAll) return;
+    const confirmed = await notifyConfirm({
+      title: "Удалить все задачи?",
+      description: `Будет удалено: ${totalCount}`,
+      confirmLabel: "Удалить",
+      cancelLabel: "Отмена",
+    });
+    if (!confirmed) return;
+    await onRemoveAll();
+  }
+
+  return (
+    <ToolbarIsland aria-label="Настройки задач">
+      <Popover>
+          <SessionTooltip
+            label={"Настройки"
+            }
+          >
+            <PopoverTrigger
+              className={toolbarIslandIconButtonClass}
+              aria-label={`Настройки: ${currentOption.label}`}
+            >
+              <Settings2 className="size-3.5" aria-hidden />
+              {hasActiveFilter ? (
+                <span className="absolute right-1 top-1 size-1.5 rounded-full bg-primary" />
+              ) : null}
+            </PopoverTrigger>
+          </SessionTooltip>
+
+          <PopoverContent align="end" className="w-80 p-3">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Вид</p>
+                <div
+                  role="tablist"
+                  aria-label="Вид задач"
+                  className="flex items-center gap-0.5 rounded-lg bg-muted/40 p-0.5 ring-1 ring-border/30"
+                >
+                  {VIEW_OPTIONS.map(({ value, label, icon: Icon }) => {
+                    const active = currentView === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center justify-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors",
+                          active
+                            ? "bg-background text-foreground shadow-sm"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                        onClick={() => onViewChange?.(value)}
+                      >
+                        <Icon className="size-3.5 shrink-0" aria-hidden />
+                        <span className="truncate">{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Filter className="size-3.5" aria-hidden />
+                  Фильтрация
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {FILTER_OPTIONS.map((option) => (
+                    <SettingsOptionRow
+                      key={option.label}
+                      label={option.label}
+                      active={statusFilter === option.value}
+                      onClick={() => onStatusFilterChange(option.value)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <p className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <ArrowUpDown className="size-3.5" aria-hidden />
+                  Сортировка
+                </p>
+                <div className="flex flex-col gap-0.5">
+                  {SORT_OPTIONS.map((label, index) => (
+                    <SettingsOptionRow
+                      key={label}
+                      label={label}
+                      active={index === 0}
+                      onClick={() => {}}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-1 border-t border-border/30 pt-3">
+                {onCreate ? (
+                  <SettingsOptionRow
+                    label="Добавить задачу"
+                    icon={Plus}
+                    onClick={onCreate}
+                  />
+                ) : null}
+                {onRemoveAll ? (
+                  <SettingsOptionRow
+                    label="Удалить все задачи"
+                    icon={Trash2}
+                    destructive
+                    disabled={totalCount === 0}
+                    onClick={() => void handleRemoveAll()}
+                  />
+                ) : null}
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+    </ToolbarIsland>
+  );
+});
