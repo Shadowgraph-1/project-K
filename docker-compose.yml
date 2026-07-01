@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kono
+      POSTGRES_PASSWORD: kono
+      POSTGRES_DB: kono
+    ports:
+      - "5432:5432"
+    volumes:
+      - kono_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kono"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://kono:kono@db:5432/kono
+      JWT_SECRET: ${JWT_SECRET}
+      PORT: 3000
+      VERSION: 1.0.0
+      LM_BASE_URL: ${LM_BASE_URL:-http://host.docker.internal:1234/v1}
+      LM_API_KEY: ${LM_API_KEY:-lm-studio}
+      LM_MODEL: ${LM_MODEL:-gemma-4-e4b-it}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+    ports:
+      - "3000:3000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "4173:4173"
+
+volumes:
+  kono_db:

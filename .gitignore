@@ -1,26 +1,16 @@
-# Live2D Cubism SDK (local copy; app uses frontend/public/live2d)
-CubismSdkForWeb-*/
-
 node_modules/
 dist/
+backend/dist/
 *.local
 .env
 .env.*
 !.env.example
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-.Python
-.venv/
-venv/
-.mypy_cache/
-.pytest_cache/
-.ruff_cache/
-.coverage
-htmlcov/
-*.egg-info/
-.eggs/
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
 
-/generated/prisma
+# Prisma generated client
+backend/src/generated/prisma
