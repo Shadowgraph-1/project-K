@@ -1,120 +1,129 @@
 import type { FastifyPluginAsync } from "fastify";
 import { toTaskDto } from "../mappers/task.mapper.js";
-import { taskCreateSchema, taskPatchSchema } from "../schemas/task.schema.js";
+import {
+  taskCreateSchema,
+  taskIdParamSchema,
+  taskListQuerySchema,
+  taskPatchSchema,
+} from "../schemas/task.schema.js";
 import * as tasksService from "../services/tasks.service.js";
-import { sendServiceResult } from "../utils/api-errors.js";
 import { parseBody } from "../utils/parse-body.js";
+import { routeSchema } from "../openapi/route-schema.js";
+import {
+  errorResponse,
+  jsonObject,
+  taskDto,
+  taskListResponse,
+} from "../openapi/responses.js";
 
 const taskRoutes: FastifyPluginAsync = async (app) => {
   app.get(
     "/tasks",
     {
-      schema: {
-        querystring: {
-          type: "object",
-          required: ["workspaceId"],
-          properties: {
-            workspaceId: { type: "string" },
-          },
-        },
-      },
+      schema: routeSchema({
+        tags: ["Задачи"],
+        summary: "Список задач",
+        description:
+          "Задачи проекта. Обязательный query `workspaceId`.\n\n" +
+          "Опционально `status` — фильтр: TODO, DONE, DEFERRED, ISSUES.",
+        security: true,
+        querystring: taskListQuerySchema,
+        response: { 200: taskListResponse, 403: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { workspaceId } = request.query as { workspaceId: string };
-      const rows = sendServiceResult(
-        reply,
-        await tasksService.listTasksByWorkspace(workspaceId, request.user.id),
-        "workspace_not_found",
+    async (request) => {
+      const { workspaceId, status } = parseBody(
+        taskListQuerySchema,
+        request.query,
       );
-      if (!rows) return;
+      const rows = await tasksService.listTasksByWorkspace(
+        workspaceId,
+        request.user.id,
+        status ? { status } : undefined,
+      );
       return rows.map(toTaskDto);
     },
   );
 
-  app.post("/tasks", async (request, reply) => {
-    const body = parseBody(taskCreateSchema, request.body);
+  app.post(
+    "/tasks",
+    {
+      schema: routeSchema({
+        tags: ["Задачи"],
+        summary: "Создать задачу",
+        description:
+          "Новая задача в указанном проекте. Статус по умолчанию — `TODO`.",
+        security: true,
+        body: taskCreateSchema,
+        response: { 200: taskDto, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const body = parseBody(taskCreateSchema, request.body);
+      const result = await tasksService.createTask(request.user.id, body);
+      return toTaskDto(result);
+    },
+  );
 
-    const result = sendServiceResult(
-      reply,
-      await tasksService.createTask(request.user.id, body),
-      "workspace_not_found",
-    );
-    if (!result) return;
-    return toTaskDto(result);
-  });
-
-  app.delete(
+  app.delete<{ Params: { id: string } }>(
     "/tasks/:id",
     {
-      schema: {
-        params: {
-          type: "object",
-          required: ["id"],
-          properties: { id: { type: "string" } },
-        },
-      },
+      schema: routeSchema({
+        tags: ["Задачи"],
+        summary: "Удалить задачу",
+        description: "Удаляет задачу по UUID вместе с подзадачами и activity.",
+        security: true,
+        params: taskIdParamSchema,
+        response: { 200: jsonObject, 403: errorResponse, 404: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const result = sendServiceResult(
-        reply,
-        await tasksService.deleteTask(id, request.user.id),
-        "task_not_found",
-      );
-      if (!result) return;
-      return result;
+    async (request) => {
+      const { id } = parseBody(taskIdParamSchema, request.params);
+      return tasksService.deleteTask(id, request.user.id);
     },
   );
 
   app.delete(
     "/tasks",
     {
-      schema: {
-        querystring: {
-          type: "object",
-          required: ["workspaceId"],
-          properties: {
-            workspaceId: { type: "string" },
-          },
-        },
-      },
+      schema: routeSchema({
+        tags: ["Задачи"],
+        summary: "Удалить все задачи проекта",
+        description:
+          "Массовое удаление всех задач workspace. Query `workspaceId` обязателен.",
+        security: true,
+        querystring: taskListQuerySchema,
+        response: { 200: jsonObject, 403: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { workspaceId } = request.query as { workspaceId: string };
-      const result = sendServiceResult(
-        reply,
-        await tasksService.deleteAllTasksInWorkspace(
-          workspaceId,
-          request.user.id,
-        ),
-        "workspace_not_found",
+    async (request) => {
+      const { workspaceId } = parseBody(taskListQuerySchema, request.query);
+      return tasksService.deleteAllTasksInWorkspace(
+        workspaceId,
+        request.user.id,
       );
-      if (!result) return;
-      return result;
     },
   );
 
-  app.patch(
+  app.patch<{ Params: { id: string } }>(
     "/tasks/:id",
     {
-      schema: {
-        params: {
-          type: "object",
-          required: ["id"],
-          properties: { id: { type: "string" } },
-        },
-      },
+      schema: routeSchema({
+        tags: ["Задачи"],
+        summary: "Обновить задачу",
+        description:
+          "Частичное обновление: заголовок, описание, статус, даты, приоритет (`tags`).\n\n" +
+          "Передайте хотя бы одно поле в теле.",
+        security: true,
+        params: taskIdParamSchema,
+        body: taskPatchSchema,
+        response: { 200: taskDto, 403: errorResponse, 404: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
+    async (request) => {
+      const { id } = parseBody(taskIdParamSchema, request.params);
       const body = parseBody(taskPatchSchema, request.body);
-
-      const result = sendServiceResult(
-        reply,
-        await tasksService.updateTask(id, request.user.id, body),
-        "task_not_found",
-      );
-      if (!result) return;
+      const result = await tasksService.updateTask(id, request.user.id, body);
       return toTaskDto(result);
     },
   );

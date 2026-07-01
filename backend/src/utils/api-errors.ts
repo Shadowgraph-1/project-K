@@ -33,6 +33,7 @@ export type ApiErrorCode =
   // Infrastructure
   | "validation_failed"
   | "unauthorized"
+  | "forbidden"
   | "route_not_found"
   | "duplicate_record"
   | "record_not_found"
@@ -75,6 +76,7 @@ const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
   invalid_role: 400,
   validation_failed: 400,
   unauthorized: 401,
+  forbidden: 403,
   route_not_found: 404,
   duplicate_record: 409,
   record_not_found: 404,
@@ -109,6 +111,7 @@ const API_ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   invalid_role: "Некорректная роль",
   validation_failed: "Некорректные данные",
   unauthorized: "Требуется авторизация",
+  forbidden: "Доступ запрещён",
   route_not_found: "Маршрут не найден",
   duplicate_record: "Запись уже существует",
   record_not_found: "Не найдено",
@@ -159,22 +162,6 @@ export function replyApiError(
     body.fields = extra.fields;
   }
   return reply.status(getApiErrorStatus(code)).send(body);
-}
-
-export function sendServiceResult<T>(
-  reply: FastifyReply,
-  result: T | ApiError | null,
-  notFoundCode: ApiErrorCode,
-): T | undefined {
-  if (result === null) {
-    replyApiError(reply, notFoundCode);
-    return undefined;
-  }
-  if (isApiError(result)) {
-    replyApiError(reply, result.error);
-    return undefined;
-  }
-  return result;
 }
 
 export function sendApiErrorResult<T>(

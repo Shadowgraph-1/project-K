@@ -2,10 +2,8 @@ import fp from "fastify-plugin";
 import type { FastifyError } from "fastify";
 import { ZodError } from "zod";
 import { Prisma } from "../generated/prisma/client.js";
-import {
-  ApiHttpError,
-  replyApiError,
-} from "../utils/api-errors.js";
+import { ApiHttpError, replyApiError } from "../utils/api-errors.js";
+import { pushErrorLog } from "../utils/error-log-store.js";
 
 function getStatusCode(error: unknown): number {
   if (
@@ -54,6 +52,16 @@ export default fp(async (app) => {
     request.log.error(error);
     const status = getStatusCode(error);
     if (status >= 500) {
+      pushErrorLog({
+        method: request.method,
+        url: request.url,
+        statusCode: status,
+        message: error instanceof Error ? error.message : "Internal error",
+        code:
+          error instanceof ApiHttpError
+            ? error.code
+            : fastifyError.code?.toString(),
+      });
       return replyApiError(reply, "internal_server_error");
     }
 

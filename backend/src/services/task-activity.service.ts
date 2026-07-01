@@ -1,9 +1,11 @@
 import { prisma } from "../db/prisma.js";
 import { assertTaskAccess } from "../permissions.js";
 import { Activity } from "../constants/activity-types.js";
-import { createTaskActivityData } from "../utils/task-activity-data.js";
-import { activitySelect, type ActivityRow } from "../mappers/task-activity.mapper.js";
-import { apiErr, type ApiError } from "../utils/api-errors.js";
+import {
+  activitySelect,
+  type ActivityRow,
+} from "../mappers/task-activity.mapper.js";
+import { ApiHttpError } from "../utils/api-errors.js";
 
 export type CreateTaskActivityInput = {
   body: string;
@@ -13,9 +15,9 @@ export type CreateTaskActivityInput = {
 export async function listTaskActivity(
   taskId: string,
   userId: number,
-): Promise<ActivityRow[] | null> {
+): Promise<ActivityRow[]> {
   if (!(await assertTaskAccess(taskId, userId, "view"))) {
-    return null;
+    throw new ApiHttpError("task_not_found");
   }
 
   return prisma.task_activity.findMany({
@@ -29,16 +31,16 @@ export async function createTaskActivity(
   taskId: string,
   userId: number,
   input: CreateTaskActivityInput,
-): Promise<ActivityRow | ApiError | null> {
+): Promise<ActivityRow> {
   const text = input.body.trim();
   const parentActivityId = input.parentActivityId?.trim();
 
   if (!text) {
-    return apiErr("activity_empty_body");
+    throw new ApiHttpError("activity_empty_body");
   }
 
   if (!(await assertTaskAccess(taskId, userId, "comment"))) {
-    return null;
+    throw new ApiHttpError("task_not_found");
   }
 
   if (parentActivityId) {
@@ -47,19 +49,19 @@ export async function createTaskActivity(
       select: { id: true },
     });
     if (!parent) {
-      return apiErr("activity_parent_not_found");
+      throw new ApiHttpError("activity_parent_not_found");
     }
   }
 
   return prisma.task_activity.create({
-    data: createTaskActivityData({
+    data: {
       task_id: taskId,
       user_id: userId,
       type: Activity.UPDATE_CREATED,
       title: "Добавлена запись",
       body: text,
       metadata: parentActivityId ? { parentActivityId } : undefined,
-    }),
+    },
     select: activitySelect,
   });
 }
@@ -67,9 +69,9 @@ export async function createTaskActivity(
 export async function clearTaskActivity(
   taskId: string,
   userId: number,
-): Promise<{ ok: true } | null> {
+): Promise<{ ok: true }> {
   if (!(await assertTaskAccess(taskId, userId, "edit_task"))) {
-    return null;
+    throw new ApiHttpError("task_not_found");
   }
 
   await prisma.task_activity.deleteMany({

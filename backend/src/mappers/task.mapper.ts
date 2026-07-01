@@ -1,3 +1,5 @@
+import { TaskStatus } from "../constants/task-statuses.js";
+
 export const taskSelect = {
   id: true,
   title: true,
@@ -7,7 +9,6 @@ export const taskSelect = {
   due_date: true,
   creator: true,
   status: true,
-  checked: true,
   workspace_id: true,
 } as const;
 
@@ -19,8 +20,7 @@ export type TaskRow = {
   start_date: string | null;
   due_date: string | null;
   creator: string | null;
-  status: string;
-  checked: boolean;
+  status: TaskStatus;
   workspace_id: string;
 };
 
@@ -34,7 +34,6 @@ export function toTaskDto(task: TaskRow) {
     dueDate: task.due_date,
     creator: task.creator,
     status: task.status,
-    checked: task.checked,
     workspaceId: task.workspace_id,
   };
 }

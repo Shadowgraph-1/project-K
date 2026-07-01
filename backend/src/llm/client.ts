@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { env } from "../config/env.js";
 
 export type LlmSettings = {
   baseURL: string;
@@ -6,23 +7,24 @@ export type LlmSettings = {
   model: string;
 };
 
-export function createLlmSettings(): LlmSettings {
+export function createLlmSettings() {
   return {
-    baseURL: process.env.LM_BASE_URL ?? "http://localhost:1234/v1",
-    apiKey: process.env.LM_API_KEY ?? "no-key",
-    model: process.env.LM_MODEL ?? "gemma-4-e4b-it",
+    baseURL: env.LM_BASE_URL,
+    apiKey: env.LM_API_KEY,
+    model: env.LM_MODEL,
   };
 }
 
 export function createLlmClient(settings = createLlmSettings()) {
-    const client = new OpenAI({
-        baseURL: settings.baseURL,
-        apiKey: settings.baseURL,
-    });
+  const client = new OpenAI({
+    baseURL: settings.baseURL,
+    apiKey: settings.apiKey,
+  });
 
-    return {
-        client, model: settings.model
-    };
+  return {
+    client,
+    model: settings.model,
+  };
 }
 
 export const llm = createLlmClient();

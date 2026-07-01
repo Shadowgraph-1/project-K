@@ -8,29 +8,27 @@ import {
   canPerformAction,
   getWorkspaceAccess,
 } from "../permissions.js";
-import { apiErr, type ApiErrorCode } from "../utils/api-errors.js";
+import { ApiHttpError } from "../utils/api-errors.js";
 
 const DEFAULT_INVITE_ROLE = WorkspaceRole.EDITOR;
 
-function err(code: ApiErrorCode) {
-  return apiErr(code);
-}
-
 async function getExcludedUserIds(workspaceId: string): Promise<Set<number>> {
-  const workspace = await prisma.workspaces.findUnique({
-    where: { id: workspaceId },
-    select: { user_id: true },
-  });
+  const [workspace, members, pendingInvites] = await Promise.all([
+    prisma.workspaces.findUnique({
+      where: { id: workspaceId },
+      select: { user_id: true },
+    }),
 
-  const members = await prisma.workspace_members.findMany({
-    where: { workspace_id: workspaceId },
-    select: { user_id: true },
-  });
+    prisma.workspace_members.findMany({
+      where: { workspace_id: workspaceId },
+      select: { user_id: true },
+    }),
 
-  const pendingInvites = await prisma.workspace_member_invites.findMany({
-    where: { workspace_id: workspaceId, status: MemberInviteStatus.PENDING },
-    select: { invitee_id: true },
-  });
+    prisma.workspace_member_invites.findMany({
+      where: { workspace_id: workspaceId, status: MemberInviteStatus.PENDING },
+      select: { invitee_id: true },
+    }),
+  ]);
 
   const ids = new Set<number>();
   if (workspace) ids.add(workspace.user_id);
@@ -39,15 +37,33 @@ async function getExcludedUserIds(workspaceId: string): Promise<Set<number>> {
   return ids;
 }
 
-export async function getMembers(workspaceId: string, userId: number) {
+type MembersResult = {
+  members: {
+    userId: number;
+    name: string;
+    isOwner: boolean;
+    role: WorkspaceRole;
+  }[];
+  pendingInvites: {
+    id: string;
+    userId: number;
+    name: string;
+    role: WorkspaceRole;
+  }[];
+};
+
+export async function getMembers(
+  workspaceId: string,
+  userId: number,
+): Promise<MembersResult> {
   const access = await getWorkspaceAccess(workspaceId, userId);
-  if (!access) return null;
+  if (!access) throw new ApiHttpError("workspace_not_found");
 
   const workspace = await prisma.workspaces.findUnique({
     where: { id: workspaceId },
     select: { users: { select: { id: true, name: true } } },
   });
-  if (!workspace) return null;
+  if (!workspace) throw new ApiHttpError("workspace_not_found");
 
   const members = await prisma.workspace_members.findMany({
     where: { workspace_id: workspaceId },
@@ -61,7 +77,10 @@ export async function getMembers(workspaceId: string, userId: number) {
 
   const pendingInvites = canManageMembers
     ? await prisma.workspace_member_invites.findMany({
-        where: { workspace_id: workspaceId, status: MemberInviteStatus.PENDING },
+        where: {
+          workspace_id: workspaceId,
+          status: MemberInviteStatus.PENDING,
+        },
         include: { invitee: { select: { id: true, name: true } } },
         orderBy: { created_at: "desc" },
       })
@@ -105,7 +124,7 @@ export async function searchUsersToInvite(
     actorId,
     "manage_members",
   );
-  if (!access) return null;
+  if (!access) throw new ApiHttpError("workspace_not_found");
 
   const excludedIds = await getExcludedUserIds(workspaceId);
   excludedIds.add(actorId);
@@ -143,21 +162,22 @@ export async function inviteUser(
     actorId,
     "manage_members",
   );
-  if (!access) return err("workspace_not_found");
+  if (!access) throw new ApiHttpError("workspace_not_found");
 
   const workspace = await prisma.workspaces.findUnique({
     where: { id: workspaceId },
     select: { user_id: true, name: true },
   });
-  if (!workspace) return err("workspace_not_found");
+  if (!workspace) throw new ApiHttpError("workspace_not_found");
 
-  if (workspace.user_id === targetUserId) return err("target_is_owner");
+  if (workspace.user_id === targetUserId)
+    throw new ApiHttpError("target_is_owner");
 
   const targetUser = await prisma.users.findUnique({
     where: { id: targetUserId },
     select: { id: true, name: true },
   });
-  if (!targetUser) return err("user_not_found");
+  if (!targetUser) throw new ApiHttpError("user_not_found");
 
   const alreadyMember = await prisma.workspace_members.findUnique({
     where: {
@@ -167,7 +187,7 @@ export async function inviteUser(
       },
     },
   });
-  if (alreadyMember) return err("already_member");
+  if (alreadyMember) throw new ApiHttpError("already_member");
 
   const existingInvite = await prisma.workspace_member_invites.findUnique({
     where: {
@@ -178,7 +198,7 @@ export async function inviteUser(
     },
   });
   if (existingInvite?.status === MemberInviteStatus.PENDING) {
-    return err("already_invited");
+    throw new ApiHttpError("already_invited");
   }
 
   const invite = await prisma.workspace_member_invites.upsert({
@@ -223,15 +243,16 @@ export async function removeMember(
     actorId,
     "manage_members",
   );
-  if (!access) return err("workspace_not_found");
+  if (!access) throw new ApiHttpError("workspace_not_found");
 
   const workspace = await prisma.workspaces.findUnique({
     where: { id: workspaceId },
     select: { user_id: true },
   });
-  if (!workspace) return err("workspace_not_found");
-  if (workspace.user_id === targetUserId) return err("owner_remove_forbidden");
-  if (targetUserId === actorId) return err("self_remove_forbidden");
+  if (!workspace) throw new ApiHttpError("workspace_not_found");
+  if (workspace.user_id === targetUserId)
+    throw new ApiHttpError("owner_remove_forbidden");
+  if (targetUserId === actorId) throw new ApiHttpError("self_remove_forbidden");
 
   const member = await prisma.workspace_members.findUnique({
     where: {
@@ -241,7 +262,7 @@ export async function removeMember(
       },
     },
   });
-  if (!member) return err("member_not_found");
+  if (!member) throw new ApiHttpError("member_not_found");
 
   await prisma.workspace_members.delete({
     where: {
@@ -273,14 +294,15 @@ export async function updateMemberRole(
     actorId,
     "manage_members",
   );
-  if (!access) return err("workspace_not_found");
+  if (!access) throw new ApiHttpError("workspace_not_found");
 
   const workspace = await prisma.workspaces.findUnique({
     where: { id: workspaceId },
     select: { user_id: true },
   });
-  if (!workspace) return err("workspace_not_found");
-  if (workspace.user_id === targetUserId) return err("owner_role_forbidden");
+  if (!workspace) throw new ApiHttpError("workspace_not_found");
+  if (workspace.user_id === targetUserId)
+    throw new ApiHttpError("owner_role_forbidden");
 
   const member = await prisma.workspace_members.findUnique({
     where: {
@@ -290,7 +312,7 @@ export async function updateMemberRole(
       },
     },
   });
-  if (!member) return err("member_not_found");
+  if (!member) throw new ApiHttpError("member_not_found");
 
   await prisma.workspace_members.update({
     where: {
@@ -307,8 +329,8 @@ export async function updateMemberRole(
 
 export async function leaveWorkspace(workspaceId: string, userId: number) {
   const access = await getWorkspaceAccess(workspaceId, userId);
-  if (!access) return err("workspace_not_found");
-  if (access.isOwner) return err("owner_leave_forbidden");
+  if (!access) throw new ApiHttpError("workspace_not_found");
+  if (access.isOwner) throw new ApiHttpError("owner_leave_forbidden");
 
   await prisma.workspace_members.delete({
     where: {
@@ -353,11 +375,11 @@ export async function acceptInvite(inviteId: string, userId: number) {
   });
 
   if (!invite || invite.invitee_id !== userId) {
-    return err("invite_not_found");
+    throw new ApiHttpError("invite_not_found");
   }
 
   if (invite.status !== MemberInviteStatus.PENDING) {
-    return err("invite_already_processed");
+    throw new ApiHttpError("invite_already_processed");
   }
 
   await prisma.$transaction(async (tx) => {
@@ -403,11 +425,11 @@ export async function declineInvite(inviteId: string, userId: number) {
   });
 
   if (!invite || invite.invitee_id !== userId) {
-    return err("invite_not_found");
+    throw new ApiHttpError("invite_not_found");
   }
 
   if (invite.status !== MemberInviteStatus.PENDING) {
-    return err("invite_already_processed");
+    throw new ApiHttpError("invite_already_processed");
   }
 
   await prisma.workspace_member_invites.update({

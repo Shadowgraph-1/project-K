@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma.js";
-import { apiErr, type ApiError } from "../utils/api-errors.js";
+import { ApiHttpError } from "../utils/api-errors.js";
+import { isFeatureEnabled } from "./feature-flags.service.js";
 
 export type AuthUser = {
   id: number;
@@ -12,14 +13,18 @@ export async function registerUser(
   name: string,
   email: string,
   password: string,
-): Promise<AuthUser | ApiError> {
+): Promise<AuthUser> {
+  if (!isFeatureEnabled("registration_open")) {
+    throw new ApiHttpError("forbidden");
+  }
+
   const existing = await prisma.users.findUnique({
     where: { email },
     select: { id: true },
   });
 
   if (existing) {
-    return apiErr("email_taken");
+    throw new ApiHttpError("email_taken");
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -41,7 +46,7 @@ export async function registerUser(
 export async function loginUser(
   email: string,
   password: string,
-): Promise<AuthUser | ApiError> {
+): Promise<AuthUser> {
   const user = await prisma.users.findUnique({
     where: { email },
     select: {
@@ -53,12 +58,12 @@ export async function loginUser(
   });
 
   if (!user) {
-    return apiErr("invalid_credentials");
+    throw new ApiHttpError("invalid_credentials");
   }
 
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
-    return apiErr("invalid_credentials");
+    throw new ApiHttpError("invalid_credentials");
   }
 
   return {

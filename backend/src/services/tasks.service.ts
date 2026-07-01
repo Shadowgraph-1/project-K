@@ -1,22 +1,30 @@
 import { Activity } from "../constants/activity-types.js";
+import { TaskStatus } from "../constants/task-statuses.js";
 import { prisma } from "../db/prisma.js";
 import { taskSelect, type TaskRow } from "../mappers/task.mapper.js";
 import { assertTaskAccess, assertWorkspaceAccess } from "../permissions.js";
-import { createTaskActivityData } from "../utils/task-activity-data.js";
-import type { TaskCreateInput, TaskPatchInput } from "../schemas/task.schema.js";
+import type {
+  TaskCreateInput,
+  TaskPatchInput,
+} from "../schemas/task.schema.js";
+import { ApiHttpError } from "../utils/api-errors.js";
 
 export type { TaskCreateInput, TaskPatchInput as TaskPatch };
 
 export async function listTasksByWorkspace(
   workspaceId: string,
   userId: number,
-): Promise<TaskRow[] | null> {
+  filters?: { status?: TaskStatus },
+): Promise<TaskRow[]> {
   if (!(await assertWorkspaceAccess(workspaceId, userId, "view"))) {
-    return null;
+    throw new ApiHttpError("workspace_not_found");
   }
 
   return prisma.tasks.findMany({
-    where: { workspace_id: workspaceId },
+    where: {
+      workspace_id: workspaceId,
+      ...(filters?.status ? { status: filters.status } : {}),
+    },
     orderBy: [{ sort_order: "asc" }, { created_at: "asc" }],
     select: taskSelect,
   });
@@ -25,9 +33,11 @@ export async function listTasksByWorkspace(
 export async function createTask(
   userId: number,
   input: TaskCreateInput,
-): Promise<TaskRow | null> {
-  if (!(await assertWorkspaceAccess(input.workspaceId, userId, "create_task"))) {
-    return null;
+): Promise<TaskRow> {
+  if (
+    !(await assertWorkspaceAccess(input.workspaceId, userId, "create_task"))
+  ) {
+    throw new ApiHttpError("workspace_not_found");
   }
 
   return prisma.$transaction(async (tx) => {
@@ -41,14 +51,14 @@ export async function createTask(
     });
 
     await tx.task_activity.create({
-      data: createTaskActivityData({
+      data: {
         task_id: created.id,
         user_id: userId,
         type: Activity.TASK_CREATED,
         title: "Задача создана",
         body: created.title,
         metadata: {},
-      }),
+      },
     });
 
     return created;
@@ -58,9 +68,9 @@ export async function createTask(
 export async function deleteTask(
   taskId: string,
   userId: number,
-): Promise<{ ok: true } | null> {
+): Promise<{ ok: true }> {
   if (!(await assertTaskAccess(taskId, userId, "delete_task"))) {
-    return null;
+    throw new ApiHttpError("task_not_found");
   }
 
   await prisma.tasks.delete({
@@ -73,9 +83,9 @@ export async function deleteTask(
 export async function deleteAllTasksInWorkspace(
   workspaceId: string,
   userId: number,
-): Promise<{ ok: true; message: string } | null> {
+): Promise<{ ok: true; message: string }> {
   if (!(await assertWorkspaceAccess(workspaceId, userId, "delete_task"))) {
-    return null;
+    throw new ApiHttpError("workspace_not_found");
   }
 
   await prisma.tasks.deleteMany({
@@ -92,9 +102,9 @@ export async function updateTask(
   taskId: string,
   userId: number,
   patch: TaskPatchInput,
-): Promise<TaskRow | null> {
+): Promise<TaskRow> {
   if (!(await assertTaskAccess(taskId, userId, "edit_task"))) {
-    return null;
+    throw new ApiHttpError("task_not_found");
   }
 
   return prisma.tasks.update({
@@ -102,12 +112,11 @@ export async function updateTask(
     data: {
       title: patch.title?.trim(),
       description: patch.description ?? undefined,
-      tags: patch.tags === "" ? null : patch.tags ?? undefined,
+      tags: patch.tags === "" ? null : (patch.tags ?? undefined),
       start_date: patch.startDate ?? undefined,
-      due_date: patch.dueDate === "" ? null : patch.dueDate ?? undefined,
+      due_date: patch.dueDate === "" ? null : (patch.dueDate ?? undefined),
       creator: patch.creator ?? undefined,
       status: patch.status ?? undefined,
-      checked: patch.checked ?? undefined,
     },
     select: taskSelect,
   });

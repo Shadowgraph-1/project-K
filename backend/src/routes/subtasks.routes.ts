@@ -1,128 +1,105 @@
 import type { FastifyPluginAsync } from "fastify";
 import * as subtaskService from "../services/subtasks.service.js";
 import { toSubtaskDto } from "../mappers/subtask.mapper.js";
-import { sendServiceResult } from "../utils/api-errors.js";
+import {
+  subtaskCreateSchema,
+  subtaskIdParamSchema,
+  subtaskPatchSchema,
+  taskIdParamSchema,
+} from "../schemas/subtask.schema.js";
+import { parseBody } from "../utils/parse-body.js";
+import { routeSchema } from "../openapi/route-schema.js";
+import {
+  errorResponse,
+  jsonObject,
+  subtaskDto,
+  subtaskListResponse,
+} from "../openapi/responses.js";
 
 const subtaskRoutes: FastifyPluginAsync = async (app) => {
-  app.get(
+  app.get<{ Params: { taskId: string } }>(
     "/tasks/:taskId/subtasks",
     {
-      schema: {
-        params: {
-          type: "object",
-          required: ["taskId"],
-          properties: {
-            taskId: { type: "string" },
-          },
-        },
-      },
+      schema: routeSchema({
+        tags: ["Подзадачи"],
+        summary: "Список подзадач",
+        description: "Все подзадачи указанной задачи.",
+        security: true,
+        params: taskIdParamSchema,
+        response: { 200: subtaskListResponse, 403: errorResponse, 404: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { taskId } = request.params as { taskId: string };
-      const rows = sendServiceResult(
-        reply,
-        await subtaskService.listSubtasks(taskId, request.user.id),
-        "task_not_found",
-      );
-      if (!rows) return;
+    async (request) => {
+      const { taskId } = parseBody(taskIdParamSchema, request.params);
+      const rows = await subtaskService.listSubtasks(taskId, request.user.id);
       return rows.map(toSubtaskDto);
     },
   );
 
-  app.post(
+  app.post<{ Params: { taskId: string } }>(
     "/tasks/:taskId/subtasks",
     {
-      schema: {
-        params: {
-          type: "object",
-          required: ["taskId"],
-          properties: {
-            taskId: { type: "string" },
-          },
-        },
-        body: {
-          type: "object",
-          required: ["title"],
-          properties: {
-            title: { type: "string", minLength: 1 },
-          },
-          additionalProperties: false,
-        },
-      },
+      schema: routeSchema({
+        tags: ["Подзадачи"],
+        summary: "Создать подзадачу",
+        description: "Добавляет шаг декомпозиции. Статус по умолчанию — `IN_PROGRESS`.",
+        security: true,
+        params: taskIdParamSchema,
+        body: subtaskCreateSchema,
+        response: { 200: subtaskDto, 403: errorResponse, 404: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { taskId } = request.params as { taskId: string };
-      const { title } = request.body as { title: string };
-
-      const result = sendServiceResult(
-        reply,
-        await subtaskService.createSubtask(taskId, request.user.id, title),
-        "task_not_found",
+    async (request) => {
+      const { taskId } = parseBody(taskIdParamSchema, request.params);
+      const { title } = parseBody(subtaskCreateSchema, request.body);
+      const result = await subtaskService.createSubtask(
+        taskId,
+        request.user.id,
+        title,
       );
-      if (!result) return;
       return toSubtaskDto(result);
     },
   );
 
-  app.patch(
+  app.patch<{ Params: { id: string } }>(
     "/subtasks/:id",
     {
-      schema: {
-        params: {
-          type: "object",
-          required: ["id"],
-          properties: {
-            id: { type: "string" },
-          },
-        },
-        body: {
-          type: "object",
-          minProperties: 1,
-          properties: {
-            title: { type: "string", minLength: 1 },
-            status: { type: "string" },
-          },
-          additionalProperties: false,
-        },
-      },
+      schema: routeSchema({
+        tags: ["Подзадачи"],
+        summary: "Обновить подзадачу",
+        description: "Изменить название или статус подзадачи.",
+        security: true,
+        params: subtaskIdParamSchema,
+        body: subtaskPatchSchema,
+        response: { 200: subtaskDto, 403: errorResponse, 404: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const body = request.body as { title?: string; status?: string };
-
-      const result = sendServiceResult(
-        reply,
-        await subtaskService.updateSubtask(id, request.user.id, body),
-        "subtask_not_found",
+    async (request) => {
+      const { id } = parseBody(subtaskIdParamSchema, request.params);
+      const body = parseBody(subtaskPatchSchema, request.body);
+      const result = await subtaskService.updateSubtask(
+        id,
+        request.user.id,
+        body,
       );
-      if (!result) return;
       return toSubtaskDto(result);
     },
   );
 
-  app.delete(
+  app.delete<{ Params: { id: string } }>(
     "/subtasks/:id",
     {
-      schema: {
-        params: {
-          type: "object",
-          required: ["id"],
-          properties: {
-            id: { type: "string" },
-          },
-        },
-      },
+      schema: routeSchema({
+        tags: ["Подзадачи"],
+        summary: "Удалить подзадачу",
+        security: true,
+        params: subtaskIdParamSchema,
+        response: { 200: jsonObject, 403: errorResponse, 404: errorResponse },
+      }),
     },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-
-      const result = sendServiceResult(
-        reply,
-        await subtaskService.deleteSubtask(id, request.user.id),
-        "subtask_not_found",
-      );
-      if (!result) return;
-      return result;
+    async (request) => {
+      const { id } = parseBody(subtaskIdParamSchema, request.params);
+      return subtaskService.deleteSubtask(id, request.user.id);
     },
   );
 };

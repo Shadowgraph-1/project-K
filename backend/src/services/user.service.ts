@@ -2,7 +2,10 @@ import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma.js";
 import { ApiHttpError } from "../utils/api-errors.js";
 
-export async function deleteAccount(userId: number, password: string) {
+export async function deleteAccount(
+  userId: number,
+  password: string,
+): Promise<{ ok: true }> {
   const user = await prisma.users.findUnique({
     where: { id: userId },
     select: { id: true, password_hash: true },
@@ -18,4 +21,5 @@ export async function deleteAccount(userId: number, password: string) {
   }
 
   await prisma.users.delete({ where: { id: userId } });
+  return { ok: true };
 }

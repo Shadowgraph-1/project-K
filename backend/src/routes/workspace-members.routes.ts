@@ -1,7 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
-import { WorkspaceRole } from "../generated/prisma/client.js";
 import {
-  ASSIGNABLE_ROLES,
   acceptInvite,
   declineInvite,
   getIncomingInvites,
@@ -13,145 +11,214 @@ import {
   updateMemberRole,
 } from "../services/workspace-members.service.js";
 import {
-  isApiError,
-  replyApiError,
-  sendServiceResult,
-} from "../utils/api-errors.js";
+  inviteIdParamSchema,
+  workspaceInviteUserSchema,
+  workspaceLeaveParamSchema,
+  workspaceMemberParamSchema,
+  workspaceMemberRoleSchema,
+  workspaceMembersParamSchema,
+  workspaceMembersSearchQuerySchema,
+} from "../schemas/workspace-member.schema.js";
+import { parseBody } from "../utils/parse-body.js";
+import { routeSchema } from "../openapi/route-schema.js";
+import { errorResponse, jsonArray, jsonObject } from "../openapi/responses.js";
 
 const workspaceMembersRoutes: FastifyPluginAsync = async (app) => {
-  app.get("/workspaces/:id/members", async (request, reply) => {
-    const { id: workspaceId } = request.params as { id: string };
+  app.get<{ Params: { id: string } }>(
+    "/workspaces/:id/members",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Участники проекта",
+        description: "Список членов команды с ролями (OWNER, ADMIN, EDITOR, …).",
+        security: true,
+        params: workspaceMembersParamSchema,
+        response: { 200: jsonArray, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { id: workspaceId } = parseBody(
+        workspaceMembersParamSchema,
+        request.params,
+      );
+      return getMembers(workspaceId, request.user.id);
+    },
+  );
 
-    const result = sendServiceResult(
-      reply,
-      await getMembers(workspaceId, request.user.id),
-      "workspace_not_found",
-    );
-    if (!result) return;
-    return result;
-  });
-
-  app.get("/workspaces/:id/members/search", async (request, reply) => {
-    const { id: workspaceId } = request.params as { id: string };
-    const { q = "", limit: limitRaw, offset: offsetRaw } = request.query as {
-      q?: string;
-      limit?: string;
-      offset?: string;
-    };
-
-    const query = q.trim();
-    const offset = Math.max(Number(offsetRaw) || 0, 0);
-    const limit = Math.min(Math.max(Number(limitRaw) || 30, 1), 50);
-
-    const result = sendServiceResult(
-      reply,
-      await searchUsersToInvite(
+  app.get<{ Params: { id: string } }>(
+    "/workspaces/:id/members/search",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Поиск для приглашения",
+        description:
+          "Ищет пользователей по имени или e-mail для добавления в проект.\n\n" +
+          "Query: `q`, `limit` (до 50), `offset`.",
+        security: true,
+        params: workspaceMembersParamSchema,
+        querystring: workspaceMembersSearchQuerySchema,
+        response: { 200: jsonArray, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { id: workspaceId } = parseBody(
+        workspaceMembersParamSchema,
+        request.params,
+      );
+      const { q, limit, offset } = parseBody(
+        workspaceMembersSearchQuerySchema,
+        request.query,
+      );
+      return searchUsersToInvite(
         workspaceId,
         request.user.id,
-        query,
+        q.trim(),
         limit,
         offset,
-      ),
-      "workspace_not_found",
-    );
-    if (!result) return;
-    return result;
-  });
+      );
+    },
+  );
 
-  app.post("/workspaces/:id/members", async (request, reply) => {
-    const { id: workspaceId } = request.params as { id: string };
-    const body = request.body as { userId?: number };
+  app.post<{ Params: { id: string } }>(
+    "/workspaces/:id/members",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Пригласить пользователя",
+        description:
+          "Отправляет персональное приглашение пользователю по числовому `userId`.",
+        security: true,
+        params: workspaceMembersParamSchema,
+        body: workspaceInviteUserSchema,
+        response: { 200: jsonObject, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { id: workspaceId } = parseBody(
+        workspaceMembersParamSchema,
+        request.params,
+      );
+      const { userId } = parseBody(workspaceInviteUserSchema, request.body);
+      return inviteUser(workspaceId, userId, request.user.id);
+    },
+  );
 
-    if (typeof body?.userId !== "number" || !Number.isInteger(body.userId)) {
-      return replyApiError(reply, "missing_user_id");
-    }
+  app.delete<{ Params: { workspaceId: string; userId: string } }>(
+    "/workspaces/:workspaceId/members/:userId",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Удалить участника",
+        description: "Исключает пользователя из проекта. Требуются права админа/владельца.",
+        security: true,
+        params: workspaceMemberParamSchema,
+        response: { 200: jsonObject, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { workspaceId, userId: targetUserId } = parseBody(
+        workspaceMemberParamSchema,
+        request.params,
+      );
+      return removeMember(workspaceId, targetUserId, request.user.id);
+    },
+  );
 
-    const result = await inviteUser(workspaceId, body.userId, request.user.id);
-    if (isApiError(result)) {
-      return replyApiError(reply, result.error);
-    }
-    return result;
-  });
+  app.patch<{ Params: { workspaceId: string; userId: string } }>(
+    "/workspaces/:workspaceId/members/:userId",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Сменить роль",
+        description:
+          "Обновляет роль участника: ADMIN, EDITOR, COMMENTER, VIEWER.\n\n" +
+          "Роль OWNER через этот метод не назначается.",
+        security: true,
+        params: workspaceMemberParamSchema,
+        body: workspaceMemberRoleSchema,
+        response: { 200: jsonObject, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { workspaceId, userId: targetUserId } = parseBody(
+        workspaceMemberParamSchema,
+        request.params,
+      );
+      const { role } = parseBody(workspaceMemberRoleSchema, request.body);
+      return updateMemberRole(workspaceId, targetUserId, request.user.id, role);
+    },
+  );
 
-  app.delete("/workspaces/:workspaceId/members/:userId", async (request, reply) => {
-    const { workspaceId, userId: targetUserIdRaw } = request.params as {
-      workspaceId: string;
-      userId: string;
-    };
+  app.post<{ Params: { workspaceId: string } }>(
+    "/workspaces/:workspaceId/members/leave",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Покинуть проект",
+        description: "Текущий пользователь выходит из shared-проекта.",
+        security: true,
+        params: workspaceLeaveParamSchema,
+        response: { 200: jsonObject, 403: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { workspaceId } = parseBody(
+        workspaceLeaveParamSchema,
+        request.params,
+      );
+      return leaveWorkspace(workspaceId, request.user.id);
+    },
+  );
 
-    const targetUserId = Number(targetUserIdRaw);
-    if (!Number.isInteger(targetUserId)) {
-      return replyApiError(reply, "invalid_user_id");
-    }
+  app.get(
+    "/invites/incoming",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Входящие приглашения",
+        description: "Список pending-приглашений в проекты для текущего пользователя.",
+        security: true,
+        response: { 200: jsonArray },
+      }),
+    },
+    async (request) => {
+      return getIncomingInvites(request.user.id);
+    },
+  );
 
-    const result = await removeMember(workspaceId, targetUserId, request.user.id);
-    if (isApiError(result)) {
-      return replyApiError(reply, result.error);
-    }
-    return result;
-  });
+  app.post<{ Params: { id: string } }>(
+    "/invites/:id/accept",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Принять приглашение",
+        security: true,
+        params: inviteIdParamSchema,
+        response: { 200: jsonObject, 404: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { id } = parseBody(inviteIdParamSchema, request.params);
+      return acceptInvite(id, request.user.id);
+    },
+  );
 
-  app.patch("/workspaces/:workspaceId/members/:userId", async (request, reply) => {
-    const { workspaceId, userId: targetUserIdRaw } = request.params as {
-      workspaceId: string;
-      userId: string;
-    };
-
-    const targetUserId = Number(targetUserIdRaw);
-    if (!Number.isInteger(targetUserId)) {
-      return replyApiError(reply, "invalid_user_id");
-    }
-
-    const { role } = request.body as { role?: WorkspaceRole };
-    if (!role || !ASSIGNABLE_ROLES.includes(role)) {
-      return replyApiError(reply, "invalid_role");
-    }
-
-    const result = await updateMemberRole(
-      workspaceId,
-      targetUserId,
-      request.user.id,
-      role,
-    );
-    if (isApiError(result)) {
-      return replyApiError(reply, result.error);
-    }
-    return result;
-  });
-
-  app.post("/workspaces/:workspaceId/members/leave", async (request, reply) => {
-    const { workspaceId } = request.params as { workspaceId: string };
-
-    const result = await leaveWorkspace(workspaceId, request.user.id);
-    if (isApiError(result)) {
-      return replyApiError(reply, result.error);
-    }
-    return result;
-  });
-
-  app.get("/invites/incoming", async (request) => {
-    return getIncomingInvites(request.user.id);
-  });
-
-  app.post("/invites/:id/accept", async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    const result = await acceptInvite(id, request.user.id);
-    if (isApiError(result)) {
-      return replyApiError(reply, result.error);
-    }
-    return result;
-  });
-
-  app.post("/invites/:id/decline", async (request, reply) => {
-    const { id } = request.params as { id: string };
-
-    const result = await declineInvite(id, request.user.id);
-    if (isApiError(result)) {
-      return replyApiError(reply, result.error);
-    }
-    return result;
-  });
+  app.post<{ Params: { id: string } }>(
+    "/invites/:id/decline",
+    {
+      schema: routeSchema({
+        tags: ["Участники"],
+        summary: "Отклонить приглашение",
+        security: true,
+        params: inviteIdParamSchema,
+        response: { 200: jsonObject, 404: errorResponse },
+      }),
+    },
+    async (request) => {
+      const { id } = parseBody(inviteIdParamSchema, request.params);
+      return declineInvite(id, request.user.id);
+    },
+  );
 };
 
 export default workspaceMembersRoutes;
