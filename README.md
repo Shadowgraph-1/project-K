@@ -1,10 +1,10 @@
 <div align="center">
 
-# Kono
+<a id="kono"></a>
 
-<img src="https://raw.githubusercontent.com/Shadowgraph-1/project-K/main/frontend/docs/readme_logo.jpg?cb=20260511" alt="Kono" width="420">
+<img src="./frontend/public/readme_logo.jpg" alt="Kono — K-Project" width="920">
 
-**Таск-трекер с AI-компаньоном** — управление проектами и задачами для небольших команд с персонажем который знает контекст твоей работы.
+**Таск-трекер с AI-компаньоном** — управление проектами и задачами для небольших команд с персонажем, который знает контекст твоей работы.
 
 [![Linear — проект](https://img.shields.io/badge/Linear-5E6AD2?style=for-the-badge&logo=linear&logoColor=white)](https://linear.app/project-k-value/project/focus-with-me-1a3e5e26fbfa/overview)
 [![Figma — макеты](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white)](https://www.figma.com/design/gV6wyVsuiNxqcDrhfwb7JU/Project-K?t=UfhMy33D2pk2PALT-0)
@@ -14,7 +14,6 @@
 ## Содержание
 
 - [Kono](#kono)
-  - [Содержание](#содержание)
   - [1. Концепция и проблематика](#1-концепция-и-проблематика)
   - [2. Целевая аудитория](#2-целевая-аудитория)
   - [3. Стек технологий](#3-стек-технологий)
@@ -29,14 +28,18 @@
   - [10. Архитектура](#10-архитектура)
   - [11. Жизненный цикл задачи](#11-жизненный-цикл-задачи)
   - [12. Клиентские пути](#12-клиентские-пути)
+    - [Виды задач в сессии](#виды-задач-в-сессии)
+    - [Карточка задачи — комментарии и activity](#карточка-задачи--комментарии-и-activity)
   - [13. Функциональные требования MoSCoW](#13-функциональные-требования-moscow)
   - [14. Пользовательские сценарии](#14-пользовательские-сценарии)
   - [15. План работ](#15-план-работ)
   - [16. Локальный запуск](#16-локальный-запуск)
     - [Требования](#требования)
+    - [Docker Compose](#docker-compose)
     - [Frontend](#frontend)
     - [Backend](#backend)
     - [Endpoints](#endpoints)
+    - [Swagger — документация API](#swagger--документация-api)
     - [Переменные окружения](#переменные-окружения)
   - [17. Структура репозитория](#17-структура-репозитория)
 
@@ -77,12 +80,14 @@
 | SPA                   | React 19, TypeScript, Vite            | **Внедрено**                                    |
 | Маршрутизация         | React Router                          | **Внедрено**                                    |
 | Стилизация            | Tailwind CSS v4, shadcn/ui            | **Внедрено**                                    |
-| Серверное состояние   | TanStack Query                        | **Внедрено** (workspaces, invites, tasks, members) |
-| Клиентское состояние  | Zustand                               | **Внедрено** (auth, UI, bulk-selection задач)   |
+| Серверное состояние   | TanStack Query                        | **Внедрено** (workspaces, invites, tasks, subtasks, activity, members, health) |
+| Клиентское состояние  | Zustand + локальный UI state          | **Внедрено** (auth, модалки, bulk-selection в `WorkspaceTasksBlock`) |
 | HTTP-клиент           | Axios                                 | **Внедрено**                                    |
 | API                   | Node.js, Fastify, Zod                 | **Внедрено** (auth, workspaces, tasks, team)    |
 | ORM / миграции        | Prisma                                | **Внедрено**                                    |
 | СУБД                  | PostgreSQL                            | **Внедрено**                                    |
+| Документация API      | Swagger UI (`/docs`)                  | **Внедрено**                                    |
+| Контейнеризация       | Docker, Docker Compose, Nginx         | **Внедрено**                                    |
 
 ---
 
@@ -92,18 +97,18 @@
 
 | Экран / модуль     | Назначение                                                               |
 | ------------------ | ------------------------------------------------------------------------ |
-| **Дашборд**        | Обзор активных задач, последние изменения в проектах, активность команды |
-| **Задачи**         | Список и канбан по статусам, фильтры, поиск, создание и редактирование   |
+| **Задачи**         | Hub проектов, три вида (список, «Даты», канбан), фильтр по статусу, bulk-действия, карточка задачи |
 | **Проекты**        | Создание проектов, управление участниками, спринты                       |
 | **Компаньон**      | Чат в сайдбаре, план дня, разбивка задачи на подзадачи, выбор персонажа  |
-| **Уведомления**    | In-app уведомления о назначении, смене статуса, комментариях             |
-| **Личный кабинет** | Профиль, смена пароля, аватар, история действий пользователя             |
+| **Уведомления**    | In-app в сессии проекта: назначение, статус, комментарии (без email и рассылок) |
+| **Настройки**      | Профиль, смена пароля, управление LLM-ключами (OpenAI-compatible)        |
+| **Статус сервиса** | Health-check API и страница состояния сервисов в сессии                    |
 
 ### Роль `admin`
 
 | Экран / модуль   | Назначение                                                   |
 | ---------------- | ------------------------------------------------------------ |
-| **Админ-панель** | Список пользователей, смена ролей, просмотр всех проектов |
+| **Админ-панель** | Список пользователей, просмотр workspace, управление доступом |
 | **Статистика**   | Агрегированная активность по пользователям и проектам        |
 
 ---
@@ -112,10 +117,11 @@
 
 1. **AI-компаньон с контекстом проекта** — чат в сессии видит список задач и отвечает по делу (локальная LLM через LM Studio или любой OpenAI-compatible API).
 2. **Совместные проекты** — владелец, роли участников, инвайты, общий список задач.
-3. **Лента activity** — создание задач, подзадач, комментарии и смены статусов пишутся в историю карточки.
-4. **Подзадачи и спринты** — декомпозиция через AI или вручную, группировка работы по циклам с датами.
-5. **Командная прозрачность** — назначение исполнителей, комментарии к задачам, активность участников.
-6. **Уведомления** — in-app и email при назначении на задачу, смене статуса или приближении дедлайна.
+3. **Лента activity и комментарии** — в карточке задачи одна секция «Комментарии»: системные события (статусы, подзадачи) и пользовательские сообщения в общем потоке; вложенные ответы, сворачиваемые ветки, быстрый inline-ответ под сообщением (как на Reddit).
+4. **Виды задач в сессии** — список (строки с контекстным меню), канбан по статусам, вид «Даты» с группировкой **относительно сегодня** (просрочено → сегодня → завтра → неделя → позже → без даты).
+5. **Подзадачи и спринты** — декомпозиция через AI или вручную, группировка работы по циклам с датами.
+6. **Командная прозрачность** — назначение исполнителей, комментарии к задачам, активность участников.
+7. **Уведомления** — только in-app внутри проекта (колокольчик в сессии): назначение, смена статуса, комментарии. Email и массовые рассылки **не планируются** на текущем этапе.
 
 ---
 
@@ -130,95 +136,43 @@
 | Сервис                 | Назначение                                     | Статус      |
 | ---------------------- | ---------------------------------------------- | ----------- |
 | **LM Studio / OpenAI-compatible** | Чат Kono AI (`POST /api/ai/chat`) | **Внедрено** (базово) |
-| **SMTP (Resend)**      | Инвайты в команду, уведомления о дедлайнах     | Планируется |
+| **SMTP (Resend)**      | Email-инвайты и рассылки                         | **Не планируется** (только in-app) |
 | **OAuth (Google)**     | Вход через Google помимо email/password        | Опционально |
 
 ---
 
 ## 8. Модель данных
 
-Ниже — логические сущности и ключевые атрибуты (физическая схема БД уточняется при миграциях).
+Ниже — сущности из `backend/prisma/schema.prisma`. В UI термин **workspace** = **проект** (публичный ключ вида `K-XXXXXX`).
 
-| Сущность        | Ключевые поля                                                                                                       |
-| --------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `User`          | `id`, имя, e-mail, хэш пароля, аватар, `role`, `created_at`                                                        |
-| `Workspace`     | `id`, название, `owner_id`, `created_at`                                                                            |
-| `Member`        | `id`, `workspace_id`, `user_id`, `role`, `invited_at`                                                               |
-| `Project`       | `id`, `workspace_id`, название, описание, `created_at`                                                              |
-| `Issue`         | `id`, `project_id`, `assignee_id`, название, описание, `status`, `priority`, `deadline`, `parent_id`, `created_at` |
-| `StatusHistory` | `id`, `issue_id`, `from_status`, `to_status`, `changed_by`, `changed_at`                                            |
-| `Comment`       | `id`, `issue_id`, `user_id`, текст, `created_at`                                                                    |
-| `Sprint`        | `id`, `project_id`, название, `starts_at`, `ends_at`                                                                |
-| `SprintIssue`   | `id`, `sprint_id`, `issue_id`                                                                                        |
-| `Notification`  | `id`, `user_id`, тип, текст, прочитано, `created_at`                                                                |
-| `ActivityLog`   | `id`, `user_id`, `workspace_id`, действие, `entity_type`, `entity_id`, `created_at`                                 |
-| `Companion`     | `id`, имя, описание, аватар, стиль общения                                                                          |
+| Сущность                  | Ключевые поля                                                                                    |
+| ------------------------- | ------------------------------------------------------------------------------------------------ |
+| `users`                   | `id`, имя, e-mail, хэш пароля, `created_at`                                                      |
+| `workspaces`              | `id`, `public_key`, `user_id` (владелец), название, `created_at`                                 |
+| `workspace_members`       | `workspace_id`, `user_id`, `role` (`OWNER` … `VIEWER`), `joined_at`                              |
+| `workspace_invites`       | код приглашения, `workspace_id`, роль, `expires_at`, лимит использований                         |
+| `workspace_member_invites`| персональный инвайт: `invitee_id`, `invited_by`, `status` (`PENDING` / `ACCEPTED` / `DECLINED`)  |
+| `tasks`                   | `id`, `workspace_id`, заголовок, описание, `status`, `start_date`, `due_date`, `tags`, `sort_order` |
+| `subtasks`                | `id`, `task_id`, заголовок, `status`, опционально `user_id`                                      |
+| `task_activity`           | `id`, `task_id`, `type`, заголовок, `body`, `metadata` (ветки через `parentActivityId`)          |
+| `user_llm_keys`           | пользовательские ключи LLM: `label`, `api_key`, `key_hint`, `is_active`                          |
 
 ---
 
 ## 9. Концептуальная схема связей (ER)
 
-```
-┌─────────────────┐          ┌──────────────────┐
-│      User       │          │    Workspace     │
-│─────────────────│          │──────────────────│
-│ id (PK)         │          │ id (PK)          │
-│ name            ├──owns───►│ name             │
-│ email           │          │ owner_id (FK)    │
-│ password_hash   │          │ created_at       │
-│ avatar_url      │          └────────┬─────────┘
-│ role            │                   │
-│ created_at      │          ┌────────▼─────────┐
-└────────┬────────┘          │     Member       │
-         │                   │──────────────────│
-         ├──belongs─────────►│ id (PK)          │
-         │                   │ workspace_id(FK) │
-         │                   │ user_id (FK)     │
-         │                   │ role             │
-         │                   │ invited_at       │
-         │                   └──────────────────┘
-         │
-         │          ┌──────────────────┐       ┌──────────────────┐
-         │          │    Project       │       │     Sprint       │
-         │          │──────────────────│       │──────────────────│
-         │          │ id (PK)          │◄──────│ project_id (FK)  │
-         │          │ workspace_id(FK) │       │ id (PK)          │
-         │          │ name             │       │ name             │
-         │          │ description      │       │ starts_at        │
-         │          │ created_at       │       │ ends_at          │
-         │          └────────┬─────────┘       └──────────────────┘
-         │                   │
-         │          ┌────────▼─────────┐       ┌──────────────────┐
-         │          │      Issue       │       │  StatusHistory   │
-         │          │──────────────────│       │──────────────────│
-         │          │ id (PK)          ├──────►│ id (PK)          │
-         │          │ project_id (FK)  │       │ issue_id (FK)    │
-         │          │ assignee_id (FK) │       │ from_status      │
-         │          │ title            │       │ to_status        │
-         │          │ status           │       │ changed_by (FK)  │
-         │          │ priority         │       │ changed_at       │
-         │          │ deadline         │       └──────────────────┘
-         │          │ parent_id (FK)   │
-         │          │ created_at       │       ┌──────────────────┐
-         │          └────────┬─────────┘       │    Comment       │
-         │                   └────────────────►│──────────────────│
-         │                                     │ id (PK)          │
-         │                                     │ issue_id (FK)    │
-         │                                     │ user_id (FK)     │
-         │                                     │ text             │
-         │                                     │ created_at       │
-         │                                     └──────────────────┘
-         │
-         │          ┌──────────────────┐
-         └─────────►│  Notification    │
-                    │──────────────────│
-                    │ id (PK)          │
-                    │ user_id (FK)     │
-                    │ type             │
-                    │ message          │
-                    │ is_read          │
-                    │ created_at       │
-                    └──────────────────┘
+```mermaid
+erDiagram
+  users ||--o{ workspaces : owns
+  users ||--o{ workspace_members : "member of"
+  workspaces ||--o{ workspace_members : has
+  workspaces ||--o{ workspace_invites : "link invites"
+  workspaces ||--o{ workspace_member_invites : "direct invites"
+  workspaces ||--o{ tasks : contains
+  tasks ||--o{ subtasks : has
+  tasks ||--o{ task_activity : logs
+  users ||--o{ task_activity : authors
+  users ||--o{ user_llm_keys : stores
 ```
 
 ---
@@ -230,8 +184,8 @@ flowchart TB
   subgraph FE["Клиент"]
     direction TB
     FE_STACK["React + TypeScript + Vite"]
-    FE_QUERY["TanStack Query — workspaces, tasks, invites, members"]
-    FE_STATE["Zustand — auth, UI, checked-задачи"]
+    FE_QUERY["TanStack Query — entities/*/model"]
+    FE_STATE["Zustand — auth, UI; useState — bulk-выбор задач"]
     FE_STACK --> FE_QUERY
     FE_STACK --> FE_STATE
   end
@@ -246,32 +200,37 @@ flowchart TB
 
   DB[(PostgreSQL)]
   LLM["OpenAI-compatible LLM — AI-компаньон"]
-  SMTP["Resend — email уведомления"]
 
   FE -->|"HTTP REST JSON"| BE
   BE_ORM --> DB
   BE -.-> LLM
-  BE -.-> SMTP
 ```
 
-**Слой данных на фронтенде.** Серверные данные — через TanStack Query (`frontend/src/shared/api/query-keys.ts`, хуки в `entities/*/model`). Подробнее: [`frontend/src/api/README.md`](frontend/src/api/README.md).
+**Слой данных на фронтенде.** HTTP-вызовы — в `frontend/src/api/`. Серверное состояние — TanStack Query (`shared/api/query-keys.ts`, хуки в `entities/*/model`). UI-состояние (выбор задач, модалки) — `useState` / Zustand, не в типах API. Подробнее: [`frontend/src/api/README.md`](frontend/src/api/README.md).
 
 ---
 
 ## 11. Жизненный цикл задачи
 
+В БД и UI используются статусы из `TaskStatus` (Prisma):
+
+| Статус     | Метка в UI   |
+| ---------- | ------------ |
+| `TODO`     | В очереди    |
+| `DONE`     | Готово       |
+| `DEFERRED` | Отложено     |
+| `ISSUES`   | Проблемы     |
+
 ```mermaid
 stateDiagram-v2
-    [*] --> BACKLOG: Задача создана
-    BACKLOG --> TODO: Добавлена в спринт
-    TODO --> IN_PROGRESS: Взята в работу
-    IN_PROGRESS --> IN_REVIEW: Отправлена на ревью
-    IN_REVIEW --> IN_PROGRESS: Возвращена на доработку
-    IN_REVIEW --> DONE: Принята
-    IN_PROGRESS --> CANCELLED: Отменена
-    BACKLOG --> CANCELLED: Отменена
+    [*] --> TODO: Задача создана
+    TODO --> DONE: Выполнена
+    TODO --> DEFERRED: Отложена
+    TODO --> ISSUES: Есть проблемы
+    DEFERRED --> TODO: Вернули в работу
+    ISSUES --> TODO: Проблема решена
+    DONE --> TODO: Переоткрыта
     DONE --> [*]
-    CANCELLED --> [*]
 ```
 
 ---
@@ -280,15 +239,64 @@ stateDiagram-v2
 
 **1. Первый контакт.** Пользователь открывает лендинг — понимает идею, видит блоки про канбан и AI-компаньона. Из шапки или кнопки CTA открывает регистрацию или вход.
 
-**2. Основная работа.** После авторизации пользователь попадает в дашборд: видит активные задачи и последние изменения. Создаёт проект, заполняет бэклог задачами. Переключается между списком и канбан-доской, перетаскивает карточки по статусам.
+**2. Основная работа.** После авторизации пользователь открывает сессию и проект (workspace). Создаёт задачи с датами начала и дедлайном. Переключает вид: **список**, **«Даты»** или **канбан**. В «Датах» сверху — обзор по срокам (слева срочнее, справа дальше), ниже — лента глав с карточками; всё считается **от календарного «сегодня»** на клиенте.
 
 **3. Работа с компаньоном.** В сайдбаре открывает чат с персонажем. Спрашивает что делать сегодня — компаньон смотрит в задачи и отвечает конкретно. Просит разбить большую задачу — компаньон создаёт подзадачи.
 
-**4. Командная работа.** Приглашает коллег по ссылке, назначает задачи, следит за активностью через уведомления. Группирует работу по спринтам с датами.
+**4. Карточка задачи.** Открывает детали: заголовок, подзадачи, свойства. Внизу — секция **«Комментарии»**: корневой композer для новых сообщений; ниже лента событий и комментариев с ветками ответов. Кнопка **«Ответить»** открывает поле ввода прямо под сообщением; ветки со счётчиком **«ответов N»** можно сворачивать и разворачивать.
 
-**5. Администратор.** Отдельный раздел `/admin`: управление пользователями, просмотр всех проектов, агрегированная статистика активности.
+**5. Командная работа.** Приглашает коллег по ссылке, назначает задачи, следит за активностью через уведомления. Группирует работу по спринтам с датами.
 
-**Побочный путь.** Пользователь вводит несуществующий URL — видит страницу 404 с кнопкой возврата на главную.
+**6. Администратор.** Отдельный раздел `/admin`: управление пользователями, просмотр всех проектов, агрегированная статистика активности.
+
+**Побочный путь.** Пользователь вводит несуществующий URL — видит страницу 404 с иллюстрацией и кнопками возврата на главную или в проекты.
+
+### Виды задач в сессии
+
+Переключатель в подшапке проекта (`Workspacetasksubheader`): **Список** · **Даты** · **Канбан**. Реализация: `frontend/src/pages/session/ui/tasks/`.
+
+| Вид (`TasksView`) | Компонент | Назначение |
+| ----------------- | --------- | ---------- |
+| `line` | `WorkspaceListView` + `TaskRow` | Плотный список: статус, приоритет, даты, контекстное меню, bulk-выбор |
+| `timeline` | `TaskTimeline` | План по срокам **относительно сегодня** (см. ниже) |
+| `kanban` | `WorkspaceKanbanView` | Колонки по статусам `TODO`, `ISSUES`, `DEFERRED`, `DONE` |
+
+**Вид «Даты» — привязка к «сегодня».** На клиенте фиксируется начало текущих суток (`00:00` локального времени). Для каждой задачи берётся опорная дата: `dueDate`, иначе `startDate`. Группы:
+
+| Группа | Условие |
+| ------ | ------- |
+| Просрочено | есть `dueDate`, статус не `DONE`, дата &lt; сегодня |
+| Сегодня | опорная дата = сегодня |
+| Завтра | опорная дата = сегодня + 1 день |
+| На этой неделе | позже завтра, но не позже конца текущей календарной недели (воскресенье) |
+| Позже | всё что дальше по календарю |
+| Без даты | нет ни `startDate`, ни `dueDate` |
+
+Сверху — **обзор по срокам**: блоки с названиями групп и счётчиками (не календарная сетка); клик прокручивает к соответствующей главе. Ниже — вертикальная ось с карточками задач. Стили — Tailwind в `TaskTimeline.tsx`, без отдельного блока в `session-shell.css`.
+
+**Канбан.** Колонки и карточки с ключом `K-XXXXXX`, статусом, приоритетом и датой. Drag-and-drop между колонками — **ещё не сделан**.
+
+### Карточка задачи — комментарии и activity
+
+Экран деталей: `TaskDetailsPage` → `task-details/TaskDetailsMain.tsx`. Лента и UI комментариев вынесены в отдельные модули внутри `pages/session/ui/tasks/`:
+
+| Модуль | Назначение |
+| ------ | ---------- |
+| `task-feed/` | `buildActivityFeed` — дерево корневых записей и ответов; форматирование дат |
+| `task-activity/` | Секция «Комментарии»: timeline, ветки, композer, inline-ответ |
+| `task-details/` | Шапка, подзадачи, свойства; оркестрация данных и мутаций |
+
+**Поведение секции «Комментарии»**
+
+| Элемент | Описание |
+| ------- | -------- |
+| Корневой композer | Поле «Оставить комментарий…» над лентой — только новые сообщения верхнего уровня |
+| Лента | Системные события и комментарии в одном потоке; у корневых записей — вертикальная ось с иконками |
+| **Ответить** | Inline-поле под выбранным сообщением или событием (Enter — отправить, Esc — закрыть) |
+| Ветки ответов | Вложенность через `parentActivityId`; короткий L-коннектор от родителя к ответу |
+| Сворачивание | Плашка **«ответов N»** — клик скрывает или показывает всю ветку |
+
+Отдельная боковая панель чата у карточки задачи **убрана** — всё обсуждение в одной секции.
 
 ---
 
@@ -297,9 +305,9 @@ stateDiagram-v2
 | Категория          | Что входит                                                                                                                                                               |
 | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Must**           | Регистрация и вход, CRUD задач и проектов, канбан по статусам, инвайты в команду, роли user/admin, личный кабинет, пагинация и поиск, API + БД для всего ядра           |
-| **Should**         | AI-компаньон с контекстом задач, история статусов, подзадачи, спринты, in-app уведомления, email при инвайте, админ-панель                                               |
-| **Could**          | Email-уведомления о дедлайнах, activity log с графом активности, OAuth через Google, command palette, keyboard shortcuts                                                 |
-| **Won't (сейчас)** | Мобильное нативное приложение, офлайн-режим, real-time WebSocket синхронизация, интеграции с GitHub/Jira                                                                 |
+| **Should**         | AI-компаньон с контекстом задач, история статусов, подзадачи, спринты, in-app уведомления в проекте, админ-панель                                               |
+| **Could**          | Activity log с графом активности, OAuth через Google, command palette, keyboard shortcuts                                                 |
+| **Won't (сейчас)** | Email и массовые рассылки, мобильное нативное приложение, офлайн-режим, real-time WebSocket синхронизация, интеграции с GitHub/Jira                                                                 |
 
 ---
 
@@ -308,11 +316,13 @@ stateDiagram-v2
 1. Как **пользователь**, я хочу **зарегистрироваться и войти**, чтобы **мои проекты и задачи сохранялись между сессиями**.
 2. Как **пользователь**, я хочу **создать проект и пригласить команду**, чтобы **работать над задачами совместно**.
 3. Как **пользователь**, я хочу **создавать задачи с приоритетом, дедлайном и исполнителем**, чтобы **команда понимала что и когда нужно сделать**.
-4. Как **пользователь**, я хочу **перетаскивать задачи по статусам на канбан-доске**, чтобы **видеть прогресс работы визуально**.
-5. Как **пользователь**, я хочу **спросить компаньона что делать сегодня**, чтобы **не тратить время на разбор бэклога**.
-6. Как **пользователь**, я хочу **попросить компаньона разбить задачу на подзадачи**, чтобы **декомпозировать сложную работу быстро**.
-7. Как **пользователь**, я хочу **получать уведомление когда меня назначают на задачу**, чтобы **не пропускать изменения без моего участия**.
-8. Как **администратор**, я хочу **управлять пользователями и просматривать все проекты**, чтобы **контролировать платформу без доступа к БД**.
+4. Как **пользователь**, я хочу **смотреть задачи на канбан-доске по статусам**, чтобы **видеть прогресс работы визуально**.
+5. Как **пользователь**, я хочу **открыть вид «Даты» и сразу понять что срочно сегодня**, чтобы **не разбирать календарь вручную**.
+6. Как **пользователь**, я хочу **спросить компаньона что делать сегодня**, чтобы **не тратить время на разбор бэклога**.
+7. Как **пользователь**, я хочу **попросить компаньона разбить задачу на подзадачи**, чтобы **декомпозировать сложную работу быстро**.
+8. Как **пользователь**, я хочу **видеть in-app уведомления в проекте** (назначение, статус, комментарии), чтобы **не пропускать изменения без моего участия**.
+9. Как **пользователь**, я хочу **оставлять комментарии и отвечать в ветках под задачей**, чтобы **обсуждение не терялось отдельно от истории изменений**.
+10. Как **администратор**, я хочу **управлять пользователями и просматривать все проекты**, чтобы **контролировать платформу без доступа к БД**.
 
 ---
 
@@ -356,7 +366,7 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 - [x] Team API
 - [ ] Поиск, фильтрация, пагинация (расширенные)
 - [ ] История статусов задач как отдельная сущность
-- [ ] Swagger / OpenAPI UI
+- [x] Swagger / OpenAPI UI (`/docs`)
 
 </details>
 
@@ -366,13 +376,15 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 - [x] Сессия: проекты (workspaces), список задач, карточка задачи
 - [x] Подзадачи, activity, свойства задачи
 - [x] Совместная работа: участники, входящие инвайты
-- [x] TanStack Query для серверных данных
-- [ ] Дашборд: активные задачи, последние изменения
-- [ ] Канбан-доска с drag-and-drop (@dnd-kit)
-- [ ] Список задач с фильтрами и поиском
-- [ ] Проекты и спринты (отдельный слой поверх workspace)
-- [ ] Личный кабинет: профиль, смена пароля, история действий
-- [ ] Уведомления: email, пометка прочитанным на сервере
+- [x] TanStack Query для серверных данных (tasks, subtasks, activity, workspaces, members)
+- [x] Разбиение экрана задачи: `task-details/`, `task-activity/`, `task-feed/` (FSD внутри pages)
+- [x] Секция «Комментарии» в карточке задачи: единая лента activity + комментарии, ветки ответов, inline-ответ, сворачивание веток
+- [x] Три вида задач: список, «Даты» (`TaskTimeline`, группы от **сегодня**), канбан (`WorkspaceKanbanView`)
+- [x] Фильтр по статусу задачи, bulk-удаление и смена статуса выбранных
+- [x] Обзор задач: hub проектов (`WorkspaceHubPicker`), список / «Даты» / канбан внутри workspace
+- [x] Настройки аккаунта и LLM-ключей (`AccountSettingsPage`, `LlmKeysPage`)
+- [x] Страница статуса сервисов (`SystemStatusPage`)
+- [ ] Полноценный личный кабинет: аватар, история действий пользователя
 
 </details>
 
@@ -383,8 +395,7 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 - [x] Панель Kono AI в сессии на странице задач
 - [ ] Команды AI: создать проект/задачу из чата (tool calling)
 - [ ] Отдельные эндпоинты suggest / breakdown
-- [ ] Email уведомления через Resend
-- [ ] Админ-панель
+- [x] Админ-панель (`/admin`)
 
 </details>
 
@@ -392,7 +403,7 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 <summary><b>5. Финализация</b> — <i>до 1 июля</i></summary>
 
 - [ ] Тесты: критичные сервисы
-- [ ] Docker Compose: frontend, backend, PostgreSQL
+- [x] Docker Compose: frontend, backend, PostgreSQL
 - [ ] Seed данные для демо
 - [ ] Полировка UI: скелетоны, тосты, обработка ошибок
 - [ ] README финальная версия с инструкцией запуска
@@ -407,6 +418,30 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 
 - **Node.js** LTS — для frontend и backend
 - **PostgreSQL** — локально или через Docker
+- **Docker Desktop** (опционально) — для запуска всего стека одной командой
+
+### Docker Compose
+
+Самый быстрый способ поднять проект целиком:
+
+```bash
+git clone https://github.com/Shadowgraph-1/project-K.git
+cd project-K
+
+# скопируй и заполни JWT_SECRET и ADMIN_EMAILS
+cp .env.example .env
+
+docker compose up --build
+```
+
+| Сервис   | URL                         |
+| -------- | --------------------------- |
+| Frontend | http://localhost:4173       |
+| API      | http://localhost:3000/api   |
+| Swagger  | http://localhost:3000/docs  |
+| Postgres | localhost:5432 (`kono/kono`) |
+
+Frontend в Docker — **Nginx** со SPA fallback и прокси `/api/` на backend. LM Studio на хосте доступен backend-контейнеру через `host.docker.internal` (см. `.env.example`).
 
 ### Frontend
 
@@ -439,8 +474,35 @@ API слушает **порт 3000**.
 | Назначение          | URL                                |
 | ------------------- | ---------------------------------- |
 | Frontend (Vite dev) | http://localhost:5173              |
+| Frontend (Docker)   | http://localhost:4173              |
 | API                 | http://localhost:3000/api          |
-| Health (Fastify)    | http://localhost:3000              |
+| Health              | http://localhost:3000/api/health   |
+| Swagger UI          | http://localhost:3000/docs         |
+
+### Swagger — документация API
+
+Интерактивная документация на русском: **http://localhost:3000/docs**
+
+1. Открой `/docs` в браузере — вверху будет введение с терминами, кодами ошибок и быстрым стартом.
+2. Разверни **Авторизация** → `POST /api/auth/login` (или register) → **Try it out** → выполни запрос.
+3. Скопируй `token` из ответа.
+4. Нажми **Authorize** (замок) → вставь `Bearer <token>` → **Authorize**.
+5. Вызывай любые защищённые методы — JWT подставится автоматически.
+
+Разделы в Swagger:
+
+| Раздел | Содержимое |
+| ------ | ---------- |
+| Авторизация | Регистрация, вход |
+| Состояние сервисов | Health API / БД / LLM |
+| Проекты | CRUD workspace |
+| Участники | Команда, инвайты, роли |
+| Задачи · Подзадачи · Комментарии | Основная работа с задачами |
+| AI-компаньон | `POST /api/ai/chat` |
+| LLM-ключи | Личные ключи OpenAI-compatible |
+| Администрирование | Только для `ADMIN_EMAILS` |
+
+У каждого метода есть краткий **summary**, описание на русском и схемы полей запроса/ответа.
 
 ### Переменные окружения
 
@@ -454,15 +516,25 @@ VITE_API_URL=http://localhost:3000/api
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/kono
-JWT_SECRET=your_secret_key
+JWT_SECRET=your_secret_key_min_32_chars
 
 # AI (LM Studio по умолчанию на localhost:1234)
 LM_BASE_URL=http://localhost:1234/v1
-LM_API_KEY=no-key
+LM_API_KEY=lm-studio
 LM_MODEL=your-model-id
 
-# опционально — email
-RESEND_API_KEY=your_resend_api_key
+# Админы платформы (e-mail через запятую)
+ADMIN_EMAILS=admin@example.com
+```
+
+**Корень репозитория** (`.env` для Docker Compose):
+
+```env
+JWT_SECRET=
+LM_BASE_URL=http://host.docker.internal:1234/v1
+LM_API_KEY=lm-studio
+LM_MODEL=gemma-4-e4b-it
+ADMIN_EMAILS=
 ```
 
 ---
@@ -471,35 +543,64 @@ RESEND_API_KEY=your_resend_api_key
 
 ```text
 project-K/
+├── docker-compose.yml              # db + backend + frontend (nginx)
+├── .env.example
 ├── frontend/
-│   ├── docs/
 │   ├── src/
-│   │   ├── api/              # HTTP-клиент и модули API
-│   │   ├── app/              # App, провайдеры (QueryClient)
-│   │   ├── pages/            # Страницы и экраны session
-│   │   ├── entities/         # Домен: user, task, workspace, team
-│   │   ├── features/         # Фичи: auth, settings
-│   │   ├── shared/           # UI, query-keys, utils
-│   │   └── assets/
+│   │   ├── api/                    # Axios-клиент, REST-модули (без React)
+│   │   ├── app/                    # App, провайдеры (QueryClient)
+│   │   ├── entities/               # Домен: типы, query-хуки, UI сущностей
+│   │   │   ├── task/model/         # useTasksQuery, useTaskActivityQuery, handlers
+│   │   │   ├── subtask/model/      # useSubtasksQuery
+│   │   │   ├── workspace/model/    # useWorkspaceQuery, members
+│   │   │   ├── user/               # useAuthStore, UserAvatar
+│   │   │   ├── notification/       # useNotifys
+│   │   │   └── session/            # reset-session-data
+│   │   ├── features/               # auth, settings
+│   │   ├── hooks/                  # app-level хуки (assistant, health, invites)
+│   │   ├── pages/
+│   │   │   ├── home/               # лендинг
+│   │   │   ├── not-found/          # страница 404
+│   │   │   └── session/            # основное приложение
+│   │   │       ├── model/          # sessionPaths, константы
+│   │   │       └── ui/
+│   │   │           ├── tasks/      # список, даты, канбан, TaskDetailsPage
+│   │   │           ├── admin/      # админ-панель
+│   │   │           ├── settings/   # аккаунт, LLM-ключи
+│   │   │           ├── system/     # статус сервисов
+│   │   │           ├── members/
+│   │   │           └── layout/
+│   │   ├── shared/                 # UI-kit, query-keys, utils, permissions
+│   │   │   └── config/
+│   │   │       └── demo-videos.ts  # метаданные видео на лендинге
+│   │   └── widgets/                # header, footer, assistant
 │   ├── public/
+│   │   ├── demo/                   # .webm для блока DemoScrollShowcase
+│   │   └── readme_logo.jpg         # обложка README
+│   ├── Dockerfile                  # nginx production image
+│   ├── nginx.conf
 │   ├── package.json
 │   └── vite.config.ts
 │
 ├── backend/
+│   ├── Dockerfile
+│   ├── prisma.config.ts            # конфиг Prisma CLI (корень backend/)
 │   ├── prisma/
 │   │   ├── schema.prisma
 │   │   └── migrations/
 │   ├── src/
-│   │   ├── routes/           # *.routes.ts — тонкий HTTP-слой
-│   │   ├── services/         # бизнес-логика
-│   │   ├── mappers/          # Prisma row → API DTO
-│   │   ├── schemas/          # Zod-валидация
-│   │   ├── constants/        # статусы, типы activity
-│   │   ├── plugins/          # JWT, error handler
-│   │   ├── llm/              # промпт и клиент LLM
-│   │   ├── utils/            # parseBody, api-errors
-│   │   ├── permissions.ts    # RBAC по workspace
-│   │   ├── db/               # Prisma client
+│   │   ├── generated/prisma/       # автоген (gitignore)
+│   │   ├── openapi/                # routeSchema, responses для Swagger
+│   │   ├── routes/                 # *.routes.ts — тонкий HTTP-слой
+│   │   ├── services/               # бизнес-логика
+│   │   ├── mappers/                # Prisma row → API DTO
+│   │   ├── schemas/                # Zod-валидация
+│   │   ├── constants/              # статусы, типы activity
+│   │   ├── plugins/                # JWT, error handler
+│   │   ├── llm/                    # промпт и клиент LLM
+│   │   ├── utils/
+│   │   ├── permissions.ts          # RBAC по workspace
+│   │   ├── db/prisma.ts            # Prisma client (runtime)
 │   │   └── index.ts
 │   └── package.json
 │
@@ -507,16 +608,24 @@ project-K/
 └── README.md
 ```
 
-| Путь                              | Назначение                                                            |
-| --------------------------------- | --------------------------------------------------------------------- |
-| `frontend/src/api/`               | Axios-клиент, вызовы REST API                                         |
-| `frontend/src/entities/`          | Query-хуки и zustand-сторы по домену                                  |
-| `frontend/src/pages/session/`     | Основной UI: проекты, задачи, команда                                 |
-| `frontend/src/shared/api/`        | `query-client`, `query-keys`                                          |
-| `backend/src/routes/`             | Эндпоинты: auth, workspaces, tasks, members, subtasks, activity, ai   |
-| `backend/src/services/`           | Use-cases: CRUD, инвайты, единый формат ошибок через `api-errors`     |
-| `backend/prisma/schema.prisma`    | Модели БД и миграции                                                  |
-| `frontend/src/api/README.md`      | Как устроены query / zustand на клиенте                               |
+| Путь | Назначение |
+| ---- | ---------- |
+| `frontend/src/api/` | Axios-клиент, вызовы REST API |
+| `frontend/src/entities/*/model/` | TanStack Query: tasks, subtasks, activity, workspaces, members |
+| `frontend/src/pages/session/ui/tasks/` | Список, канбан, вид «Даты», `SessionTasksPage`, `WorkspaceTasksBlock` |
+| `frontend/src/pages/session/ui/tasks/TaskTimeline.tsx` | Группировка задач по срокам относительно **сегодня** |
+| `frontend/src/pages/session/ui/tasks/task-feed/` | Дерево activity: корни и ответы (`buildActivityFeed`) |
+| `frontend/src/pages/session/ui/tasks/task-activity/` | UI секции «Комментарии»: timeline, ветки, inline-ответ, сворачивание |
+| `frontend/src/pages/session/ui/tasks/task-details/` | Карточка задачи: main, header, subtasks, properties, оркестрация мутаций |
+| `frontend/public/demo/` | Видео-демо для лендинга (`.webm`) |
+| `frontend/src/shared/config/demo-videos.ts` | Пути и тексты для `DemoScrollShowcase` на главной |
+| `frontend/src/shared/api/query-keys.ts` | Единые ключи кэша Query |
+| `frontend/src/hooks/` | Хуки уровня приложения (не домен): health, assistant, invites |
+| `backend/prisma/schema.prisma` | Модели БД и миграции |
+| `backend/src/db/prisma.ts` | Инициализация Prisma Client |
+| `backend/src/openapi/` | Zod → JSON Schema, Swagger UI на `/docs` |
+| `docker-compose.yml` | Postgres + backend + frontend (nginx) |
+| `frontend/src/api/README.md` | Query / Zustand / logout |
 
 > [!IMPORTANT]
-> Документ не зафиксирован как «окончательный»: обновлён 08.06.2026
+> Документ не зафиксирован как «окончательный»: обновлён 28.06.2026
