@@ -688,201 +688,89 @@ project-K/
 
 ## 18. Глоссарий
 
-Краткие определения **англоязычных терминов**, встречающихся в этом README. По клику на термин в тексте документа вы попадаете сюда.
+Англоязычные термины из README: **подчёркнутый моноширинный** текст — сам термин, средняя колонка — расшифровка, справа — как это у нас устроено. Ссылки в документе ведут сюда.
 
 ### Продукт и UX
 
-<a id="glossary-activity"></a>
-**activity** — лента событий в задаче: смена статуса, подзадачи, комментарии; хранится в `task_activity`.
-
-<a id="glossary-admin"></a>
-**admin** — роль администратора платформы (не путать с владельцем проекта). Доступ к `/projects/admin`, задаётся через `ADMIN_EMAILS`.
-
-<a id="glossary-backlog"></a>
-**backlog** — накопленный список невыполненных задач; «разбор бэклога» — понять, за что браться в первую очередь.
-
-<a id="glossary-bento"></a>
-**bento** — сетка карточек разного размера на лендинге (как «бенто-бокс»); у нас — `HomeBentoCard`.
-
-<a id="glossary-bulk"></a>
-**bulk** — массовые действия над несколькими выделенными задачами (удаление, смена статуса).
-
-<a id="glossary-command-palette"></a>
-**Command palette** — модальное окно быстрых команд и поиска; в Kono открывается по **Ctrl+K** (`CommandDialog`).
-
-<a id="glossary-drag-and-drop"></a>
-**drag-and-drop** (сокр. **DnD**) — перетаскивание элементов мышью; в канбане — смена статуса задачи между колонками.
-
-<a id="glossary-empty-state"></a>
-**empty state** — экран «нет данных» или «ничего не найдено» (`EmptySession`, `ConnectionEmptyState`).
-
-<a id="glossary-feature-flags"></a>
-**feature flags** — переключатели функций в админке без отдельного деплоя.
-
-<a id="glossary-hub"></a>
-**hub** — экран-обзор и точка входа в раздел (hub проектов, hub участников).
-
-<a id="glossary-in-app"></a>
-**in-app** — внутри приложения (колокольчик, toast), без email и push.
-
-<a id="glossary-kanban"></a>
-**kanban** — доска с колонками по статусам задач; перетаскивание меняет статус.
-
-<a id="glossary-keyboard-shortcuts"></a>
-**keyboard shortcuts** — горячие клавиши (Ctrl+K, Ctrl+B, Ctrl+N, Ctrl+J).
-
-<a id="glossary-push"></a>
-**push** — push-уведомления браузера или устройства; в Kono **не реализованы**.
-
-<a id="glossary-skeleton"></a>
-**skeleton** — «скелетон» загрузки: серые заглушки вместо контента, пока идёт запрос.
-
-<a id="glossary-sprint"></a>
-**sprint** — итерация работ (фиксированный период с набором задач); **в Kono пока не реализован**.
-
-<a id="glossary-timeline"></a>
-**timeline** — лента или ось времени (вид «Даты», история статуса в карточке).
-
-<a id="glossary-toast"></a>
-**toast** — короткое всплывающее уведомление в углу экрана (библиотека Sonner).
-
-<a id="glossary-tool-calling"></a>
-**tool calling** — когда LLM из ответа вызывает действия (создать задачу, подзадачу); **в Kono не реализовано**.
-
-<a id="glossary-user"></a>
-**user** — обычный пользователь платформы (не admin).
-
-<a id="glossary-withtask"></a>
-**withTask** — флаг контекста для AI-чата: модель «видит» задачи текущего проекта.
-
-<a id="glossary-workspace"></a>
-**workspace** — проект в БД; в UI — «проект» с публичным ключом `K-XXXXXX`.
-
-<a id="glossary-wireframes"></a>
-**wireframes** — чёрно-белые схематичные макеты экранов до финального дизайна.
+| Термин | Расшифровка | По проекту |
+| :----- | :---------- | :--------- |
+| <a id="glossary-activity"></a> <ins>`activity`</ins> | активность, лента событий | Смена статуса, подзадачи, комментарии в `task_activity` |
+| <a id="glossary-admin"></a> <ins>`admin`</ins> | administrator | Админ платформы: `/projects/admin`, e-mail в `ADMIN_EMAILS` |
+| <a id="glossary-backlog"></a> <ins>`backlog`</ins> | очередь несделанного | Накопленные задачи; «разбор бэклога» — выбрать приоритет на сегодня |
+| <a id="glossary-bento"></a> <ins>`bento`</ins> | bento grid | Сетка карточек на лендинге; компонент `HomeBentoCard` |
+| <a id="glossary-bulk"></a> <ins>`bulk`</ins> | массово | Действия над несколькими выделенными задачами (удаление, статус) |
+| <a id="glossary-command-palette"></a> <ins>`Command palette`</ins> | палитра команд | Модальное окно поиска и быстрых действий — **Ctrl+K** |
+| <a id="glossary-drag-and-drop"></a> <ins>`drag-and-drop`</ins> | перетаскивание (DnD) | В канбане — перенос карточки между колонками, смена статуса |
+| <a id="glossary-empty-state"></a> <ins>`empty state`</ins> | пустое состояние | Экран «нет данных» — `EmptySession`, `ConnectionEmptyState` |
+| <a id="glossary-feature-flags"></a> <ins>`feature flags`</ins> | флаги функций | Переключатели в админке без отдельного деплоя |
+| <a id="glossary-hub"></a> <ins>`hub`</ins> | центральный экран | Точка входа в раздел: hub проектов, hub участников |
+| <a id="glossary-in-app"></a> <ins>`in-app`</ins> | внутри приложения | Колокольчик и toast; без email и push |
+| <a id="glossary-kanban"></a> <ins>`kanban`</ins> | канбан-доска | Колонки по статусам; DnD меняет `TaskStatus` |
+| <a id="glossary-keyboard-shortcuts"></a> <ins>`keyboard shortcuts`</ins> | горячие клавиши | Ctrl+K поиск, Ctrl+B сайдбар, Ctrl+N задача, Ctrl+J AI |
+| <a id="glossary-push"></a> <ins>`push`</ins> | push-уведомления | Браузер/устройство; **в Kono не реализованы** |
+| <a id="glossary-skeleton"></a> <ins>`skeleton`</ins> | скелетон | Серые заглушки UI, пока грузятся данные |
+| <a id="glossary-sprint"></a> <ins>`sprint`</ins> | спринт, итерация | Фиксированный период задач; **пока не реализован** |
+| <a id="glossary-timeline"></a> <ins>`timeline`</ins> | временная лента | Вид «Даты», история статуса в карточке |
+| <a id="glossary-toast"></a> <ins>`toast`</ins> | всплывающий тост | Короткое уведомление в углу (Sonner) |
+| <a id="glossary-tool-calling"></a> <ins>`tool calling`</ins> | вызов инструментов | LLM создаёт задачи/подзадачи из чата; **не реализовано** |
+| <a id="glossary-user"></a> <ins>`user`</ins> | пользователь | Обычная роль (не admin) |
+| <a id="glossary-withtask"></a> <ins>`withTask`</ins> | with task context | Флаг AI-чата: модель видит задачи текущего проекта |
+| <a id="glossary-workspace"></a> <ins>`workspace`</ins> | рабочее пространство | **Проект** в БД; ключ `K-XXXXXX` |
+| <a id="glossary-wireframes"></a> <ins>`wireframes`</ins> | вайрфреймы | Чёрно-белые схемы экранов до финального UI |
 
 ### Архитектура и API
 
-<a id="glossary-api"></a>
-**API** *(Application Programming Interface)* — программный интерфейс; HTTP-методы под `/api/*`.
-
-<a id="glossary-crud"></a>
-**CRUD** — Create, Read, Update, Delete; базовые операции над сущностями.
-
-<a id="glossary-dto"></a>
-**DTO** *(Data Transfer Object)* — формат данных в ответе API после маппинга из БД.
-
-<a id="glossary-er"></a>
-**ER** *(Entity-Relationship)* — схема «сущность — связь» между таблицами БД.
-
-<a id="glossary-fsd"></a>
-**FSD** *(Feature-Sliced Design)* — подход к структуре фронтенда по слоям (entities, features, pages…).
-
-<a id="glossary-health-check"></a>
-**health-check** — проверка доступности API, БД и LLM (`GET /api/health`).
-
-<a id="glossary-jwt"></a>
-**JWT** *(JSON Web Token)* — токен авторизации после входа; передаётся в заголовке `Authorization: Bearer …`.
-
-<a id="glossary-llm"></a>
-**LLM** *(Large Language Model)* — большая языковая модель для AI-компаньона.
-
-<a id="glossary-moscow"></a>
-**MoSCoW** — приоритизация требований: Must / Should / Could / Won't.
-
-<a id="glossary-openai-compatible"></a>
-**OpenAI-compatible** — API в формате OpenAI (`/v1/chat/completions`); подходит LM Studio и многие провайдеры.
-
-<a id="glossary-openapi"></a>
-**OpenAPI** — стандарт описания REST API; в проекте генерируется из Zod-схем.
-
-<a id="glossary-pagination"></a>
-**pagination** — постраничная или курсорная подгрузка списков (для задач **ещё не реализована**).
-
-<a id="glossary-full-text"></a>
-**full-text** — полнотекстовый поиск по содержимому (не только по заголовку).
-
-<a id="glossary-rbac"></a>
-**RBAC** *(Role-Based Access Control)* — доступ по ролям (`OWNER`, `ADMIN`, `MEMBER`, `VIEWER` в workspace).
-
-<a id="glossary-rest"></a>
-**REST** — стиль HTTP API с ресурсами и методами GET/POST/PATCH/DELETE.
-
-<a id="glossary-seed"></a>
-**seed** — начальные демо-данные в БД для быстрого старта.
-
-<a id="glossary-spa"></a>
-**SPA** *(Single Page Application)* — одностраничное приложение; навигация без полной перезагрузки страницы.
+| Термин | Расшифровка | По проекту |
+| :----- | :---------- | :--------- |
+| <a id="glossary-api"></a> <ins>`API`</ins> | Application Programming Interface | HTTP-методы под `/api/*` |
+| <a id="glossary-crud"></a> <ins>`CRUD`</ins> | Create · Read · Update · Delete | Базовые операции над сущностями |
+| <a id="glossary-dto"></a> <ins>`DTO`</ins> | Data Transfer Object | Формат ответа API после маппинга из БД |
+| <a id="glossary-er"></a> <ins>`ER`</ins> | Entity-Relationship | Схема связей таблиц (раздел 9) |
+| <a id="glossary-fsd"></a> <ins>`FSD`</ins> | Feature-Sliced Design | Слои фронта: entities, features, pages… |
+| <a id="glossary-health-check"></a> <ins>`health-check`</ins> | проверка здоровья | `GET /api/health` — API, БД, LLM |
+| <a id="glossary-jwt"></a> <ins>`JWT`</ins> | JSON Web Token | Токен после входа: `Authorization: Bearer …` |
+| <a id="glossary-llm"></a> <ins>`LLM`</ins> | Large Language Model | Модель для AI-компаньона |
+| <a id="glossary-moscow"></a> <ins>`MoSCoW`</ins> | Must · Should · Could · Won't | Приоритизация требований (раздел 13) |
+| <a id="glossary-openai-compatible"></a> <ins>`OpenAI-compatible`</ins> | совместимость с OpenAI API | `/v1/chat/completions`; LM Studio и др. |
+| <a id="glossary-openapi"></a> <ins>`OpenAPI`</ins> | спецификация REST API | Генерируется из Zod → Swagger `/docs` |
+| <a id="glossary-pagination"></a> <ins>`pagination`</ins> | пагинация | Постраничная/курсорная подгрузка; для задач **ещё нет** |
+| <a id="glossary-full-text"></a> <ins>`full-text`</ins> | полнотекстовый поиск | Поиск по содержимому, не только по заголовку |
+| <a id="glossary-rbac"></a> <ins>`RBAC`</ins> | Role-Based Access Control | Роли в workspace: `OWNER` … `VIEWER` |
+| <a id="glossary-rest"></a> <ins>`REST`</ins> | Representational State Transfer | HTTP API: GET / POST / PATCH / DELETE |
+| <a id="glossary-seed"></a> <ins>`seed`</ins> | начальное наполнение | Демо-данные в БД для быстрого старта |
+| <a id="glossary-spa"></a> <ins>`SPA`</ins> | Single Page Application | Навигация без полной перезагрузки страницы |
 
 ### Frontend
 
-<a id="glossary-axios"></a>
-**Axios** — HTTP-клиент для запросов к API с фронтенда.
-
-<a id="glossary-debounce"></a>
-**debounce** — задержка перед запросом при вводе (например, 350 ms в поиске).
-
-<a id="glossary-offline-first"></a>
-**offline-first** — стратегия кэша: показывать сохранённые данные при потере сети (`networkMode: offlineFirst`).
-
-<a id="glossary-react"></a>
-**React** — библиотека UI; в проекте React 19.
-
-<a id="glossary-react-router"></a>
-**React Router** — маршрутизация на клиенте (`/`, `/login`, `/projects/*`…).
-
-<a id="glossary-shadcn-ui"></a>
-**shadcn/ui** — набор переиспользуемых UI-компонентов поверх Radix UI и Tailwind.
-
-<a id="glossary-tailwind-css"></a>
-**Tailwind CSS** — utility-first CSS-фреймворк для вёрстки.
-
-<a id="glossary-tanstack-query"></a>
-**TanStack Query** — кэш и синхронизация серверного состояния (задачи, проекты, activity…).
-
-<a id="glossary-typescript"></a>
-**TypeScript** — типизированный JavaScript.
-
-<a id="glossary-vite"></a>
-**Vite** — сборщик и dev-сервер фронтенда (порт 5173).
-
-<a id="glossary-zustand"></a>
-**Zustand** — лёгкое клиентское хранилище (auth, тема, prefs уведомлений).
+| Термин | Расшифровка | По проекту |
+| :----- | :---------- | :--------- |
+| <a id="glossary-axios"></a> <ins>`Axios`</ins> | HTTP-клиент | Запросы к API из `frontend/src/api/` |
+| <a id="glossary-debounce"></a> <ins>`debounce`</ins> | задержка ввода | 350 ms перед запросом в глобальном поиске |
+| <a id="glossary-offline-first"></a> <ins>`offline-first`</ins> | сначала офлайн | Кэш при потере сети: `networkMode: offlineFirst` |
+| <a id="glossary-react"></a> <ins>`React`</ins> | библиотека UI | React 19 |
+| <a id="glossary-react-router"></a> <ins>`React Router`</ins> | маршрутизация | `/`, `/login`, `/projects/*`… |
+| <a id="glossary-shadcn-ui"></a> <ins>`shadcn/ui`</ins> | UI-кит | Компоненты на Radix UI + Tailwind |
+| <a id="glossary-tailwind-css"></a> <ins>`Tailwind CSS`</ins> | utility-first CSS | Основная вёрстка и стили сессии |
+| <a id="glossary-tanstack-query"></a> <ins>`TanStack Query`</ins> | серверный state | Кэш задач, проектов, activity, search… |
+| <a id="glossary-typescript"></a> <ins>`TypeScript`</ins> | типизированный JS | Весь frontend |
+| <a id="glossary-vite"></a> <ins>`Vite`</ins> | сборщик | Dev-сервер :5173, production build |
+| <a id="glossary-zustand"></a> <ins>`Zustand`</ins> | client store | Auth, тема, prefs уведомлений |
 
 ### Backend, данные и инфраструктура
 
-<a id="glossary-docker"></a>
-**Docker** — контейнеризация приложений.
-
-<a id="glossary-docker-compose"></a>
-**Docker Compose** — запуск нескольких контейнеров одной командой (`docker compose up`).
-
-<a id="glossary-fastify"></a>
-**Fastify** — HTTP-фреймворк для Node.js backend.
-
-<a id="glossary-lm-studio"></a>
-**LM Studio** — локальный запуск LLM с OpenAI-compatible API (по умолчанию порт 1234).
-
-<a id="glossary-nginx"></a>
-**Nginx** — веб-сервер для production-frontend в Docker (статика + прокси `/api`).
-
-<a id="glossary-nodejs"></a>
-**Node.js** — среда выполнения JavaScript на сервере.
-
-<a id="glossary-orm"></a>
-**ORM** *(Object-Relational Mapping)* — слой между кодом и SQL; у нас — Prisma.
-
-<a id="glossary-postgresql"></a>
-**PostgreSQL** — реляционная СУБД проекта.
-
-<a id="glossary-prisma"></a>
-**Prisma** — ORM, схема в `schema.prisma`, миграции и клиент для запросов.
-
-<a id="glossary-swagger"></a>
-**Swagger** — интерактивная документация API в браузере (`/docs`).
-
-<a id="glossary-zod"></a>
-**Zod** — валидация и типизация входных данных на backend.
+| Термин | Расшифровка | По проекту |
+| :----- | :---------- | :--------- |
+| <a id="glossary-docker"></a> <ins>`Docker`</ins> | контейнеризация | Образы frontend / backend |
+| <a id="glossary-docker-compose"></a> <ins>`Docker Compose`</ins> | оркестрация контейнеров | `docker compose up` — весь стек |
+| <a id="glossary-fastify"></a> <ins>`Fastify`</ins> | HTTP-фреймворк | Backend на Node.js, порт 3000 |
+| <a id="glossary-lm-studio"></a> <ins>`LM Studio`</ins> | локальный LLM-сервер | OpenAI-compatible API, порт 1234 |
+| <a id="glossary-nginx"></a> <ins>`Nginx`</ins> | веб-сервер | Production-frontend: статика + прокси `/api` |
+| <a id="glossary-nodejs"></a> <ins>`Node.js`</ins> | среда выполнения JS | Backend |
+| <a id="glossary-orm"></a> <ins>`ORM`</ins> | Object-Relational Mapping | Слой код ↔ SQL; у нас Prisma |
+| <a id="glossary-postgresql"></a> <ins>`PostgreSQL`</ins> | СУБД | Основная база данных |
+| <a id="glossary-prisma"></a> <ins>`Prisma`</ins> | ORM + миграции | `schema.prisma`, Prisma Client |
+| <a id="glossary-swagger"></a> <ins>`Swagger`</ins> | UI документации API | Интерактивные методы на `/docs` |
+| <a id="glossary-zod"></a> <ins>`Zod`</ins> | валидация схем | Входные данные routes + OpenAPI |
 
 > [!IMPORTANT]
 > Документ не зафиксирован как «окончательный»: обновлён 02.07.2026
