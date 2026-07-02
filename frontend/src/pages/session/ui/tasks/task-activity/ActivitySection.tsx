@@ -3,7 +3,7 @@ import { Trash2 } from "lucide-react";
 import type { TaskActivity } from "@/api/task-activity";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { KonoLoader } from "@/shared/ui/kono-loader";
+import { ActivityTimelineSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import {
   taskDetailIconBtn,
   taskDetailSectionHeader,
@@ -82,9 +82,7 @@ export function ActivitySection({
       </div>
 
       {activityLoading && activity.length === 0 ? (
-        <div className="py-6">
-          <KonoLoader size="sm" hint="комментарии" />
-        </div>
+        <ActivityTimelineSkeleton />
       ) : hasActivity ? (
         <div className="mt-4 min-w-0">
           <ActivityTimeline

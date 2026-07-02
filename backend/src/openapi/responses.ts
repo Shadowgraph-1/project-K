@@ -112,6 +112,11 @@ export const taskDto = {
       format: "uuid",
       description: "UUID проекта",
     },
+    createdAt: {
+      type: "string",
+      format: "date-time",
+      description: "Дата создания (ISO 8601)",
+    },
   },
 } as const;
 
@@ -256,11 +261,18 @@ export const errorResponse = {
   properties: {
     error: {
       type: "string",
-      description: "Код ошибки, например forbidden, not_found, invalid_credentials",
+      description: "Человекочитаемое сообщение об ошибке",
     },
-    message: { type: "string", description: "Человекочитаемое сообщение" },
+    fields: {
+      type: "object",
+      additionalProperties: {
+        type: "array",
+        items: { type: "string" },
+      },
+      description: "Ошибки валидации по полям",
+    },
   },
-  required: ["error", "message"],
+  required: ["error"],
 } as const;
 
 export const okMessageResponse = {
@@ -305,9 +317,133 @@ export const activityListResponse = {
   items: activityDto,
 } as const;
 
-export const llmKeyListResponse = {
+export const taskStatusHistoryDto = {
+  type: "object",
+  description: "Запись истории смены статуса задачи",
+  properties: {
+    id: { type: "string", format: "uuid" },
+    taskId: { type: "string", format: "uuid" },
+    fromStatus: {
+      ...taskStatusEnum,
+      nullable: true,
+      description: "Предыдущий статус; null — первое событие (создание)",
+    },
+    toStatus: taskStatusEnum,
+    userId: { type: "integer", nullable: true },
+    userName: { type: "string", nullable: true },
+    changedAt: {
+      type: "string",
+      format: "date-time",
+      description: "Когда статус изменился",
+    },
+  },
+  required: ["id", "taskId", "toStatus", "changedAt"],
+} as const;
+
+export const taskStatusHistoryListResponse = {
   type: "array",
-  items: llmKeyDto,
+  description: "История статусов задачи, от старых к новым",
+  items: taskStatusHistoryDto,
+} as const;
+
+export const llmKeysResponse = {
+  type: "object",
+  description: "Список LLM-ключей пользователя",
+  properties: {
+    useDefault: {
+      type: "boolean",
+      description: "true — используется системный LLM из env",
+    },
+    keys: {
+      type: "array",
+      items: llmKeyDto,
+    },
+  },
+  required: ["useDefault", "keys"],
+} as const;
+
+export const workspaceMemberDto = {
+  type: "object",
+  properties: {
+    userId: { type: "integer" },
+    name: { type: "string" },
+    isOwner: { type: "boolean" },
+    role: workspaceRoleEnum,
+  },
+  required: ["userId", "name", "isOwner", "role"],
+} as const;
+
+export const pendingInviteDto = {
+  type: "object",
+  properties: {
+    id: { type: "string", format: "uuid" },
+    userId: { type: "integer" },
+    name: { type: "string" },
+    role: workspaceRoleEnum,
+  },
+  required: ["id", "userId", "name", "role"],
+} as const;
+
+export const workspaceMembersResponse = {
+  type: "object",
+  description: "Участники проекта и ожидающие приглашения",
+  properties: {
+    members: {
+      type: "array",
+      items: workspaceMemberDto,
+    },
+    pendingInvites: {
+      type: "array",
+      items: pendingInviteDto,
+    },
+  },
+  required: ["members", "pendingInvites"],
+} as const;
+
+export const userSearchPageResponse = {
+  type: "object",
+  description: "Страница результатов поиска пользователей для приглашения",
+  properties: {
+    items: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          id: { type: "integer" },
+          name: { type: "string" },
+        },
+        required: ["id", "name"],
+      },
+    },
+    nextOffset: {
+      type: "integer",
+      nullable: true,
+      description: "Смещение следующей страницы или null",
+    },
+  },
+  required: ["items", "nextOffset"],
+} as const;
+
+export const incomingInvitesResponse = {
+  type: "array",
+  description: "Входящие приглашения в проекты",
+  items: {
+    type: "object",
+    properties: {
+      id: { type: "string", format: "uuid" },
+      workspaceId: { type: "string", format: "uuid" },
+      workspaceName: { type: "string" },
+      inviterName: { type: "string" },
+      createdAt: { type: "string", format: "date-time" },
+    },
+    required: [
+      "id",
+      "workspaceId",
+      "workspaceName",
+      "inviterName",
+      "createdAt",
+    ],
+  },
 } as const;
 
 export const noContentResponse = {

@@ -5,6 +5,7 @@ import {
   useInvitesQuery,
   useInvitesActions,
 } from "@/hooks/use-invites-query";
+import { useNotificationPrefsStore } from "@/shared/model/useNotificationPrefsStore";
 import { Button } from "@/shared/ui/button";
 import { ScrollArea } from "@/shared/ui/scroll-area";
 import { cn } from "@/shared/lib/utils";
@@ -45,13 +46,21 @@ const BORDER_MAP: Record<string, string> = {
 function NotifysCenter() {
   const notifys = useNotifys((state) => state.notifys);
   const removeNotify = useNotifys((state) => state.removeNotify);
+  const taskHistoryEnabled = useNotificationPrefsStore(
+    (s) => s.taskHistoryEnabled,
+  );
+  const teamInvitesEnabled = useNotificationPrefsStore(
+    (s) => s.teamInvitesEnabled,
+  );
 
   const { data: incoming } = useInvitesQuery();
   const { accept, decline } = useInvitesActions();
 
   const [actingId, setActingId] = useState<string | null>(null);
 
-  const hasAny = notifys.length > 0 || (incoming?.length ?? 0) > 0;
+  const visibleNotifys = taskHistoryEnabled ? notifys : [];
+  const visibleInvites = teamInvitesEnabled ? (incoming ?? []) : [];
+  const hasAny = visibleNotifys.length > 0 || visibleInvites.length > 0;
 
   return (
     <div className="flex flex-col">
@@ -72,7 +81,7 @@ function NotifysCenter() {
             </div>
           ) : (
             <>
-              {(incoming ?? []).map((invite) => (
+              {visibleInvites.map((invite) => (
                 <div
                   key={invite.id}
                   className={cn(
@@ -119,7 +128,7 @@ function NotifysCenter() {
                 </div>
               ))}
 
-              {notifys.map((n) => (
+              {visibleNotifys.map((n) => (
                 <div
                   key={n.id}
                   className={cn(

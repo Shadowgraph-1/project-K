@@ -42,4 +42,3 @@ export default function EmptySession({
 }
 
 export type { SessionEmptySuggestion, SessionEmptyAction };
-export { SessionEmptyPage };

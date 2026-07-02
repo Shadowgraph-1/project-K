@@ -95,7 +95,6 @@ function Session() {
             <div className="min-h-0 flex-1 space-y-3 overflow-auto">
               <WorkspaceListSection
                 title="Мои проекты"
-                description="Проекты, которые вы создали"
                 items={owned}
                 showColumnHeader={owned.length > 0}
                 headerAction={
@@ -127,7 +126,6 @@ function Session() {
               />
               <WorkspaceListSection
                 title="Совместная работа"
-                description="Проекты, куда вас пригласили"
                 items={shared}
               />
             </div>

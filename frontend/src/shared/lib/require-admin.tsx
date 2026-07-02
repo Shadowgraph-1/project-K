@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 import { useAdminAccessQuery } from "@/hooks/use-admin-query";
-import { SessionEmptyPage } from "@/pages/session/ui/placeholders/SessionEmptyPage";
+import { RequireAdminSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 
 type RequireAdminProps = {
   children: ReactNode;
@@ -13,7 +13,7 @@ export function RequireAdmin({ children }: RequireAdminProps) {
   const location = useLocation();
 
   if (isLoading) {
-    return <SessionEmptyPage title="Проверяем доступ…" />;
+    return <RequireAdminSkeleton />;
   }
 
   if (isError || !data?.isAdmin) {

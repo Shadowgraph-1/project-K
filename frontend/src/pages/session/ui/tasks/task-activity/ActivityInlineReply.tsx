@@ -15,7 +15,7 @@ type ActivityInlineReplyProps = {
   className?: string;
 };
 
-export function ActivityInlineReply({
+function ActivityInlineReply({
   text,
   onTextChange,
   onSubmit,

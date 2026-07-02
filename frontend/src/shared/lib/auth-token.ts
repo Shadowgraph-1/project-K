@@ -1,5 +1,5 @@
 
-export const AUTH_TOKEN_STORAGE_KEY = "kono-auth-token";
+const AUTH_TOKEN_STORAGE_KEY = "kono-auth-token";
 
 export function getAuthToken(): string | null {
   if (typeof localStorage === "undefined") return null;

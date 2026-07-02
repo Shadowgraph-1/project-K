@@ -119,13 +119,11 @@ export function MembersHubPage() {
           <div className="flex flex-col gap-3">
             <MembersHubSection
               title="Мои проекты"
-              description="Проекты, которые вы создали"
               items={owned}
               onSelect={handleSelect}
             />
             <MembersHubSection
               title="Совместная работа"
-              description="Проекты, куда вас пригласили"
               items={shared}
               onSelect={handleSelect}
             />
@@ -135,5 +133,3 @@ export function MembersHubPage() {
     </div>
   );
 }
-
-export default MembersHubPage;

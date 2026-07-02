@@ -1,5 +1,4 @@
 import {
-  QueryClient,
   useMutation,
   useQueries,
   useQuery,
@@ -53,19 +52,15 @@ export function useTasksQueries(workspaceIds: string[]) {
   });
 }
 
-function invalidateTasks(queryClient: QueryClient, workspaceId: string) {
-  return queryClient.invalidateQueries({
-    queryKey: [...queryKeys.tasks.all, workspaceId],
-  });
-}
-
 export function useCreateTaskMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (payload: CreateTaskPayload) => createTaskOnApi(payload),
     onSuccess: (_data, variables) => {
-      void invalidateTasks(queryClient, variables.workspaceId);
+      void queryClient.invalidateQueries({
+        queryKey: [...queryKeys.tasks.all, variables.workspaceId],
+      });
     },
     onError: () => {
       notify({
@@ -88,7 +83,14 @@ export function useUpdateTaskMutation() {
       workspaceId: string;
     }) => updateTaskOnAPI(id, patch),
     onSuccess: (_data, variables) => {
-      void invalidateTasks(queryClient, variables.workspaceId);
+      void queryClient.invalidateQueries({
+        queryKey: [...queryKeys.tasks.all, variables.workspaceId],
+      });
+      if (variables.patch.status !== undefined) {
+        void queryClient.invalidateQueries({
+          queryKey: queryKeys.taskStatusHistory(variables.id),
+        });
+      }
     },
   });
 }
@@ -99,7 +101,9 @@ export function useDeleteAllTasksMutation() {
     mutationFn: (workspaceId: string) =>
       deleteAllTasksInWorkspaceOnApi(workspaceId),
     onSuccess: (_data, workspaceId) => {
-      void invalidateTasks(queryClient, workspaceId);
+      void queryClient.invalidateQueries({
+        queryKey: [...queryKeys.tasks.all, workspaceId],
+      });
     },
   });
 }
@@ -110,7 +114,9 @@ export function useDeleteTaskMutation() {
     mutationFn: ({ id }: { id: string; workspaceId: string }) =>
       deleteTaskOnApi(id),
     onSuccess: (_data, variables) => {
-      void invalidateTasks(queryClient, variables.workspaceId);
+      void queryClient.invalidateQueries({
+        queryKey: [...queryKeys.tasks.all, variables.workspaceId],
+      });
     },
   });
 }

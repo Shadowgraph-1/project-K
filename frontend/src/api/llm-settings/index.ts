@@ -48,11 +48,6 @@ export async function activateLlmKeyOnApi(
   return data;
 }
 
-export async function activateDefaultLlmOnApi(): Promise<LlmKeysResponse> {
-  const { data } = await api.patch<LlmKeysResponse>("/llm-keys/use-default");
-  return data;
-}
-
 export async function deleteLlmKeyOnApi(keyId: string): Promise<void> {
   await api.delete(`/llm-keys/${keyId}`);
 }

@@ -1,73 +1,67 @@
-import leftKaguya from "../../../../assets/left_kaguya.jpg";
-import rightLilly from "../../../../assets/right_lilly.jpg";
-import { FeatureCard } from "@/pages/home/ui/components/FeatureCard";
-import { FeaturesCompanionFigure } from "@/pages/home/ui/components/FeaturesCompanionFigure";
-import { FEATURE_CARDS } from "@/shared/config/featureCards";
-import { SECTION_ID } from "@/shared/config/sectionIds";
+import AutoScroll from "embla-carousel-auto-scroll";
 
-const CARD_ANIMATIONS = [
-  { aos: "fade-up", delay: 0 },
-  { aos: "fade-up", delay: 80 },
-  { aos: "fade-up", delay: 160 },
-  { aos: "fade-up", delay: 240 },
-] as const;
+import { HomeBentoCard } from "@/pages/home/ui/components/HomeBentoCard";
+import { FEATURE_CAROUSEL_CARDS } from "@/shared/config/featureCards";
+import { SECTION_ID } from "@/shared/config/sectionIds";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from "@/shared/ui/carousel";
+
+const FEATURES_CAROUSEL_PLUGINS = [
+  AutoScroll({
+    speed: 0.75,
+    startDelay: 0,
+    stopOnMouseEnter: true,
+    stopOnInteraction: true,
+  }),
+];
 
 function FeaturesSection() {
   return (
     <section
       id={SECTION_ID.FEATURES}
-      className="relative scroll-mt-20 overflow-hidden bg-black py-20 md:py-28"
+      className="scroll-mt-20 border-t border-white/8 bg-black px-4 py-16 sm:py-24"
     >
-      <FeaturesCompanionFigure
-        side="left"
-        image={leftKaguya}
-        alt="Кагуя — AI-компаньон Kono"
-        aos="fade-right"
-      />
-
-      <FeaturesCompanionFigure
-        side="right"
-        image={rightLilly}
-        alt="Лилли — AI-компаньон Kono"
-        aos="fade-left"
-      />
-
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-4 lg:px-6">
+      <div className="mx-auto w-full max-w-7xl lg:px-6">
         <div
-          className="mx-auto flex max-w-2xl flex-col gap-3 text-center"
+          className="mx-auto max-w-2xl text-center"
           data-aos="fade-up"
           data-aos-duration="750"
         >
-          <p className="text-sm font-medium text-white/40">Возможности</p>
-          <h2 className="text-3xl font-medium tracking-tight text-white sm:text-4xl">
-            Что уже есть в Kono
+          <p className="text-sm font-medium text-white/40">Собрано</p>
+          <h2 className="mt-3 text-2xl font-medium tracking-tight text-white sm:text-3xl">
+            Всё на одном экране
           </h2>
-          <p className="text-pretty text-white/45 sm:text-lg">
-            Задачи с историей изменений, совместные проекты и AI-чат прямо в
-            проекте — Кагуя и Лилли всегда рядом с вашими задачами.
+          <p className="mx-auto mt-4 max-w-xl text-pretty text-white/45 sm:text-lg">
+            Проект, задачи, календарь и компаньон — не разъезжаются по вкладкам.
+            Вот как это складывается в одной сессии.
           </p>
         </div>
 
-        <ol className="home-features-grid mt-14 list-none p-0">
-          {FEATURE_CARDS.map((info, index) => {
-            const animation = CARD_ANIMATIONS[index] ?? CARD_ANIMATIONS[0];
-
-            return (
-              <li
-                key={info.title}
-                className="h-full"
-                data-aos={animation.aos}
-                data-aos-delay={animation.delay}
-                data-aos-duration="750"
+        <Carousel
+          className="home-features-carousel mt-12 w-full min-w-0"
+          opts={{ align: "start", loop: true, dragFree: true }}
+          plugins={FEATURES_CAROUSEL_PLUGINS}
+          data-aos="fade-up"
+          data-aos-duration="750"
+          data-aos-delay="80"
+        >
+          <CarouselContent className="-ml-4">
+            {FEATURE_CAROUSEL_CARDS.map((card) => (
+              <CarouselItem
+                key={card.title}
+                className="basis-[min(82vw,17.5rem)] pl-4"
               >
-                <FeatureCard
-                  title={info.title}
-                  description={info.description}
+                <HomeBentoCard
+                  title={card.title}
+                  description={card.description}
                 />
-              </li>
-            );
-          })}
-        </ol>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
       </div>
     </section>
   );

@@ -1,11 +1,5 @@
 import { useMemo, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import {
-  clearTaskActivityOnApi,
-  createTaskActivityOnApi,
-  getTaskActivityOnApi,
-} from "@/api/task-activity";
 import type { SubtaskStatus } from "@/api/subtasks";
 import type { TaskActivity } from "@/api/task-activity";
 import {
@@ -15,10 +9,15 @@ import {
   useUpdateSubtaskMutation,
 } from "@/entities/subtask/model/use-subtasks-query";
 import type { Task } from "@/entities/task/model/types";
-import { queryKeys } from "@/shared/api/query-keys";
-import { ActivitySection } from "../task-activity";
+import {
+  useClearTaskActivityMutation,
+  useCreateTaskActivityMutation,
+  useTaskActivityQuery,
+} from "@/entities/task/model/use-task-activity-query";
+import { ActivitySection } from "../task-activity/ActivitySection";
 import type { ActivityInlineReplyState } from "../task-activity/ActivityInlineReply";
-import { TaskDetailsHeader } from "./TaskDetailsHeader";
+import { TaskDescription } from "./TaskDescription";
+import { TaskStatusHistoryTimeline } from "./TaskStatusHistoryTimeline";
 import { TaskSubtaskSection } from "./TaskSubtaskSection";
 
 type TaskDetailsMainProps = {
@@ -26,7 +25,6 @@ type TaskDetailsMainProps = {
 };
 
 export function TaskDetailsMain({ task }: TaskDetailsMainProps) {
-  const queryClient = useQueryClient();
   const [commentText, setCommentText] = useState("");
   const [inlineReplyTarget, setInlineReplyTarget] =
     useState<TaskActivity | null>(null);
@@ -39,59 +37,49 @@ export function TaskDetailsMain({ task }: TaskDetailsMainProps) {
   const updateSubtask = useUpdateSubtaskMutation();
   const deleteSubtask = useDeleteSubtaskMutation();
 
-  const { data: activity = [], isLoading: activityLoading } = useQuery({
-    queryKey: queryKeys.taskActivity(task.id),
-    queryFn: () => getTaskActivityOnApi(task.id),
-  });
+  const { data: activity = [], isLoading: activityLoading } =
+    useTaskActivityQuery(task.id);
 
   const feedItems = useMemo(
     () => activity.filter((item) => item.type !== "task.created"),
     [activity],
   );
 
-  const createCommentMutation = useMutation({
-    mutationFn: createTaskActivityOnApi,
-    onSuccess: (_data, variables) => {
-      if (variables.parentActivityId) {
-        setInlineReplyText("");
-        setInlineReplyTarget(null);
-      } else {
-        setCommentText("");
-      }
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.taskActivity(task.id),
-      });
-    },
-  });
-
-  const clearActivityMutation = useMutation({
-    mutationFn: () => clearTaskActivityOnApi(task.id),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.taskActivity(task.id),
-      });
-    },
-  });
+  const createCommentMutation = useCreateTaskActivityMutation();
+  const clearActivityMutation = useClearTaskActivityMutation();
 
   const handleSubmitComment = () => {
     const body = commentText.trim();
     if (!body || createCommentMutation.isPending) return;
 
-    createCommentMutation.mutate({
-      taskId: task.id,
-      body,
-    });
+    createCommentMutation.mutate(
+      {
+        taskId: task.id,
+        body,
+      },
+      {
+        onSuccess: () => setCommentText(""),
+      },
+    );
   };
 
   const handleSubmitInlineReply = () => {
     const body = inlineReplyText.trim();
     if (!body || !inlineReplyTarget || createCommentMutation.isPending) return;
 
-    createCommentMutation.mutate({
-      taskId: task.id,
-      body,
-      parentActivityId: inlineReplyTarget.id,
-    });
+    createCommentMutation.mutate(
+      {
+        taskId: task.id,
+        body,
+        parentActivityId: inlineReplyTarget.id,
+      },
+      {
+        onSuccess: () => {
+          setInlineReplyText("");
+          setInlineReplyTarget(null);
+        },
+      },
+    );
   };
 
   const handleReply = (item: TaskActivity) => {
@@ -126,12 +114,22 @@ export function TaskDetailsMain({ task }: TaskDetailsMainProps) {
     onCancel: handleCancelInlineReply,
   };
 
+  const description = task.description?.trim();
+
   return (
     <div className="task-details-layout flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <main className="session-panel-scroll min-h-0 flex-1 overflow-y-auto overscroll-contain bg-background">
         <div className="mx-auto w-full max-w-3xl px-6 py-6 lg:px-8 lg:py-8">
           <div className="flex flex-col gap-8 pb-4">
-            <TaskDetailsHeader task={task} />
+            {description ? (
+              <section className="space-y-2">
+                <h2 className="text-sm font-medium text-foreground">
+                  Описание
+                </h2>
+                <TaskDescription text={description} />
+              </section>
+            ) : null}
+            <TaskStatusHistoryTimeline taskId={task.id} />
             <TaskSubtaskSection
               subtasks={subtasks}
               loading={subtasksLoading}
@@ -152,7 +150,7 @@ export function TaskDetailsMain({ task }: TaskDetailsMainProps) {
             <ActivitySection
               activity={feedItems}
               activityLoading={activityLoading}
-              onClear={() => void clearActivityMutation.mutateAsync()}
+              onClear={() => void clearActivityMutation.mutateAsync(task.id)}
               onReply={handleReply}
               commentText={commentText}
               onCommentTextChange={setCommentText}

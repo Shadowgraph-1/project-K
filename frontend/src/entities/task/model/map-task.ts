@@ -14,5 +14,6 @@ export function mapApiTask(raw: TaskDTO): Task {
     creator: raw.creator ?? undefined,
     tags: normalizeTaskPriority(raw.tags) ?? undefined,
     status: raw.status ?? DEFAULT_TASK_STATUS,
+    createdAt: raw.createdAt,
   };
 }

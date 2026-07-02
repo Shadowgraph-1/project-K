@@ -7,6 +7,8 @@ import {
   setFeatureFlag,
   type FeatureFlagKey,
 } from "./feature-flags.service.js";
+import { ApiHttpError } from "../utils/api-errors.js";
+import { isAdminUser } from "../utils/admin-access.js";
 
 export async function getAdminOverview() {
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
@@ -114,4 +116,26 @@ export function getAdminFeatureFlags() {
 
 export function updateAdminFeatureFlag(key: FeatureFlagKey, enabled: boolean) {
   return setFeatureFlag(key, enabled);
+}
+
+export async function deleteAdminUser(
+  actorId: number,
+  targetUserId: number,
+): Promise<{ ok: true }> {
+  if (actorId === targetUserId) {
+    throw new ApiHttpError("self_remove_forbidden");
+  }
+
+  const target = await prisma.users.findUnique({
+    where: { id: targetUserId },
+    select: { id: true, email: true },
+  });
+  if (!target) throw new ApiHttpError("user_not_found");
+
+  if (await isAdminUser({ id: target.id, email: target.email })) {
+    throw new ApiHttpError("forbidden");
+  }
+
+  await prisma.users.delete({ where: { id: targetUserId } });
+  return { ok: true };
 }

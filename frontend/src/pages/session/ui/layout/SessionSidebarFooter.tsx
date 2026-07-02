@@ -75,7 +75,7 @@ export function SessionSidebarFooter({ pathname }: { pathname: string }) {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      <div className="session-sidebar-footer-actions shrink-0">
+      <div className="shrink-0">
         {isAuthenticated ? (
           <FooterIconButton
             label="Kono AI"

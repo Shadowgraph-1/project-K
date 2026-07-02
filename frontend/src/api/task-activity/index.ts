@@ -2,7 +2,7 @@ import { api } from "../client";
 import type { ActivityType } from "@/shared/constants/activity-types";
 
 export type { ActivityType } from "@/shared/constants/activity-types";
-export { Activity, ACTIVITY_TYPES, isActivityType } from "@/shared/constants/activity-types";
+export { Activity, isActivityType } from "@/shared/constants/activity-types";
 
 export type TaskActivity = {
   id: string;

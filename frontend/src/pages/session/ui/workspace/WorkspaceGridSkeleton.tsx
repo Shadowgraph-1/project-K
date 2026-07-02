@@ -1,1 +1,1 @@
-export { KonoLoadingPanel as WorkspaceGridSkeleton } from "@/shared/ui/kono-loader";
+export { WorkspaceGridSkeleton } from "../skeletons/session-skeletons";

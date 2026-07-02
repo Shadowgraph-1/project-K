@@ -5,6 +5,7 @@ import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import rateLimit from "@fastify/rate-limit";
 import aiRoutes from "./routes/ai.routes.js";
+import taskStatusHistoryRoutes from "./routes/task-status-history.routes.js";
 import taskRoutes from "./routes/tasks.routes.js";
 import subtaskRoutes from "./routes/subtasks.routes.js";
 import taskActivityRoutes from "./routes/task-activity.routes.js";
@@ -18,6 +19,7 @@ import healthRoutes from "./routes/health.routes.js";
 import llmSettingsRoutes from "./routes/llm-settings.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import adminAccessRoutes from "./routes/admin-access.routes.js";
+import searchRoutes from "./routes/search.routes.js";
 import { API_DESCRIPTION, OPENAPI_TAGS } from "./openapi/description.js";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
@@ -101,8 +103,10 @@ await app.register(
     await protectedApp.register(workspacesRoutes);
     await protectedApp.register(workspaceMembersRoutes);
     await protectedApp.register(taskRoutes);
+    await protectedApp.register(taskStatusHistoryRoutes);
     await protectedApp.register(subtaskRoutes);
     await protectedApp.register(taskActivityRoutes);
+    await protectedApp.register(searchRoutes);
   },
   { prefix: "/api" },
 );

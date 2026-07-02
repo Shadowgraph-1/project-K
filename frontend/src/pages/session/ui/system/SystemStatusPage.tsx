@@ -3,7 +3,7 @@ import { Check, RefreshCw, TriangleAlert } from "lucide-react";
 import { useHealthQuery } from "@/hooks/use-health-query";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
-import { KonoLoader } from "@/shared/ui/kono-loader";
+import { SystemStatusTableSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import {
   ServiceStatusCard,
   type ServiceStatus,
@@ -202,9 +202,7 @@ export function SystemStatusPage() {
           </div>
 
           {isLoading ? (
-            <div className="flex min-h-56 items-center justify-center rounded-2xl border border-border/70 bg-background/60">
-              <KonoLoader size="sm" hint="Загружаем статус сервисов..." />
-            </div>
+            <SystemStatusTableSkeleton />
           ) : liveRows.length > 0 ? (
             <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/60">
               <div className="overflow-x-auto">

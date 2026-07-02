@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   activateLlmKeyOnApi,
-  activateDefaultLlmOnApi,
   createLlmKeyOnApi,
   deleteAllLlmKeysOnApi,
   deleteLlmKeyOnApi,
@@ -70,13 +69,6 @@ export function useActivateLlmKeyMutation() {
   );
 }
 
-export function useUseDefaultLlmMutation() {
-  return useLlmKeysMutation<void>(() => activateDefaultLlmOnApi(), {
-    success: "Используется Kono AI по умолчанию",
-    error: "Не удалось переключить на модель по умолчанию",
-  });
-}
-
 export function useDeleteLlmKeyMutation() {
   const queryClient = useQueryClient();
 
@@ -112,6 +104,3 @@ export function useDeleteAllLlmKeysMutation() {
     },
   });
 }
-
-export const useLlmKeyQuery = useLlmKeysQuery;
-export const useSaveLlmKeyMutation = useCreateLlmKeyMutation;

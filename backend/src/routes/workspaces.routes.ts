@@ -105,7 +105,7 @@ const workspacesRoutes: FastifyPluginAsync = async (app) => {
           "Только владелец или пользователь с правами на удаление.",
         security: true,
         params: workspaceIdParamSchema,
-        response: { 200: workspaceDto, 403: errorResponse, 404: errorResponse },
+        response: { 200: jsonObject, 403: errorResponse, 404: errorResponse },
       }),
     },
     async (request) => {

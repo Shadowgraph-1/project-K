@@ -6,9 +6,8 @@ type DemoVideoPlayerProps = {
   src: string;
   title: string;
   className?: string;
-  playback?: "viewport" | "controlled";
-  isActive?: boolean;
-  restartOnActivate?: boolean;
+  playback?: "viewport";
+  onVideoRef?: (node: HTMLVideoElement | null) => void;
 };
 
 export function DemoVideoPlayer({
@@ -16,16 +15,11 @@ export function DemoVideoPlayer({
   title,
   className,
   playback = "viewport",
-  isActive = false,
-  restartOnActivate = false,
+  onVideoRef,
 }: DemoVideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setReady(false);
-  }, [src]);
 
   useEffect(() => {
     if (playback !== "viewport") return;
@@ -49,43 +43,53 @@ export function DemoVideoPlayer({
     return () => observer.disconnect();
   }, [playback]);
 
-  useEffect(() => {
-    if (playback !== "controlled") return;
-
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (isActive) {
-      if (restartOnActivate) video.currentTime = 0;
-      void video.play().catch(() => undefined);
-      return;
-    }
-
-    video.pause();
-  }, [playback, isActive, src, restartOnActivate]);
+  function handleVideoRef(node: HTMLVideoElement | null) {
+    videoRef.current = node;
+    onVideoRef?.(node);
+  }
 
   return (
     <div
       ref={frameRef}
-      className={cn("demo-video-frame", ready && "demo-video-frame--ready", className)}
+      className={cn(
+        "overflow-hidden rounded-2xl border border-white/8 bg-[#0a0a0a]",
+        "shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_48px_-28px_rgba(0,0,0,0.85),0_0_80px_-40px_rgba(99,102,241,0.22)]",
+        className,
+      )}
     >
-      <div className="demo-video-frame__chrome" aria-hidden>
-        <span className="demo-video-frame__label">Kono</span>
+      <div
+        className="flex items-center border-b border-white/6 bg-white/2 px-3.5 py-2.5"
+        aria-hidden
+      >
+        <span className="ml-auto font-mono text-[11px] uppercase tracking-wider text-white/30">
+          Kono
+        </span>
       </div>
 
-      <div className="demo-video-frame__screen">
+      <div className="relative w-full bg-[#080808]">
+        {!ready ? (
+          <div
+            className="aspect-video w-full animate-pulse bg-linear-to-r from-white/3 via-white/[0.07] to-white/3"
+            aria-hidden
+          />
+        ) : null}
+
         <video
-          ref={videoRef}
-          className="demo-video-frame__video"
+          ref={handleVideoRef}
+          className={cn(
+            "block w-full h-auto transition-opacity duration-500",
+            ready ? "relative opacity-100" : "absolute inset-0 size-full opacity-0",
+          )}
           src={src}
+          aria-label={title}
           title={title}
           muted
           loop
           playsInline
           preload="metadata"
-          onLoadedData={() => setReady(true)}
+          onLoadStart={() => setReady(false)}
+          onLoadedMetadata={() => setReady(true)}
         />
-        {!ready ? <div className="demo-video-frame__loader" aria-hidden /> : null}
       </div>
     </div>
   );

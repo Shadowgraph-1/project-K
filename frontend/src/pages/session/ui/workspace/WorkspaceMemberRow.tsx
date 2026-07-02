@@ -7,14 +7,14 @@ type WorkspaceMemberRowProps = {
   name: string;
   muted?: boolean;
   className?: string;
-  trailing?: ReactNode;
+  children?: ReactNode;
 };
 
 export function WorkspaceMemberRow({
   name,
   muted = false,
   className,
-  trailing,
+  children,
 }: WorkspaceMemberRowProps) {
   return (
     <div
@@ -32,8 +32,8 @@ export function WorkspaceMemberRow({
       >
         {name}
       </span>
-      {trailing ? (
-        <div className="flex shrink-0 items-center">{trailing}</div>
+      {children ? (
+        <div className="flex shrink-0 items-center">{children}</div>
       ) : null}
     </div>
   );

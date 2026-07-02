@@ -28,7 +28,7 @@ export function HomePage() {
   }, [location.pathname, location.hash]);
 
   return (
-    <main className="min-h-0 flex flex-1 flex-col bg-black">
+    <main className="home-page min-h-0 flex flex-1 flex-col bg-black">
       <Header />
       <MainSection />
       <AboutKonoSection />

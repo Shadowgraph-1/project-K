@@ -2,7 +2,6 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
-  type QueryClient,
 } from "@tanstack/react-query";
 import {
   clearTaskActivityOnApi,
@@ -20,19 +19,15 @@ export function useTaskActivityQuery(taskId: string | undefined) {
   });
 }
 
-function invalidateActivity(queryClient: QueryClient, taskId: string) {
-  return queryClient.invalidateQueries({
-    queryKey: queryKeys.taskActivity(taskId),
-  });
-}
-
 export function useCreateTaskActivityMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: createTaskActivityOnApi,
     onSuccess: (_data, variables) => {
-      void invalidateActivity(queryClient, variables.taskId);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.taskActivity(variables.taskId),
+      });
     },
     onError: () => {
       notify({ title: "Не удалось отправить комментарий", variant: "error" });
@@ -46,7 +41,9 @@ export function useClearTaskActivityMutation() {
   return useMutation({
     mutationFn: (taskId: string) => clearTaskActivityOnApi(taskId),
     onSuccess: (_data, taskId) => {
-      void invalidateActivity(queryClient, taskId);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.taskActivity(taskId),
+      });
     },
     onError: () => {
       notify({ title: "Не удалось очистить активность", variant: "error" });

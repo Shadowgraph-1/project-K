@@ -4,7 +4,7 @@ import { ChevronRight, Plus, Trash2 } from "lucide-react";
 import type { Subtask } from "@/api/subtasks";
 import type { SubtaskStatus } from "@/api/subtasks";
 import { Button } from "@/shared/ui/button";
-import { KonoLoader } from "@/shared/ui/kono-loader";
+import { SubtaskListSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import { cn } from "@/shared/lib/utils";
 import DialogUpdateTask from "../DialogUpdateTask";
 import { SubtaskStatusDropdown } from "../SubtaskStatusDropdown";
@@ -79,9 +79,7 @@ export function TaskSubtaskSection({
 
       {expanded ? (
         loading ? (
-          <div className="py-4 pl-5">
-            <KonoLoader size="sm" hint="подзадачи" />
-          </div>
+          <SubtaskListSkeleton />
         ) : subtasks.length === 0 ? (
           <p className="py-2 pl-5 text-[13px] text-muted-foreground/50">
             Нет подзадач

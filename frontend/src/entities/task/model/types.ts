@@ -1,13 +1,11 @@
 import {
   DEFAULT_TASK_STATUS,
-  TASK_STATUSES,
   type TaskStatus,
 } from "@/shared/constants/task-statuses";
 
 export type { TaskStatus };
-export { DEFAULT_TASK_STATUS, TASK_STATUSES };
 
-export const TASK_PRIORITIES = [
+const TASK_PRIORITIES = [
   "Срочный",
   "Высокий",
   "Средний",
@@ -25,6 +23,7 @@ export type Task = {
   creator?: string;
   tags?: TaskPriority;
   status?: TaskStatus;
+  createdAt?: string;
 };
 
 /** @deprecated use Task */

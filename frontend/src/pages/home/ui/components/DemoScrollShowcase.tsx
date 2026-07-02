@@ -25,9 +25,42 @@ const STEP_ICONS: Record<DemoVideo["id"], LucideIcon> = {
   ai: Bot,
 };
 
+function syncStickyVideos(
+  videos: Array<HTMLVideoElement | null>,
+  activeIndex: number,
+  restartOnActivate: boolean,
+) {
+  videos.forEach((video, index) => {
+    if (!video) return;
+
+    if (index === activeIndex) {
+      if (restartOnActivate) video.currentTime = 0;
+      void video.play().catch(() => undefined);
+      return;
+    }
+
+    video.pause();
+  });
+}
+
 export function DemoScrollShowcase({ items }: DemoScrollShowcaseProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const stepRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const stickyVideoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+
+  const setStickyVideoRef = useCallback(
+    (index: number) => (node: HTMLVideoElement | null) => {
+      stickyVideoRefs.current[index] = node;
+      if (node && index === activeIndex) {
+        syncStickyVideos(stickyVideoRefs.current, activeIndex, true);
+      }
+    },
+    [activeIndex],
+  );
+
+  useEffect(() => {
+    syncStickyVideos(stickyVideoRefs.current, activeIndex, false);
+  }, [activeIndex]);
 
   useEffect(() => {
     const elements = stepRefs.current.filter(Boolean) as HTMLDivElement[];
@@ -38,7 +71,9 @@ export function DemoScrollShowcase({ items }: DemoScrollShowcaseProps) {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
           const index = Number((entry.target as HTMLElement).dataset.index);
-          if (!Number.isNaN(index)) setActiveIndex(index);
+          if (Number.isNaN(index)) continue;
+          setActiveIndex(index);
+          syncStickyVideos(stickyVideoRefs.current, index, true);
         }
       },
       {
@@ -59,8 +94,8 @@ export function DemoScrollShowcase({ items }: DemoScrollShowcaseProps) {
   );
 
   return (
-    <div className="demo-scroll-showcase lg:grid lg:grid-cols-[1fr_1.3fr] lg:gap-16">
-      <div className="demo-scroll-showcase__steps">
+    <div className="lg:grid lg:grid-cols-[1fr_1.3fr] lg:gap-16">
+      <div>
         {items.map((item, index) => {
           const isActive = index === activeIndex;
           const Icon = STEP_ICONS[item.id];
@@ -70,7 +105,7 @@ export function DemoScrollShowcase({ items }: DemoScrollShowcaseProps) {
               key={item.id}
               ref={setStepRef(index)}
               data-index={index}
-              className="demo-scroll-showcase__step lg:flex lg:min-h-[50vh] lg:flex-col lg:justify-center"
+              className="lg:flex lg:min-h-[50vh] lg:flex-col lg:justify-center"
             >
               <div
                 className={cn(
@@ -101,23 +136,23 @@ export function DemoScrollShowcase({ items }: DemoScrollShowcaseProps) {
       </div>
 
       <div className="relative hidden lg:block">
-        <div className="demo-scroll-showcase__sticky">
-          <div className="demo-scroll-showcase__stack">
+        <div className="sticky top-[calc(50vh-14rem)]">
+          <div className="relative w-full">
             {items.map((item, index) => (
               <div
                 key={item.id}
                 className={cn(
-                  "demo-scroll-showcase__layer",
-                  index === activeIndex && "demo-scroll-showcase__layer--active",
+                  "w-full transition-opacity duration-500",
+                  index === activeIndex
+                    ? "relative z-10 opacity-100"
+                    : "pointer-events-none absolute inset-x-0 top-0 opacity-0",
                 )}
                 aria-hidden={index !== activeIndex}
               >
                 <DemoVideoPlayer
                   src={item.src}
                   title={item.title}
-                  playback="controlled"
-                  isActive={index === activeIndex}
-                  restartOnActivate
+                  onVideoRef={setStickyVideoRef(index)}
                 />
               </div>
             ))}

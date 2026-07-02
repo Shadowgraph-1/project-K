@@ -3,7 +3,6 @@ import {
   useQueries,
   useQuery,
   useQueryClient,
-  type QueryClient,
 } from "@tanstack/react-query";
 import {
   createSubtaskOnApi,
@@ -33,27 +32,17 @@ export function useSubtasksQueries(taskIds: string[]) {
   });
 }
 
-function invalidateSubtasks(queryClient: QueryClient, taskId: string) {
-  return queryClient.invalidateQueries({
-    queryKey: queryKeys.subtasks(taskId),
-  });
-}
-
-function invalidateSubtasksAndActivity(queryClient: QueryClient, taskId: string) {
-  return Promise.all([
-    invalidateSubtasks(queryClient, taskId),
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.taskActivity(taskId),
-    }),
-  ]);
-}
-
 export function useCreateSubtaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: createSubtaskOnApi,
     onSuccess: (_data, variables) => {
-      void invalidateSubtasksAndActivity(queryClient, variables.taskId);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.subtasks(variables.taskId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.taskActivity(variables.taskId),
+      });
     },
     onError: () => {
       notify({ title: "Не удалось создать подзадачу", variant: "error" });
@@ -73,7 +62,12 @@ export function useUpdateSubtaskMutation() {
       patch: Partial<Pick<Subtask, "title" | "status">>;
     }) => updateSubtaskOnApi(id, patch),
     onSuccess: (_data, variables) => {
-      void invalidateSubtasksAndActivity(queryClient, variables.taskId);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.subtasks(variables.taskId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.taskActivity(variables.taskId),
+      });
     },
   });
 }
@@ -84,7 +78,12 @@ export function useDeleteSubtaskMutation() {
     mutationFn: ({ id }: { id: string; taskId: string }) =>
       deleteSubtaskOnApi(id),
     onSuccess: (_data, variables) => {
-      void invalidateSubtasksAndActivity(queryClient, variables.taskId);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.subtasks(variables.taskId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.taskActivity(variables.taskId),
+      });
     },
     onError: () => {
       notify({ title: "Не удалось удалить подзадачу", variant: "error" });

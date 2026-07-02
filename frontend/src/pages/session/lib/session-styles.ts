@@ -1,9 +1,6 @@
 export const sessionSurface =
   "rounded-2xl bg-muted/40 ring-1 ring-border/30 transition-[box-shadow,background-color] duration-200";
 
-export const sessionSurfaceSm =
-  "rounded-xl bg-muted/40 ring-1 ring-border/30 transition-[box-shadow,background-color] duration-200";
-
 export const sessionField =
   "h-9 rounded-xl border-0 bg-muted/50 shadow-none ring-1 ring-border/35 focus-visible:ring-2 focus-visible:ring-foreground/10";
 

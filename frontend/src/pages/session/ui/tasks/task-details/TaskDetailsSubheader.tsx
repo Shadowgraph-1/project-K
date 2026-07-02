@@ -33,12 +33,10 @@ import {
 import { TaskStatusIcon } from "../task-status-icons";
 import { TaskDueDateIcon, TaskStartDateIcon } from "../task-date-icons";
 import { TaskDatePicker } from "../task-date-picker";
-import { formatDate } from "../task-feed";
+import { formatDate } from "../task-feed/format-activity-date";
 import { UserAvatar } from "@/entities/user/ui/UserAvatar";
-import {
-  ToolbarIsland,
-  toolbarIslandIconButtonClass,
-} from "../../layout/ToolbarIsland";
+import { ToolbarIsland } from "../../layout/ToolbarIsland";
+import { toolbarIslandIconButtonClass } from "../../layout/toolbar-island-styles";
 import { SessionTooltip } from "../../layout/SessionTooltip";
 
 type TaskDetailsPropertiesButtonProps = {

@@ -1,5 +1,11 @@
 import { createPortal } from "react-dom";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  LazyMotion,
+  domAnimation,
+  m,
+  useReducedMotion,
+} from "motion/react";
 import {
   CheckCircle2,
   Circle,
@@ -44,6 +50,9 @@ function selectedLabel(n: number) {
   return "выбрано";
 }
 
+const hiddenVariant = { opacity: 0, y: 16, scale: 0.95 };
+const visibleVariant = { opacity: 1, y: 0, scale: 1 };
+
 function TaskStatusIcon({ status }: { status: TaskStatus }) {
   switch (status) {
     case "DONE":
@@ -68,15 +77,14 @@ export function TaskCheckedSelectionBar({
   const prefersReducedMotion = useReducedMotion();
   if (typeof document === "undefined") return null;
 
-  const hiddenVariant = { opacity: 0, y: 16, scale: 0.95 };
-  const visibleVariant = { opacity: 1, y: 0, scale: 1 };
   const initialVariant = prefersReducedMotion ? visibleVariant : hiddenVariant;
   const exitVariant = prefersReducedMotion ? visibleVariant : hiddenVariant;
 
   return createPortal(
-    <AnimatePresence>
-      {count > 0 ? (
-        <motion.div
+    <LazyMotion features={domAnimation}>
+      <AnimatePresence>
+        {count > 0 ? (
+          <m.div
           key="task-selection-bar"
           role="toolbar"
           aria-label="Выбранные задачи"
@@ -184,9 +192,10 @@ export function TaskCheckedSelectionBar({
               <X className="size-3.5" />
             </Button>
           </SessionTooltip>
-        </motion.div>
+        </m.div>
       ) : null}
-    </AnimatePresence>,
+    </AnimatePresence>
+    </LazyMotion>,
     document.body,
   );
 }

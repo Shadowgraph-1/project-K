@@ -170,9 +170,9 @@ function AssistantChatMessages({
           </div>
         ) : null}
 
-        {turns.map((turn, i) => (
+        {turns.map((turn) => (
           <div
-            key={`turn-${i}-${turn.user.slice(0, 16)}-${turn.assistant?.slice(0, 16) ?? ""}`}
+            key={`${turn.user}-${turn.assistant ?? ""}-${turn.thinking ? "thinking" : "done"}`}
             className="flex flex-col gap-3"
           >
             {turn.user ? <UserChatMessage>{turn.user}</UserChatMessage> : null}
@@ -202,9 +202,8 @@ export function AssistantFloatingPanel({ chat }: AssistantFloatingPanelProps) {
 
   return createPortal(
     <>
-        <div
-          role="dialog"
-          aria-modal="false"
+        <dialog
+          open
           aria-label="Kono AI"
           className="fixed z-50 flex animate-in flex-col overflow-hidden rounded-2xl border-0 bg-background/95 shadow-[0_24px_70px_-16px_rgba(0,0,0,0.4)] ring-1 ring-border/35 backdrop-blur-xl fade-in slide-in-from-bottom-3 duration-200"
           style={{
@@ -283,7 +282,7 @@ export function AssistantFloatingPanel({ chat }: AssistantFloatingPanelProps) {
           />
         ) : null}
       </div>
-        </div>
+        </dialog>
     </>,
     document.body,
   );

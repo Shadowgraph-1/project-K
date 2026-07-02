@@ -63,10 +63,10 @@ export const WorkspaceTasksBlock = memo(function WorkspaceTasksBlock({
     });
     if (!confirmed) return;
     let removed = 0;
-    for (const task of selected) {
-      const result = await handlers.removeTaskCore(task.id);
-      if (result.ok) removed += 1;
-    }
+    const results = await Promise.all(
+      selected.map((task) => handlers.removeTaskCore(task.id)),
+    );
+    removed = results.filter((result) => result.ok).length;
     if (removed > 0) {
       notifyWithCenter({
         title: removed === 1 ? "Задача удалена" : `Удалено задач: ${removed}`,
@@ -114,6 +114,7 @@ export const WorkspaceTasksBlock = memo(function WorkspaceTasksBlock({
         className="flex min-h-0 min-w-0 flex-1 scroll-mt-24 flex-col"
       >
         <WorkspaceTasksSection
+          workspaceId={workspaceId}
           view={view}
           tasks={tasks}
           creating={creating}

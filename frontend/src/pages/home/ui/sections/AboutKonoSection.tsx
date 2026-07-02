@@ -2,22 +2,8 @@ import { HOME_DEMO_VIDEOS } from "@/shared/config/demo-videos";
 
 import { DemoScrollShowcase } from "@/pages/home/ui/components/DemoScrollShowcase";
 import { HomeGlowCard } from "@/pages/home/ui/components/HomeGlowCard";
+import { FEATURE_CARDS } from "@/shared/config/featureCards";
 import { SECTION_ID } from "@/shared/config/sectionIds";
-
-const HIGHLIGHTS = [
-  {
-    title: "Проекты и задачи",
-    description: "Список, канбан и даты — всё в одном рабочем пространстве.",
-  },
-  {
-    title: "Kono AI",
-    description: "Контекстный помощник рядом.",
-  },
-  {
-    title: "Командная работа",
-    description: "Роли, приглашения и общий прогресс по проекту.",
-  },
-] as const;
 
 export default function AboutKonoSection() {
   return (
@@ -32,22 +18,24 @@ export default function AboutKonoSection() {
             Менеджер задач, который не мешает думать
           </h2>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/45 sm:text-lg">
-            Kono собирает проекты, задачи и AI в одном месте. Создайте пространство, добавьте задачи и работайте в ритме,
-            который подходит вам.
+            Kono собирает проекты, задачи и AI в одном месте. Создайте
+            пространство, добавьте задачи и работайте в ритме, который подходит
+            вам.
           </p>
         </div>
 
         <div
-          className="home-about-highlights mt-12 grid gap-4 sm:grid-cols-3 sm:gap-5"
+          className="home-about-highlights mt-12 grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-4"
           data-aos="fade-up"
           data-aos-delay="80"
         >
-          {HIGHLIGHTS.map((item, index) => (
+          {FEATURE_CARDS.map((item, index) => (
             <HomeGlowCard
               key={item.title}
               title={item.title}
               subtitle={item.description}
-              accent={index === 1}
+              featured
+              slotIndex={index}
             />
           ))}
         </div>

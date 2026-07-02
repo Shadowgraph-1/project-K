@@ -1,19 +1,18 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
-import { HomePreviewCards } from "@/pages/home/ui/components/HomePreviewCards";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { SECTION_ID } from "@/shared/config/sectionIds";
 import { Button } from "@/shared/ui/button";
 
-function MainSection() {
-  const sectionScroll = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-  };
+const sectionScroll = (id: string) => {
+  document.getElementById(id)?.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+};
 
+function MainSection() {
   return (
     <section className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-black px-4 py-24 md:py-28">
       <div className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[640px] -translate-x-1/2 rounded-full bg-neutral-600/15 blur-[120px]" />
@@ -36,7 +35,7 @@ function MainSection() {
             data-aos-delay="80"
             data-aos-duration="800"
           >
-            Список, лента дат, подзадачи и чат с компаньоном.
+            А также чат с персональным компаньоном.
           </p>
 
           <div
@@ -59,16 +58,12 @@ function MainSection() {
               type="button"
               variant="outline"
               size="lg"
-              onClick={() => sectionScroll(SECTION_ID.FEATURES)}
+              onClick={() => sectionScroll(SECTION_ID.ABOUT)}
               className="h-11 rounded-full border-white/15 bg-transparent px-6 text-white shadow-none hover:bg-white/[0.05] hover:text-white"
             >
               Возможности
             </Button>
           </div>
-        </div>
-
-        <div className="relative w-full">
-          <HomePreviewCards />
         </div>
       </div>
     </section>

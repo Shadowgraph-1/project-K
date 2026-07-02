@@ -3,6 +3,7 @@ import { TaskStatus } from "../constants/task-statuses.js";
 import { prisma } from "../db/prisma.js";
 import { taskSelect, type TaskRow } from "../mappers/task.mapper.js";
 import { assertTaskAccess, assertWorkspaceAccess } from "../permissions.js";
+import { recordTaskStatusChange } from "./task-status-history.service.js";
 import type {
   TaskCreateInput,
   TaskPatchInput,
@@ -61,6 +62,14 @@ export async function createTask(
       },
     });
 
+    await recordTaskStatusChange(tx, {
+      taskId: created.id,
+      userId,
+      fromStatus: null,
+      toStatus: created.status,
+      changedAt: created.created_at,
+    });
+
     return created;
   });
 }
@@ -107,17 +116,41 @@ export async function updateTask(
     throw new ApiHttpError("task_not_found");
   }
 
-  return prisma.tasks.update({
+  const current = await prisma.tasks.findUnique({
     where: { id: taskId },
-    data: {
-      title: patch.title?.trim(),
-      description: patch.description ?? undefined,
-      tags: patch.tags === "" ? null : (patch.tags ?? undefined),
-      start_date: patch.startDate ?? undefined,
-      due_date: patch.dueDate === "" ? null : (patch.dueDate ?? undefined),
-      creator: patch.creator ?? undefined,
-      status: patch.status ?? undefined,
-    },
-    select: taskSelect,
+    select: { status: true },
+  });
+  if (!current) throw new ApiHttpError("task_not_found");
+
+  const nextStatus = patch.status;
+
+  return prisma.$transaction(async (tx) => {
+    const updated = await tx.tasks.update({
+      where: { id: taskId },
+      data: {
+        title: patch.title?.trim(),
+        description: patch.description ?? undefined,
+        tags: patch.tags === "" ? null : (patch.tags ?? undefined),
+        start_date: patch.startDate ?? undefined,
+        due_date: patch.dueDate === "" ? null : (patch.dueDate ?? undefined),
+        creator: patch.creator ?? undefined,
+        status: nextStatus ?? undefined,
+      },
+      select: taskSelect,
+    });
+
+    if (
+      nextStatus !== undefined &&
+      nextStatus !== current.status
+    ) {
+      await recordTaskStatusChange(tx, {
+        taskId,
+        userId,
+        fromStatus: current.status,
+        toStatus: nextStatus,
+      });
+    }
+
+    return updated;
   });
 }

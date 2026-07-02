@@ -75,10 +75,6 @@ export function getActivityEntityTone(item: TaskActivity): ActivityEntityTone {
   }
 }
 
-export function activityEntityToneClass(tone: ActivityEntityTone) {
-  return ENTITY_TONE_CLASS[tone];
-}
-
 export function activityIconSurfaceClass(item: TaskActivity) {
   return ICON_SURFACE_TONE_CLASS[getActivityEntityTone(item)];
 }

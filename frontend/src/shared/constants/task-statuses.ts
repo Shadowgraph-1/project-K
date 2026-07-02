@@ -37,10 +37,6 @@ export function getTaskFilterEmptyCopy(status: TaskStatus): {
   };
 }
 
-export function isTaskStatus(value: string): value is TaskStatus {
-  return (TASK_STATUSES as readonly string[]).includes(value);
-}
-
 export function getStatusLabel(status: TaskStatus) {
   return TASK_STATUS_LABELS[status];
 }

@@ -3,6 +3,7 @@ import { isAdminUser } from "../utils/admin-access.js";
 import { replyApiError } from "../utils/api-errors.js";
 import {
   adminErrorLogsQuerySchema,
+  adminUserIdParamSchema,
   adminUsersQuerySchema,
   featureFlagKeyParamSchema,
   updateFeatureFlagSchema,
@@ -59,6 +60,31 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
     async (request) => {
       const query = parseBody(adminUsersQuerySchema, request.query);
       return adminService.listAdminUsers(query.limit, query.offset);
+    },
+  );
+
+  app.delete<{ Params: { userId: string } }>(
+    "/admin/users/:userId",
+    {
+      schema: routeSchema({
+        tags: ["Администрирование"],
+        summary: "Удалить пользователя",
+        description:
+          "Безвозвратно удаляет пользователя и его проекты (каскад).\n\n" +
+          "Нельзя удалить себя или другого администратора.",
+        security: true,
+        params: adminUserIdParamSchema,
+        response: {
+          200: jsonObject,
+          400: errorResponse,
+          403: errorResponse,
+          404: errorResponse,
+        },
+      }),
+    },
+    async (request) => {
+      const { userId } = parseBody(adminUserIdParamSchema, request.params);
+      return adminService.deleteAdminUser(request.user.id, userId);
     },
   );
 

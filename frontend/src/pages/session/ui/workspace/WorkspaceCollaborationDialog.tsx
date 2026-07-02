@@ -9,6 +9,12 @@ import {
 } from "@/shared/ui/dialog";
 import { WorkspaceMembersPanel } from "./WorkspaceMembersPanel";
 
+function handleDialogOpenChange(next: boolean) {
+  if (!next) {
+    useCollaborationModalStore.getState().closeCollaboration();
+  }
+}
+
 export function WorkspaceCollaborationDialog() {
   const open = useCollaborationModalStore((s) => s.open);
   const workspaceId = useCollaborationModalStore((s) => s.workspaceId);
@@ -20,12 +26,6 @@ export function WorkspaceCollaborationDialog() {
     ? workspaces.find((w) => w.id === workspaceId)
     : undefined;
   const effectiveTitle = workspaceTitle ?? resolvedWorkspace?.title ?? "Проект";
-
-  function handleDialogOpenChange(next: boolean) {
-    if (!next) {
-      useCollaborationModalStore.getState().closeCollaboration();
-    }
-  }
 
   return (
     <Dialog open={open} onOpenChange={handleDialogOpenChange}>

@@ -19,7 +19,7 @@ import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { notify } from "@/shared/lib/notify";
 import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
 import { Button } from "@/shared/ui/button";
-import { KonoLoader } from "@/shared/ui/kono-loader";
+import { MemberListSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,10 +54,10 @@ function apiErrorMessage(error: unknown, fallback: string) {
 }
 
 function MemberRoleBadge({
-  role,
+  memberRole,
   interactive = false,
 }: {
-  role: WorkspaceRole;
+  memberRole: WorkspaceRole;
   interactive?: boolean;
 }) {
   return (
@@ -69,7 +69,7 @@ function MemberRoleBadge({
           : "justify-center rounded-full bg-muted/25 ring-1 ring-border/30",
       )}
     >
-      {ROLE_LABELS[role]}
+      {ROLE_LABELS[memberRole]}
       {interactive ? <ChevronDown className="size-3 opacity-60" aria-hidden /> : null}
     </span>
   );
@@ -85,7 +85,7 @@ function MemberRoleSelect({
   onSelectRole: (role: WorkspaceRole) => void;
 }) {
   if (disabled) {
-    return <MemberRoleBadge role={role} />;
+    return <MemberRoleBadge memberRole={role} />;
   }
 
   return (
@@ -95,7 +95,7 @@ function MemberRoleSelect({
           type="button"
           className="rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <MemberRoleBadge role={role} interactive />
+          <MemberRoleBadge memberRole={role} interactive />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[10rem] p-1">
@@ -249,9 +249,7 @@ export function WorkspaceMembersPanel({
           </div>
 
           {membersLoading ? (
-            <div className="py-8">
-              <KonoLoader size="sm" hint="участники" />
-            </div>
+            <MemberListSkeleton rows={4} />
           ) : members.length === 0 ? (
             <p className="text-sm text-muted-foreground">Пока никого</p>
           ) : (
@@ -261,12 +259,10 @@ export function WorkspaceMembersPanel({
                   key={member.userId}
                   className="rounded-md px-1 py-0.5 transition-colors hover:bg-muted/50"
                 >
-                  <WorkspaceMemberRow
-                    name={member.name}
-                    trailing={
-                      <div className="flex items-center gap-1">
+                  <WorkspaceMemberRow name={member.name}>
+                    <div className="flex items-center gap-1">
                         {member.isOwner ? (
-                          <MemberRoleBadge role="OWNER" />
+                          <MemberRoleBadge memberRole="OWNER" />
                         ) : (
                           <>
                             <MemberRoleSelect
@@ -303,8 +299,7 @@ export function WorkspaceMembersPanel({
                           </>
                         )}
                       </div>
-                    }
-                  />
+                  </WorkspaceMemberRow>
                 </li>
               ))}
             </ul>
@@ -327,13 +322,9 @@ export function WorkspaceMembersPanel({
                   key={invite.id}
                   className="rounded-md px-1 py-0.5 hover:bg-muted/40"
                 >
-                  <WorkspaceMemberRow
-                    name={invite.name}
-                    muted
-                    trailing={
-                      <MemberRoleBadge role={invite.role as WorkspaceRole} />
-                    }
-                  />
+                  <WorkspaceMemberRow name={invite.name} muted>
+                    <MemberRoleBadge memberRole={invite.role as WorkspaceRole} />
+                  </WorkspaceMemberRow>
                 </li>
               ))}
             </ul>

@@ -1,9 +1,9 @@
 import {
-  forwardRef,
   type ComponentPropsWithoutRef,
   type KeyboardEvent,
   type MouseEvent,
   type PointerEvent,
+  type Ref,
 } from "react";
 import { Check, Trash2 } from "lucide-react";
 import {
@@ -31,7 +31,7 @@ import { getTaskStatus } from "@/entities/task/model/types";
 import type { TaskStatus } from "@/shared/constants/task-statuses";
 import { TASK_STATUS_LABELS } from "@/shared/constants/task-statuses";
 import { TASK_ROW_GRID_COLUMNS } from "./sessionWorkspaceTypes";
-import { formatShortDate } from "./task-feed";
+import { formatDate, formatShortDate } from "./task-feed/format-activity-date";
 import { Button } from "@/shared/ui/button";
 import {
   TaskPriorityContextMenuSub,
@@ -48,6 +48,16 @@ function taskKey(id: string) {
 
 function stopRowActivation(event: MouseEvent | PointerEvent) {
   event.stopPropagation();
+}
+
+function handleRowOpenKeyDown(
+  event: KeyboardEvent<HTMLLIElement>,
+  onOpen: () => void,
+) {
+  if (event.target !== event.currentTarget) return;
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  onOpen();
 }
 
 export type TaskRowProps = {
@@ -154,13 +164,16 @@ function TaskRowCheckbox({
   );
 }
 
-const TaskRowIconTrigger = forwardRef<
-  HTMLButtonElement,
-  ComponentPropsWithoutRef<typeof Button>
->(function TaskRowIconTrigger(
-  { className, onClick, onPointerDown, type = "button", ...props },
+function TaskRowIconTrigger({
   ref,
-) {
+  className,
+  onClick,
+  onPointerDown,
+  type = "button",
+  ...props
+}: ComponentPropsWithoutRef<typeof Button> & {
+  ref?: Ref<HTMLButtonElement>;
+}) {
   return (
     <Button
       ref={ref}
@@ -179,7 +192,7 @@ const TaskRowIconTrigger = forwardRef<
       {...props}
     />
   );
-});
+}
 
 export function TaskRow({
   task,
@@ -191,9 +204,12 @@ export function TaskRow({
 }: TaskRowProps) {
   const status = getTaskStatus(task);
   const priority = normalizeTaskPriority(task.tags);
-  const dateLabel = task.dueDate ?? task.startDate;
   const priorityLabel = getTaskPriorityLabel(priority);
   const statusLabel = TASK_STATUS_LABELS[status];
+  const createdLabel = task.createdAt ? formatShortDate(task.createdAt) : null;
+  const createdTooltip = task.createdAt
+    ? (formatDate(task.createdAt) ?? task.createdAt)
+    : null;
   const savePatch = useSaveTaskPatch(task.id, task.workspaceId);
 
   const handleStatusChange = (nextStatus: TaskStatus) =>
@@ -208,39 +224,32 @@ export function TaskRow({
       { description: "Приоритет не изменён, попробуйте ещё раз" },
     );
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLLIElement>) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    e.preventDefault();
-    onOpen(task.id);
-  };
-
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
         <li
-          role="button"
-          tabIndex={0}
-          aria-label={`Открыть задачу ${task.title}`}
           className={cn(
             "task-list-row group relative grid h-11 w-full min-w-0 cursor-pointer items-center gap-x-2 rounded-sm px-1",
-            "transition-colors hover:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+            "transition-colors hover:bg-muted/45 focus-within:bg-muted/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
             isChecked && "bg-accent/70 hover:bg-accent/80",
           )}
           style={{ gridTemplateColumns: TASK_ROW_GRID_COLUMNS }}
-          onClick={(event) => {
-            if ((event.target as HTMLElement).closest("button")) return;
-            onOpen(task.id);
-          }}
-          onKeyDown={handleKeyDown}
+          tabIndex={0}
+          role="button"
+          aria-label={`Открыть задачу ${task.title}`}
+          onClick={() => onOpen(task.id)}
+          onKeyDown={(event) =>
+            handleRowOpenKeyDown(event, () => onOpen(task.id))
+          }
         >
-        <div className="relative z-10 flex items-center justify-center">
+        <div className="relative flex items-center justify-center">
           <TaskRowCheckbox
             checked={isChecked}
             onToggle={() => onToggleChecked(task.id)}
           />
         </div>
 
-        <div className="relative z-10 flex items-center justify-center">
+        <div className="relative flex items-center justify-center">
           <TaskPriorityPickerMenu
             priority={priority}
             onPriorityChange={handlePriorityChange}
@@ -253,11 +262,11 @@ export function TaskRow({
           />
         </div>
 
-        <span className="relative z-10 truncate font-mono text-xs tabular-nums text-muted-foreground">
+        <span className="relative truncate font-mono text-xs tabular-nums text-muted-foreground">
           {taskKey(task.id)}
         </span>
 
-        <div className="relative z-10 flex items-center justify-center">
+        <div className="relative flex items-center justify-center">
           <TaskStatusPickerMenu
             status={status}
             onStatusChange={handleStatusChange}
@@ -270,7 +279,7 @@ export function TaskRow({
           />
         </div>
 
-        <div className="relative z-10 flex min-w-0 items-center gap-2">
+        <div className="relative flex min-w-0 items-center gap-2">
           {task.description?.trim() ? (
             <SessionTooltip label={task.description.trim()}>
               <span className="min-w-0 truncate text-[13px] leading-5 text-foreground">
@@ -282,42 +291,39 @@ export function TaskRow({
               {task.title}
             </span>
           )}
-          {task.creator ? (
+          {task.creator?.trim() ? (
             <div className="ml-auto flex shrink-0 items-center opacity-100 transition-opacity group-hover:opacity-100 sm:opacity-70">
-              <UserAvatar
-                name={task.creator}
-                size={16}
-                fallbackClassName="text-[8px]"
-              />
-              <span className="ml-2 text-sm">{task.creator}</span>
+              <SessionTooltip label={`Создатель: ${task.creator.trim()}`} side="bottom">
+                <span className="inline-flex">
+                  <UserAvatar
+                    name={task.creator}
+                    size={16}
+                    fallbackClassName="text-[8px]"
+                  />
+                </span>
+              </SessionTooltip>
             </div>
           ) : null}
         </div>
 
-        <div className="relative z-10 flex items-center justify-end gap-2">
-          {subtaskCount !== undefined ? (
-            <SessionTooltip
-              label={
-                subtaskCount === 0
-                  ? "Нет подзадач"
-                  : `Подзадач: ${subtaskCount}`
-              }
-            >
-              <span className="min-w-[1.25rem] text-center text-xs tabular-nums text-muted-foreground/70">
+        <div className="relative flex items-center justify-end gap-2">
+          {subtaskCount !== undefined && subtaskCount > 0 ? (
+            <SessionTooltip label={`Подзадач: ${subtaskCount}`}>
+              <span className="min-w-5 text-center text-xs tabular-nums text-muted-foreground/70">
                 {subtaskCount}
               </span>
             </SessionTooltip>
           ) : null}
-          {dateLabel ? (
-            <SessionTooltip label={dateLabel}>
+          {createdLabel && createdTooltip ? (
+            <SessionTooltip label={`Создана: ${createdTooltip}`}>
               <span className="text-xs tabular-nums text-muted-foreground">
-                {formatShortDate(dateLabel)}
+                {createdLabel}
               </span>
             </SessionTooltip>
           ) : null}
         </div>
 
-        <div className="relative z-10 flex items-center justify-center">
+        <div className="relative flex items-center justify-center">
           <TaskRowIconTrigger
             aria-label="Удалить задачу"
             className={cn(

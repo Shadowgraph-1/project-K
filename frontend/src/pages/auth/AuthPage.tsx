@@ -1,6 +1,6 @@
-import { useEffect, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Controller, useForm } from "react-hook-form";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 
 import { createUserOnApi, loginUserOnApi } from "@/api/auth";
@@ -291,16 +291,16 @@ function RegisterPanel({
 export function AuthPage({ mode }: { mode: AuthMode }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const logout = useAuthStore((s) => s.logout);
 
   const redirectTo =
     searchParams.get("redirect")?.trim() || SESSION_PATHS.sessionRoot;
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(redirectTo, { replace: true });
-    }
-  }, [isAuthenticated, navigate, redirectTo]);
+  if (mode === "login" && isAuthenticated) {
+    return <Navigate to={redirectTo} replace />;
+  }
 
   const handleSuccess = () => {
     navigate(redirectTo, { replace: true });
@@ -322,6 +322,39 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
         <div className="flex flex-1 flex-col items-center justify-center px-5 py-4">
           <div className="flex w-full grow items-center justify-center">
             <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+              {mode === "register" && isAuthenticated && user ? (
+                <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-sm text-white/60">
+                  <p>
+                    Сейчас вы вошли как{" "}
+                    <span className="font-medium text-white/85">
+                      {user.email}
+                    </span>
+                    .
+                  </p>
+                  <p className="mt-1">
+                    Новая регистрация заменит текущую сессию на этом устройстве.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full border-white/15 bg-transparent text-white/80 hover:bg-white/5 hover:text-white"
+                      onClick={() => logout()}
+                    >
+                      Выйти и создать новый
+                    </Button>
+                    <Button
+                      asChild
+                      size="sm"
+                      className="rounded-full bg-white text-neutral-950 hover:bg-neutral-200"
+                    >
+                      <Link to={SESSION_PATHS.sessionRoot}>К проектам</Link>
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+
               {mode === "login" ? (
                 <LoginPanel redirectTo={redirectTo} onSuccess={handleSuccess} />
               ) : (

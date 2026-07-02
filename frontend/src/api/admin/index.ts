@@ -124,3 +124,7 @@ export async function updateAdminFeatureFlag(
   });
   return data;
 }
+
+export async function deleteAdminUser(userId: number): Promise<void> {
+  await api.delete(`/admin/users/${userId}`);
+}

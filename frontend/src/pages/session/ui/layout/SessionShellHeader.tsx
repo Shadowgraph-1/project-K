@@ -4,6 +4,8 @@ import { Bell } from "lucide-react";
 
 import { useNotifys } from "@/entities/notification/model/useNotifys";
 import { useInvitesQuery } from "@/hooks/use-invites-query";
+import { useNotificationPrefsStore } from "@/shared/model/useNotificationPrefsStore";
+import { useSearchBar } from "@/hooks/use-searchBar";
 import { Button } from "@/shared/ui/button";
 import { SidebarTrigger, useSidebar } from "@/shared/ui/sidebar";
 import {
@@ -16,6 +18,7 @@ import {
 import { sessionToolbarIconButton } from "@/pages/session/lib/session-styles";
 import { cn } from "@/shared/lib/utils";
 import NotifysCenter from "../widgets/NotifysCenter";
+import { SearchBar } from "../widgets/SearchBar";
 import { WorkspaceCollaborationDialog } from "../workspace/WorkspaceCollaborationDialog";
 import { SessionBreadcrumbs } from "./SessionBreadcrumbs";
 
@@ -29,11 +32,20 @@ export function SessionShellHeader() {
   const { pathname } = useLocation();
   const { state: sidebarState } = useSidebar();
   const sidebarExpanded = sidebarState === "expanded";
+  const { focus, setFocus } = useSearchBar();
+
+  const taskHistoryEnabled = useNotificationPrefsStore(
+    (s) => s.taskHistoryEnabled,
+  );
+  const teamInvitesEnabled = useNotificationPrefsStore(
+    (s) => s.teamInvitesEnabled,
+  );
 
   const { data: incoming } = useInvitesQuery();
-  const inviteCount = incoming?.length ?? 0;
+  const inviteCount = teamInvitesEnabled ? (incoming?.length ?? 0) : 0;
   const toastCount = useNotifys((s) => s.notifys.length);
-  const notifyCount = toastCount + inviteCount;
+  const notifyCount =
+    (taskHistoryEnabled ? toastCount : 0) + inviteCount;
 
   const [openCenter, setOpenCenter] = useState(false);
 
@@ -43,8 +55,8 @@ export function SessionShellHeader() {
 
   return (
     <>
-      <header className="flex min-h-12 w-full shrink-0 items-center justify-between gap-3 border-b border-border/40 bg-background/95 px-3 py-2">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      <header className="relative z-30 flex min-h-12 w-full shrink-0 items-center gap-2 border-b border-border/40 bg-background/95 px-3 py-2 sm:gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           <SidebarTrigger
             className={cn(
               "size-7 shrink-0 rounded-md",
@@ -57,8 +69,16 @@ export function SessionShellHeader() {
                 : "Развернуть боковую панель"
             }
           />
-          <SessionBreadcrumbs />
+          <div className="hidden min-w-0 md:block">
+            <SessionBreadcrumbs />
+          </div>
         </div>
+
+        <SearchBar
+          className="min-w-0 flex-1"
+          focused={focus}
+          onFocusChange={setFocus}
+        />
 
         <div className="flex shrink-0 items-center gap-1">
           <Button

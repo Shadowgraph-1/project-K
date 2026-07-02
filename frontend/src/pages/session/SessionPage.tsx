@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/shared/ui/sidebar";
 import { useAssistantChat } from "@/hooks/use-assistant-chat";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
-import { ConnectionEmptyState } from "@/pages/Offline/ConnectionEmptyState";
+import { ConnectionEmptyState } from "@/pages/offline/ConnectionEmptyState";
 import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 
@@ -13,6 +13,7 @@ import { AuthGate } from "./ui/layout/AuthGate";
 import { SessionMainArea } from "./ui/layout/SessionMainArea";
 import { SessionShellHeader } from "./ui/layout/SessionShellHeader";
 import { AssistantFloatingPanel } from "./ui/widgets/AssistantFloatingPanel";
+import { SessionShortcutsHost } from "./ui/widgets/SessionShortcutsHost";
 import { useAssistantContext } from "./model/use-assistant-context";
 import { useSessionRouteState } from "./model/use-session-route-state";
 import { useSessionThemeSync } from "./lib/use-session-theme-sync";
@@ -44,6 +45,7 @@ function SessionPage() {
     loading,
   } = useAssistantChat({ tasks: tasksContext, subtasks: subtasksContext });
 
+  
   return (
     <div className="session-shell flex h-dvh flex-col overflow-hidden">
       <TooltipProvider delayDuration={300}>
@@ -53,6 +55,7 @@ function SessionPage() {
           className="min-h-0 flex-1"
           style={{ "--sidebar-width": "244px" } as CSSProperties}
         >
+          <SessionShortcutsHost />
           <AppSidebar />
           <SidebarInset className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background md:m-2 md:ml-0 md:rounded-2xl md:shadow-none md:ring-1 md:ring-border/30">
             <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">

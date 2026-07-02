@@ -2,7 +2,7 @@ import type { TaskActivity } from "@/api/task-activity";
 import { cn } from "@/shared/lib/utils";
 import { ActivityActionIcon } from "../activity-action-icons";
 import { activityIconRingClass } from "./activity-entity-tones";
-import { buildActivityFeed } from "../task-feed";
+import { buildActivityFeed } from "../task-feed/build-activity-feed";
 import type { ActivityInlineReplyState } from "./ActivityInlineReply";
 import { ActivityThreadNode } from "./ActivityThreadNode";
 import { ActivityTimelineRail } from "./ActivityTimelineRail";
@@ -39,7 +39,6 @@ export function ActivityTimeline({
         return (
           <li
             key={item.id}
-            role="listitem"
             className="relative flex min-w-0 items-start gap-2.5"
           >
             <ActivityTimelineRail

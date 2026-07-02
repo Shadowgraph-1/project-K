@@ -7,7 +7,6 @@ type SessionPageHeaderProps = {
   title: string;
   actions?: ReactNode;
   children?: ReactNode;
-  /** Inline caption for `toolbar` variant (e.g. task count). */
   meta?: ReactNode;
   className?: string;
   variant?: "default" | "toolbar";
@@ -17,7 +16,6 @@ export function SessionPageHeader({
   title,
   actions,
   children,
-  meta,
   className,
   variant = "default",
 }: SessionPageHeaderProps) {
@@ -38,17 +36,6 @@ export function SessionPageHeader({
           <h1 className="truncate text-lg font-semibold tracking-tight text-foreground">
             {title}
           </h1>
-          {meta ? (
-            <>
-              <span
-                className="shrink-0 text-muted-foreground/35"
-                aria-hidden
-              >
-                ·
-              </span>
-              <p className="shrink-0 text-sm text-muted-foreground">{meta}</p>
-            </>
-          ) : null}
           {children}
         </div>
       ) : (

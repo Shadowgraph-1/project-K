@@ -26,7 +26,7 @@ export function TaskPriorityFieldIcon({ className }: IconProps) {
   );
 }
 
-export function NoPriorityIcon({ className }: IconProps) {
+function NoPriorityIcon({ className }: IconProps) {
   return (
     <svg
       width="16"
@@ -45,7 +45,7 @@ export function NoPriorityIcon({ className }: IconProps) {
 }
 
 
-export function UrgentPriorityIcon({ className }: IconProps) {
+function UrgentPriorityIcon({ className }: IconProps) {
   return (
     <svg
       width="16"
@@ -62,7 +62,7 @@ export function UrgentPriorityIcon({ className }: IconProps) {
 }
 
 
-export function HighPriorityIcon({ className }: IconProps) {
+function HighPriorityIcon({ className }: IconProps) {
   return (
     <svg
       width="16"
@@ -81,7 +81,7 @@ export function HighPriorityIcon({ className }: IconProps) {
 }
 
 
-export function MediumPriorityIcon({ className }: IconProps) {
+function MediumPriorityIcon({ className }: IconProps) {
   return (
     <svg
       width="16"
@@ -100,7 +100,7 @@ export function MediumPriorityIcon({ className }: IconProps) {
 }
 
 
-export function LowPriorityIcon({ className }: IconProps) {
+function LowPriorityIcon({ className }: IconProps) {
   return (
     <svg
       width="16"

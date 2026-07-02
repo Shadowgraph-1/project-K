@@ -1,3 +1,4 @@
+import { type KeyboardEvent } from "react";
 import { Box, MoreVertical, Trash2, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -45,6 +46,13 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
     navigate(SESSION_PATHS.workspace(item.publicKey));
   };
 
+  const handleOpenKeyDown = (event: KeyboardEvent<HTMLLIElement>) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    handleOpen();
+  };
+
   async function handleDelete() {
     const taskHint =
       total > 0
@@ -84,13 +92,17 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
 
   return (
     <li
-      onClick={handleOpen}
       className={cn(
         WORKSPACE_LIST_GRID,
-        "group min-h-12 cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-background/45",
+        "group relative min-h-12 cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-background/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
       )}
+      tabIndex={0}
+      role="button"
+      aria-label={`Открыть проект ${item.title}`}
+      onClick={handleOpen}
+      onKeyDown={handleOpenKeyDown}
     >
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="relative flex min-w-0 items-center gap-2">
         <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
           {item.kind === "shared" ? (
             <Users className="size-4" />
@@ -112,18 +124,19 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
         </div>
       </div>
 
-      <span className="text-sm tabular-nums text-muted-foreground">
+      <span className="relative text-sm tabular-nums text-muted-foreground">
         {total > 0 ? total : "—"}
       </span>
 
-      <span className="text-sm tabular-nums text-muted-foreground">
+      <span className="relative text-sm tabular-nums text-muted-foreground">
         {completionPercent !== null ? `${completionPercent}%` : "—"}
       </span>
 
       {canDelete ? (
         <div
-          className="flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100"
+          className="relative flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100"
           onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
         >
           <DropdownMenu>
             <SessionTooltip label="Действия">

@@ -1,1 +1,1 @@
-export { KonoLoadingPanel as WorkspaceHubListSkeleton } from "@/shared/ui/kono-loader";
+export { WorkspaceHubListSkeleton } from "../skeletons/session-skeletons";

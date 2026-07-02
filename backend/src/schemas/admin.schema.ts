@@ -49,3 +49,13 @@ export const featureFlagKeyParamSchema = z
       ),
   })
   .describe("Параметры URL: feature flag");
+
+export const adminUserIdParamSchema = z
+  .object({
+    userId: z.coerce
+      .number()
+      .int()
+      .positive()
+      .describe("Числовой ID пользователя"),
+  })
+  .describe("Параметры URL: пользователь");

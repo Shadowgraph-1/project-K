@@ -20,13 +20,14 @@ export function Header() {
   const logout = useAuthStore((s) => s.logout);
   const location = useLocation();
 
-  const [elevated, setElevated] = useState(false);
+  const [elevated, setElevated] = useState(
+    () => typeof window !== "undefined" && window.scrollY > 12,
+  );
   const activeHash = location.hash.replace("#", "");
 
   useEffect(() => {
     const onScroll = () => setElevated(window.scrollY > 12);
 
-    onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
 
     return () => window.removeEventListener("scroll", onScroll);

@@ -1,5 +1,8 @@
+import { useDroppable } from "@dnd-kit/core";
+
 import type { Task } from "@/entities/task/model/types";
 import type { TaskStatus } from "@/shared/constants/task-statuses";
+import { cn } from "@/shared/lib/utils";
 import { TaskStatusIcon } from "./task-status-icons";
 import { KanbanCard } from "./KanbanCard";
 
@@ -16,6 +19,11 @@ export function KanbanColumn({
   tasks,
   onOpenTask,
 }: KanbanColumnProps) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: status,
+    data: { status },
+  });
+
   return (
     <section className="session-kanban-column">
       <header className="session-kanban-column-header">
@@ -24,7 +32,13 @@ export function KanbanColumn({
         <span className="session-kanban-column-count">{tasks.length}</span>
       </header>
 
-      <div className="session-kanban-column-body session-panel-scroll">
+      <div
+        ref={setNodeRef}
+        className={cn(
+          "session-kanban-column-body session-panel-scroll",
+          isOver && "session-kanban-column--over",
+        )}
+      >
         {tasks.length === 0 ? (
           <p className="session-kanban-empty">Нет задач</p>
         ) : (

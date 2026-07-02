@@ -10,6 +10,7 @@ export const taskSelect = {
   creator: true,
   status: true,
   workspace_id: true,
+  created_at: true,
 } as const;
 
 export type TaskRow = {
@@ -22,6 +23,7 @@ export type TaskRow = {
   creator: string | null;
   status: TaskStatus;
   workspace_id: string;
+  created_at: Date;
 };
 
 export function toTaskDto(task: TaskRow) {
@@ -35,5 +37,6 @@ export function toTaskDto(task: TaskRow) {
     creator: task.creator,
     status: task.status,
     workspaceId: task.workspace_id,
+    createdAt: task.created_at.toISOString(),
   };
 }

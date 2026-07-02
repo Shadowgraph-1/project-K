@@ -11,9 +11,7 @@ import { parseBody } from "../utils/parse-body.js";
 import { routeSchema } from "../openapi/route-schema.js";
 import {
   errorResponse,
-  jsonObject,
-  llmKeyDto,
-  llmKeyListResponse,
+  llmKeysResponse,
   noContentResponse,
 } from "../openapi/responses.js";
 
@@ -35,7 +33,7 @@ const llmSettingsRoutes: FastifyPluginAsync = async (app) => {
           "Требует feature flag `llm_user_keys`.",
         security: true,
         querystring: listLlmQuerySchema,
-        response: { 200: llmKeyListResponse, 403: errorResponse },
+        response: { 200: llmKeysResponse, 403: errorResponse },
       }),
     },
     async (request) => {
@@ -53,7 +51,7 @@ const llmSettingsRoutes: FastifyPluginAsync = async (app) => {
         description: "Сохраняет OpenAI-compatible API key. Новый ключ не активируется автоматически.",
         security: true,
         body: createLlmKeySchema,
-        response: { 200: llmKeyDto, 403: errorResponse },
+        response: { 200: llmKeysResponse, 403: errorResponse },
       }),
     },
     async (request) => {
@@ -71,7 +69,7 @@ const llmSettingsRoutes: FastifyPluginAsync = async (app) => {
         description:
           "Отключает пользовательские ключи и переключает чат на системный LM из env.",
         security: true,
-        response: { 200: jsonObject, 403: errorResponse },
+        response: { 200: llmKeysResponse, 403: errorResponse },
       }),
     },
     async (request) => {
@@ -88,7 +86,7 @@ const llmSettingsRoutes: FastifyPluginAsync = async (app) => {
         description: "Делает указанный ключ активным для AI-чата (остальные деактивируются).",
         security: true,
         params: llmKeyIdParamSchema,
-        response: { 200: llmKeyDto, 403: errorResponse, 404: errorResponse },
+        response: { 200: llmKeysResponse, 403: errorResponse, 404: errorResponse },
       }),
     },
     async (request) => {

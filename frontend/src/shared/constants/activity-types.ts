@@ -1,4 +1,4 @@
-export const ACTIVITY_TYPES = [
+const ACTIVITY_TYPES = [
   "task.created",
   "update.created",
   "subtask.created",

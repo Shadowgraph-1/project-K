@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/utils";
 
-export const ACTIVITY_RAIL_WIDTH = "w-5";
+const ACTIVITY_RAIL_WIDTH = "w-5";
 
 type ActivityTimelineRailProps = {
   icon: ReactNode;

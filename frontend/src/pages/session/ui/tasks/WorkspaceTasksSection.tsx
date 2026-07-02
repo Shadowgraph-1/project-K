@@ -7,6 +7,7 @@ import { WorkspaceListView } from "./WorkspaceListView";
 import { WorkspaceTasksEmptyState } from "./workspace-tasks-empty";
 
 type WorkspaceTasksSectionProps = {
+  workspaceId: string;
   view: TasksView;
   tasks: Task[];
   creating: boolean;
@@ -20,6 +21,7 @@ type WorkspaceTasksSectionProps = {
 };
 
 export function WorkspaceTasksSection({
+  workspaceId,
   view,
   tasks,
   creating,
@@ -54,7 +56,11 @@ export function WorkspaceTasksSection({
           onOpenTask={onOpenTask}
         />
       ) : view === "kanban" ? (
-        <WorkspaceKanbanView tasks={tasks} onOpenTask={onOpenTask} />
+        <WorkspaceKanbanView
+          workspaceId={workspaceId}
+          tasks={tasks}
+          onOpenTask={onOpenTask}
+        />
       ) : (
         <WorkspaceListView
           tasks={tasks}

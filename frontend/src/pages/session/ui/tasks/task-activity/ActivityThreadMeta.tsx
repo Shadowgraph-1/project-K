@@ -8,7 +8,7 @@ import {
   isSubtaskStatus,
 } from "../activity-action-icons";
 import { Activity } from "@/shared/constants/activity-types";
-import { isCardActivity, resolveActivityAuthor } from "../task-feed";
+import { isCardActivity, resolveActivityAuthor } from "../task-feed/build-activity-feed";
 import { formatActivityDate } from "../task-feed/format-activity-date";
 import { getSubtaskStatusLabel } from "@/shared/constants/subtask-statuses";
 import {

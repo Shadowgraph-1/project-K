@@ -11,7 +11,7 @@ import {
   isCardActivity,
   isCommentActivity,
   resolveActivityAuthor,
-} from "../task-feed";
+} from "../task-feed/build-activity-feed";
 import { UserAvatar } from "@/entities/user/ui/UserAvatar";
 import { ActivityThreadMeta } from "./ActivityThreadMeta";
 import {
@@ -24,7 +24,6 @@ import {
   ThreadReplyItem,
 } from "./ActivityThreadline";
 import {
-  formatHiddenReplies,
   MAX_THREAD_DEPTH,
   THREAD_GRID,
 } from "./activity-thread-ui";
@@ -284,25 +283,5 @@ export function ActivityThreadNode({
         />
       ) : null}
     </article>
-  );
-}
-
-export function ActivityThreadCollapsedHint({
-  count,
-  className,
-}: {
-  count: number;
-  className?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        THREAD_GRID,
-        "items-center text-[11px] text-muted-foreground",
-        className,
-      )}
-    >
-      <span>{formatHiddenReplies(count)}</span>
-    </div>
   );
 }

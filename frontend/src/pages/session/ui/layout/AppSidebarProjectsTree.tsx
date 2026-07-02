@@ -23,6 +23,7 @@ import {
   ContextMenuTrigger,
 } from "@/shared/ui/context-menu";
 import { TaskStatusIcon } from "@/pages/session/ui/tasks/task-status-icons";
+import { SidebarTreeSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import { linearContextMenuContentClass } from "@/pages/session/ui/tasks/task-context-menu";
 import {
   SidebarTaskContextMenuItems,
@@ -332,19 +333,6 @@ function WorkspaceTreeItem({
           activeTaskId={activeTaskId}
         />
       ) : null}
-    </div>
-  );
-}
-
-function SidebarTreeSkeleton() {
-  return (
-    <div className="flex flex-col gap-0.5 py-0.5">
-      {Array.from({ length: 2 }).map((_, index) => (
-        <div
-          key={index}
-          className="h-8 animate-pulse rounded-[10px] bg-foreground/5"
-        />
-      ))}
     </div>
   );
 }

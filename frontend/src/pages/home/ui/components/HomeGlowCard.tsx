@@ -1,16 +1,30 @@
 type HomeGlowCardProps = {
   title: string;
   subtitle: string;
-  accent?: boolean;
+  featured?: boolean;
+  slotIndex?: number;
 };
 
-export function HomeGlowCard({ title, subtitle, accent = false }: HomeGlowCardProps) {
+export function HomeGlowCard({
+  title,
+  subtitle,
+  featured = false,
+  slotIndex,
+}: HomeGlowCardProps) {
   return (
-    <div className="home-glow-card" data-accent={accent ? "true" : undefined}>
-      {accent ? <span className="home-glow-card__ring" aria-hidden /> : null}
+    <div
+      className="home-glow-card"
+      data-featured={featured ? "true" : undefined}
+      style={
+        slotIndex === undefined
+          ? undefined
+          : ({ "--glow-slot-delay": `${slotIndex * 4}s` } as React.CSSProperties)
+      }
+    >
+      <span className="home-card-ring" aria-hidden />
       <div className="home-glow-card__content">
-        <p className="text-sm font-medium tabular-nums text-white/80">{title}</p>
-        <p className="mt-0.5 text-xs text-white/40">{subtitle}</p>
+        <p className="home-glow-card__title">{title}</p>
+        <p className="home-glow-card__subtitle">{subtitle}</p>
       </div>
     </div>
   );

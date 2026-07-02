@@ -434,6 +434,12 @@ html.session-theme-active.dark .session-empty-state {
   font-variant-numeric: tabular-nums;
 }
 
+.session-kanban-column--over {
+  background-color: rgba(255, 255, 255, 0.03);
+  outline: 1px dashed rgba(255, 255, 255, 0.15);
+  outline-offset: -1px;
+}
+
 .session-kanban-column-body {
   display: flex;
   min-height: 0;
@@ -481,6 +487,19 @@ html.session-theme-active.dark .session-empty-state {
   outline-offset: 1px;
 }
 
+.session-kanban-card--dragging {
+  opacity: 0.35;
+}
+
+.session-kanban-card--overlay {
+  width: 20.25rem;
+  cursor: grabbing;
+  pointer-events: none;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.35),
+    0 0 0 1px color-mix(in oklch, var(--border) 40%, transparent);
+}
+
 .session-kanban-card--done {
   background-color: color-mix(in oklch, var(--card) 88%, var(--muted));
 }
@@ -505,7 +524,7 @@ html.session-theme-active.dark .session-empty-state {
 }
 
 .session-kanban-card-key {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: var(--font-mono);
   font-size: 0.6875rem;
   line-height: 1rem;
   color: color-mix(in oklch, var(--muted-foreground) 88%, transparent);

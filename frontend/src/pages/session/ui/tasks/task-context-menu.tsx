@@ -87,26 +87,6 @@ export function ContextMenuPickItem({
   );
 }
 
-export function ContextMenuPlainItem({
-  icon,
-  label,
-  className,
-}: {
-  icon: ReactNode;
-  label: string;
-  className?: string;
-}) {
-  return (
-    <ContextMenuItem
-      className={cn(linearRowClass, "gap-2", className)}
-      onSelect={(event) => event.preventDefault()}
-    >
-      <span className={linearIconWrapClass}>{icon}</span>
-      <span className="min-w-0 flex-1 truncate">{label}</span>
-    </ContextMenuItem>
-  );
-}
-
 export function ContextMenuActionItem({
   icon,
   label,

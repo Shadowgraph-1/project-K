@@ -84,7 +84,7 @@ function GetStartedSection() {
                   asChild
                   size="lg"
                   className={cn(
-                    "h-10 w-full rounded-md text-sm font-medium",
+                    "h-11 w-full rounded-full text-sm font-medium",
                     option.variant === "primary"
                       ? "bg-white text-neutral-950 hover:bg-neutral-200"
                       : "border-white/15 bg-transparent text-white shadow-none hover:bg-white/[0.05] hover:text-white",

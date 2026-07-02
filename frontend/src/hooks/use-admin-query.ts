@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   clearAdminErrorLogs,
+  deleteAdminUser,
   fetchAdminAccess,
   fetchAdminErrorLogs,
   fetchAdminFeatureFlags,
@@ -84,6 +85,21 @@ export function useUpdateFeatureFlagMutation() {
     },
     onError: () => {
       notify({ title: "Не удалось обновить флаг", variant: "error" });
+    },
+  });
+}
+
+export function useDeleteAdminUserMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAdminUser,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.users() });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.admin.overview() });
+      notify({ title: "Пользователь удалён", variant: "success" });
+    },
+    onError: () => {
+      notify({ title: "Не удалось удалить пользователя", variant: "error" });
     },
   });
 }

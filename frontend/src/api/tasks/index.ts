@@ -16,6 +16,7 @@ export type TaskDTO = {
   creator: string | null;
   status: TaskStatus;
   workspaceId: string;
+  createdAt: string;
 };
 
 export type TaskPatch = Partial<

@@ -5,7 +5,7 @@ import { getTaskStatus, type Task } from "@/entities/task/model/types";
 import { cn } from "@/shared/lib/utils";
 import { TaskStatusIcon } from "./task-status-icons";
 import { normalizeTaskPriority, TaskPriorityIcon } from "./task-priority-icons";
-import { formatShortDate } from "./task-feed";
+import { formatShortDate } from "./task-feed/format-activity-date";
 
 type TaskTimelineProps = {
   tasks: Task[];
@@ -382,7 +382,10 @@ function TaskTimeline({ tasks, isTaskChecked, onOpenTask }: TaskTimelineProps) {
   const chapters = useMemo(() => buildChapters(groups), [groups]);
   const segments = useMemo(() => buildFlowSegments(chapters, groups), [chapters, groups]);
   const defaultExpanded = useMemo(() => buildDefaultExpanded(chapters), [chapters]);
-  const chapterRefs = useRef(new Map<string, HTMLElement>());
+  const chapterRefs = useRef<Map<string, HTMLElement> | null>(null);
+  if (!chapterRefs.current) {
+    chapterRefs.current = new Map();
+  }
   const [activeId, setActiveId] = useState<string | null>(null);
   const [expandedOverrides, setExpandedOverrides] = useState<Record<string, boolean>>({});
 
@@ -409,16 +412,18 @@ function TaskTimeline({ tasks, isTaskChecked, onOpenTask }: TaskTimelineProps) {
   const jumpToChapter = useCallback((chapterId: string) => {
     setActiveId(chapterId);
     setExpandedOverrides((prev) => ({ ...prev, [chapterId]: true }));
-    const node = chapterRefs.current.get(chapterId);
+    const node = chapterRefs.current?.get(chapterId);
     if (!node) return;
     node.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   const setChapterRef = useCallback((id: string, node: HTMLElement | null) => {
+    const refs = chapterRefs.current;
+    if (!refs) return;
     if (node) {
-      chapterRefs.current.set(id, node);
+      refs.set(id, node);
     } else {
-      chapterRefs.current.delete(id);
+      refs.delete(id);
     }
   }, []);
 

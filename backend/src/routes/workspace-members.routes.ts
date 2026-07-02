@@ -21,7 +21,13 @@ import {
 } from "../schemas/workspace-member.schema.js";
 import { parseBody } from "../utils/parse-body.js";
 import { routeSchema } from "../openapi/route-schema.js";
-import { errorResponse, jsonArray, jsonObject } from "../openapi/responses.js";
+import {
+  errorResponse,
+  incomingInvitesResponse,
+  jsonObject,
+  userSearchPageResponse,
+  workspaceMembersResponse,
+} from "../openapi/responses.js";
 
 const workspaceMembersRoutes: FastifyPluginAsync = async (app) => {
   app.get<{ Params: { id: string } }>(
@@ -33,7 +39,7 @@ const workspaceMembersRoutes: FastifyPluginAsync = async (app) => {
         description: "Список членов команды с ролями (OWNER, ADMIN, EDITOR, …).",
         security: true,
         params: workspaceMembersParamSchema,
-        response: { 200: jsonArray, 403: errorResponse },
+        response: { 200: workspaceMembersResponse, 403: errorResponse },
       }),
     },
     async (request) => {
@@ -57,7 +63,7 @@ const workspaceMembersRoutes: FastifyPluginAsync = async (app) => {
         security: true,
         params: workspaceMembersParamSchema,
         querystring: workspaceMembersSearchQuerySchema,
-        response: { 200: jsonArray, 403: errorResponse },
+        response: { 200: userSearchPageResponse, 403: errorResponse },
       }),
     },
     async (request) => {
@@ -178,7 +184,7 @@ const workspaceMembersRoutes: FastifyPluginAsync = async (app) => {
         summary: "Входящие приглашения",
         description: "Список pending-приглашений в проекты для текущего пользователя.",
         security: true,
-        response: { 200: jsonArray },
+        response: { 200: incomingInvitesResponse },
       }),
     },
     async (request) => {

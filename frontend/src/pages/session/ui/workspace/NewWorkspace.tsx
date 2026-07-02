@@ -145,12 +145,15 @@ function NewWorkspace() {
 
           <section className="w-full">
             <div className="flex w-full flex-col divide-y divide-border/50">
-              {PRESETS.map((preset) => (
+              {PRESETS.map(({ title, description, icon, iconClassName }) => (
                 <PresetRow
-                  key={preset.title}
-                  {...preset}
-                  active={trimmed === preset.title}
-                  onClick={() => pickPreset(preset.title)}
+                  key={title}
+                  title={title}
+                  description={description}
+                  icon={icon}
+                  iconClassName={iconClassName}
+                  active={trimmed === title}
+                  onClick={() => pickPreset(title)}
                 />
               ))}
             </div>

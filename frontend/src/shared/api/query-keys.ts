@@ -14,9 +14,11 @@ export const queryKeys = {
       byWorkspace: (workspaceId: string, filters?: { status?: TaskStatus}) =>
         [...queryKeys.tasks.all, workspaceId, filters ?? {}] as const,
     },
-  
+
+    search: (q: string) => ["search", q] as const,
     subtasks: (taskId: string) => ['subtasks', taskId] as const,
     taskActivity: (taskId: string) => ['task-activity', taskId] as const,
+    taskStatusHistory: (taskId: string) => ['task-status-history', taskId] as const,
     workspaceMembers: (workspaceId: string) => ['workspace-members', workspaceId] as const,
     team: ['team'] as const,
     health: ['health'] as const,
