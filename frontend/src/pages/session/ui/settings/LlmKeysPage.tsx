@@ -10,6 +10,7 @@ import {
   useLlmKeysQuery,
 } from "@/hooks/use-llm-key-query";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
+import { useSessionPageSectionRegistry } from "@/pages/session/model/SessionPageSectionContext";
 import { SessionPageHeader } from "@/pages/session/ui/layout/SessionPageHeader";
 import { sessionPillOutline } from "@/pages/session/lib/session-styles";
 import { LlmKeysTableSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
@@ -18,9 +19,11 @@ import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 import { LlmCreateKeyDialog } from "./LlmCreateKeyDialog";
-import { LlmKeysEmptyState } from "./LlmKeysEmptyState";
+import { LlmKeysDocsView } from "./LlmKeysDocsView";
 import { LlmKeysTable } from "./LlmKeysTable";
+import { LLM_KEYS_SECTION_OPTIONS } from "./page-section-options";
 import { keyTitle } from "./llm-keys-utils";
+import { useLlmKeysPageView, type LlmKeysPageView } from "./useLlmKeysPageView";
 
 export function LlmKeysPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -42,6 +45,19 @@ export function LlmKeysPage() {
   const deleteAllMutation = useDeleteAllLlmKeysMutation();
 
   const keys = useMemo(() => data?.keys ?? [], [data?.keys]);
+  const [view, setView] = useLlmKeysPageView(keys.length > 0);
+
+  const sectionConfig = useMemo(
+    () => ({
+      ariaLabel: "Раздел API ключей",
+      options: LLM_KEYS_SECTION_OPTIONS,
+      value: view,
+      onChange: (id: string) => setView(id as LlmKeysPageView),
+    }),
+    [view, setView],
+  );
+
+  useSessionPageSectionRegistry(sectionConfig);
 
   const filteredKeys = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -128,46 +144,42 @@ export function LlmKeysPage() {
     deleteMutation.mutate(key.id);
   }
 
-  const showKeysEmpty = !isLoading && keys.length === 0 && !search.trim();
-  const showPageHeader = keys.length > 0 || search.trim().length > 0;
+  const toolbarActions = !isLoading ? (
+    <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+      {view === "keys" && keys.length > 0 ? (
+        <Button
+          type="button"
+          variant="outline"
+          className={cn(sessionPillOutline, "h-9 gap-1 px-4")}
+          onClick={handleDeleteAll}
+          disabled={busy}
+        >
+          <Trash2 className="size-4" />
+          Удалить все
+        </Button>
+      ) : null}
+      <Button
+        type="button"
+        className="h-9 gap-1 rounded-full px-4 shadow-sm"
+        onClick={() => openCreateDialog()}
+        disabled={busy}
+      >
+        <Plus className="size-4" />
+        Создать ключ
+      </Button>
+    </div>
+  ) : null;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl min-h-0 flex-1 flex-col gap-3 px-1 pb-2">
-      {showPageHeader ? (
-        <SessionPageHeader
-          title="API ключи"
-          actions={
-            !isLoading ? (
-              <div className="flex shrink-0 items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className={cn(sessionPillOutline, "h-9 gap-1 px-4")}
-                  onClick={handleDeleteAll}
-                  disabled={busy || keys.length === 0}
-                >
-                  <Trash2 className="size-4" />
-                  Удалить все
-                </Button>
-                <Button
-                  type="button"
-                  className="h-9 gap-1 rounded-full px-4 shadow-sm"
-                  onClick={() => openCreateDialog()}
-                  disabled={busy}
-                >
-                  <Plus className="size-4" />
-                  Создать ключ
-                </Button>
-              </div>
-            ) : null
-          }
-        />
+    <div className="mx-auto flex w-full max-w-7xl min-h-0 flex-1 flex-col gap-3 px-1 pb-2">
+      {!isLoading && view === "keys" ? (
+        <SessionPageHeader title="API ключи" actions={toolbarActions} />
       ) : null}
 
       {isLoading ? (
         <LlmKeysTableSkeleton />
-      ) : showKeysEmpty ? (
-        <LlmKeysEmptyState onCreate={openCreateDialog} />
+      ) : view === "docs" ? (
+        <LlmKeysDocsView onCreate={openCreateDialog} />
       ) : (
         <LlmKeysTable
           userName={userName}
@@ -198,7 +210,10 @@ export function LlmKeysPage() {
               ...(label ? { label } : {}),
             },
             {
-              onSuccess: () => setCreateOpen(false),
+              onSuccess: () => {
+                setCreateOpen(false);
+                setView("keys");
+              },
             },
           );
         }}

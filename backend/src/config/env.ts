@@ -22,6 +22,10 @@ const envSchema = z.object({
 
   ADMIN_EMAILS: z.string().optional(),
   ADMIN_USER_IDS: z.string().optional(),
+
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_CHAT_ID: z.string().optional(),
+  TELEGRAM_PROXY: z.string().optional(),
 });
 
 export const env = envSchema.parse(process.env);

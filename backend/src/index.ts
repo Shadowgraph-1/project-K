@@ -19,6 +19,7 @@ import healthRoutes from "./routes/health.routes.js";
 import llmSettingsRoutes from "./routes/llm-settings.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import adminAccessRoutes from "./routes/admin-access.routes.js";
+import connectorsRoutes from "./routes/connectors.routes.js";
 import searchRoutes from "./routes/search.routes.js";
 import { API_DESCRIPTION, OPENAPI_TAGS } from "./openapi/description.js";
 import { env } from "./config/env.js";
@@ -107,6 +108,7 @@ await app.register(
     await protectedApp.register(subtaskRoutes);
     await protectedApp.register(taskActivityRoutes);
     await protectedApp.register(searchRoutes);
+    await protectedApp.register(connectorsRoutes);
   },
   { prefix: "/api" },
 );

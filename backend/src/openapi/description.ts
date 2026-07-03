@@ -117,6 +117,10 @@ export const OPENAPI_TAGS = [
       "Личные OpenAI-compatible ключи. Доступно при включённом feature flag llm_user_keys.",
   },
   {
+    name: "Коннекторы",
+    description: "Внешние интеграции: Telegram и др. Включение уведомлений на пользователя.",
+  },
+  {
     name: "Пользователь",
     description: "Операции с текущим аккаунтом.",
   },

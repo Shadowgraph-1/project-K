@@ -14,7 +14,8 @@
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "mcp": "tsx mcp-server/src/index.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",
@@ -22,6 +23,7 @@
     "@fastify/rate-limit": "^11.1.0",
     "@fastify/swagger": "^9.7.0",
     "@fastify/swagger-ui": "^5.2.6",
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "bcrypt": "^6.0.0",
@@ -32,6 +34,8 @@
     "openai": "^6.37.0",
     "otplib": "^13.4.1",
     "prisma": "^7.8.0",
+    "socks-proxy-agent": "^10.1.0",
+    "undici": "^8.6.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

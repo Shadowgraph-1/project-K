@@ -1,18 +1,13 @@
-import { ArrowUp, Boxes, ChevronDown, ListChecks, Paperclip } from "lucide-react";
+import { ArrowUp, Paperclip } from "lucide-react";
 
-import { Button, buttonVariants } from "@/shared/ui/button";
+import { McpLogo } from "@/shared/ui/icons/McpLogo";
+import { Button } from "@/shared/ui/button";
 import { Textarea } from "@/shared/ui/textarea";
+import { Spinner } from "@/shared/ui/spinner";
 import { cn } from "@/shared/lib/utils";
 import { FIELD_LIMITS } from "@/shared/constants/field-limits";
 
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/shared/ui/dropdown-menu";
+import { AssistantMcpMenu } from "./AssistantMcpMenu";
 
 type AssistantInputProps = {
   className?: string;
@@ -20,8 +15,14 @@ type AssistantInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSend: () => void;
-  withTasks?: boolean;
-  onToggleTasks?: () => void;
+  withMcp?: boolean;
+  onToggleMcp?: () => void;
+  onSetAllTools?: (enabled: boolean) => void;
+  enabledCount?: number;
+  totalCount?: number;
+  isToolEnabled?: (toolName: string) => boolean;
+  onToggleTool?: (toolName: string) => void;
+  loading?: boolean;
 };
 
 function AssistantInput({
@@ -30,13 +31,21 @@ function AssistantInput({
   value,
   onChange,
   onSend,
-  withTasks = false,
-  onToggleTasks,
+  withMcp = true,
+  onToggleMcp,
+  onSetAllTools,
+  enabledCount = 0,
+  totalCount = 0,
+  isToolEnabled,
+  onToggleTool,
+  loading = false,
 }: AssistantInputProps) {
   const trySend = () => {
-    if (!value.trim()) return;
+    if (!value.trim() || loading) return;
     onSend();
   };
+
+  const mcpActive = withMcp && enabledCount > 0;
 
   return (
     <div className={cn("relative mx-auto w-full max-w-[700px]", className)}>
@@ -51,19 +60,18 @@ function AssistantInput({
                   trySend();
                 }}
               >
-                {withTasks ? (
+                {mcpActive ? (
                   <div className="flex items-center gap-2 border-b border-border/60 px-3 py-2">
-                    <ListChecks
-                      className="size-3.5 shrink-0 text-muted-foreground"
-                      aria-hidden
-                    />
+                    <McpLogo className="size-3.5 text-foreground" />
                     <span className="min-w-0 flex-1 text-xs text-muted-foreground">
-                      Учитываются задачи проекта
+                      {enabledCount < totalCount
+                        ? `MCP: ${enabledCount} из ${totalCount} инструментов`
+                        : "Проекты, задачи, подзадачи, комментарии"}
                     </span>
-                    {onToggleTasks ? (
+                    {onToggleMcp ? (
                       <button
                         type="button"
-                        onClick={onToggleTasks}
+                        onClick={onToggleMcp}
                         className="shrink-0 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
                       >
                         Отключить
@@ -82,12 +90,15 @@ function AssistantInput({
                   onChange={(e) => onChange(e.target.value)}
                   rows={3}
                   maxLength={FIELD_LIMITS.assistantMessage}
+                  showCharCount={false}
                   placeholder={placeholder}
+                  disabled={loading}
                   className={cn(
                     "min-h-10 w-full resize-none rounded-none border-0 bg-transparent px-3 pb-1 pt-3 text-xs shadow-none dark:bg-transparent",
-                    !withTasks && "rounded-t-xl",
+                    !mcpActive && "rounded-t-xl",
                     "placeholder:text-muted-foreground",
                     "focus-visible:ring-0",
+                    loading && "opacity-60",
                   )}
                 />
                 <div className="flex h-[42px] shrink-0 items-center gap-2 border-border/70 px-3">
@@ -99,48 +110,26 @@ function AssistantInput({
                       className="rounded-full text-muted-foreground"
                       aria-label="Добавить файлы"
                       title="Добавить файлы"
-                      disabled={true}
+                      disabled
                     >
                       <Paperclip />
                     </Button>
                     <div className="flex shrink-0 items-center gap-0.5">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger
-                          className={cn(
-                            buttonVariants({ variant: "ghost", size: "sm" }),
-                            "h-7 gap-1 rounded-md px-2 text-xs font-medium",
-                            withTasks
-                              ? "bg-muted text-foreground"
-                              : "text-muted-foreground",
-                          )}
-                          aria-label="Возможности"
-                          title="Что учитывать в ответе"
-                        >
-                          <Boxes className="size-3.5 shrink-0" aria-hidden />
-                          <span>Возможности</span>
-                          <ChevronDown
-                            className="size-3 shrink-0 opacity-70"
-                            aria-hidden
-                          />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-48" align="start">
-                          <DropdownMenuGroup>
-                            <DropdownMenuLabel>Возможности</DropdownMenuLabel>
-                            <DropdownMenuCheckboxItem
-                              checked={withTasks}
-                              onCheckedChange={() => {
-                                onToggleTasks?.();
-                              }}
-                            >
-                              <ListChecks
-                                className="size-4 text-muted-foreground"
-                                aria-hidden
-                              />
-                              Задачи
-                            </DropdownMenuCheckboxItem>
-                          </DropdownMenuGroup>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      {onToggleMcp &&
+                      onSetAllTools &&
+                      isToolEnabled &&
+                      onToggleTool ? (
+                        <AssistantMcpMenu
+                          withMcp={withMcp}
+                          onToggleMcp={onToggleMcp}
+                          onSetAllTools={onSetAllTools}
+                          enabledCount={enabledCount}
+                          totalCount={totalCount}
+                          isToolEnabled={isToolEnabled}
+                          onToggleTool={onToggleTool}
+                          loading={loading}
+                        />
+                      ) : null}
                     </div>
                   </div>
                   <div className="min-w-0 flex-1" />
@@ -151,8 +140,9 @@ function AssistantInput({
                     className="shrink-0 rounded-full"
                     aria-label="Отправить"
                     title="Отправить"
+                    disabled={loading || !value.trim()}
                   >
-                    <ArrowUp />
+                    {loading ? <Spinner className="size-4" /> : <ArrowUp />}
                   </Button>
                 </div>
               </form>

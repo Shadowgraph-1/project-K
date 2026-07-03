@@ -25,6 +25,7 @@ import {
   tdClass,
   thClass,
 } from "./llm-keys-utils";
+import { LlmKeysTableEmptyState } from "./LlmKeysTableEmptyState";
 
 type LlmKeysTableProps = {
   userName: string;
@@ -66,79 +67,79 @@ export function LlmKeysTable({
         />
       </div>
 
-      <div className={cn(sessionSurface, "overflow-x-auto p-1")}>
-        <table className="w-full border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-border border-b">
-              <th className={cn(thClass, "!pl-0")}>
-                <SortHeader
-                  active={sorting === "name"}
-                  order={ordering}
-                  onClick={() => onToggleSort("name")}
-                  label="Название"
-                />
-              </th>
-              <th className={cn(thClass, "w-full")}>Ключ</th>
-              <th className={thClass}>Кто создал</th>
-              <th className={thClass}>
-                <SortHeader
-                  active={sorting === "created"}
-                  order={ordering}
-                  onClick={() => onToggleSort("created")}
-                  label="Создан"
-                />
-              </th>
-              <th className={cn(thClass, "w-12 font-light")} aria-label="Действия" />
-            </tr>
-          </thead>
-          <tbody className="divide-border divide-y [&_td]:py-2.5">
-            <tr style={{ height: "3rem" }}>
-              <td className={cn(tdClass, "!pl-0")}>
-                <div
-                  className="flex items-center gap-3"
-                  style={{ ["--max-name-length" as string]: "500px" }}
-                >
-                  <p className="max-w-[var(--max-name-length)] truncate text-sm text-foreground">
-                    Kono AI
-                  </p>
-                </div>
-              </td>
-              <td className={cn(tdClass, "w-full")}>
-                <p className="text-sm text-muted-foreground">по умолчанию</p>
-              </td>
-              <td className={tdClass}>
-                <p className="text-sm text-foreground">{userName}</p>
-              </td>
-              <td className={cn(tdClass, "min-w-36")}>
-                <p className="text-sm text-muted-foreground">—</p>
-              </td>
-              <td className={cn(tdClass, "w-15 !pr-0")}>
-                <div className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    aria-label="Действия для Kono AI"
-                    disabled
-                    className="flex size-7 items-center justify-center rounded-full text-muted-foreground/40"
+      {keys.length === 0 ? (
+        <LlmKeysTableEmptyState />
+      ) : (
+        <div className={cn(sessionSurface, "overflow-x-auto p-1")}>
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-border border-b">
+                <th className={cn(thClass, "!pl-0")}>
+                  <SortHeader
+                    active={sorting === "name"}
+                    order={ordering}
+                    onClick={() => onToggleSort("name")}
+                    label="Название"
+                  />
+                </th>
+                <th className={cn(thClass, "w-full")}>Ключ</th>
+                <th className={thClass}>Кто создал</th>
+                <th className={thClass}>
+                  <SortHeader
+                    active={sorting === "created"}
+                    order={ordering}
+                    onClick={() => onToggleSort("created")}
+                    label="Создан"
+                  />
+                </th>
+                <th className={cn(thClass, "w-12 font-light")} aria-label="Действия" />
+              </tr>
+            </thead>
+            <tbody className="divide-border divide-y [&_td]:py-2.5">
+              <tr style={{ height: "3rem" }}>
+                <td className={cn(tdClass, "!pl-0")}>
+                  <div
+                    className="flex items-center gap-3"
+                    style={{ ["--max-name-length" as string]: "500px" }}
                   >
-                    <MoreHorizontal className="size-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            {filteredKeys.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-3 py-12 text-center text-sm text-muted-foreground"
-                >
-                  {keys.length === 0
-                    ? "Ключей пока нет — создайте первый"
-                    : "Ничего не найдено"}
+                    <p className="max-w-[var(--max-name-length)] truncate text-sm text-foreground">
+                      Kono AI
+                    </p>
+                  </div>
+                </td>
+                <td className={cn(tdClass, "w-full")}>
+                  <p className="text-sm text-muted-foreground">по умолчанию</p>
+                </td>
+                <td className={tdClass}>
+                  <p className="text-sm text-foreground">{userName}</p>
+                </td>
+                <td className={cn(tdClass, "min-w-36")}>
+                  <p className="text-sm text-muted-foreground">—</p>
+                </td>
+                <td className={cn(tdClass, "w-15 !pr-0")}>
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      aria-label="Действия для Kono AI"
+                      disabled
+                      className="flex size-7 items-center justify-center rounded-full text-muted-foreground/40"
+                    >
+                      <MoreHorizontal className="size-4" />
+                    </button>
+                  </div>
                 </td>
               </tr>
-            ) : (
-              filteredKeys.map((key) => {
+
+              {filteredKeys.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      Ничего не найдено
+                    </p>
+                  </td>
+                </tr>
+              ) : (
+                filteredKeys.map((key) => {
                 const title = keyTitle(key);
                 const relative = formatLastUpdated(key.createdAt);
                 const fullDate = formatFullDate(key.createdAt);
@@ -218,7 +219,8 @@ export function LlmKeysTable({
             )}
           </tbody>
         </table>
-      </div>
+        </div>
+      )}
     </>
   );
 }

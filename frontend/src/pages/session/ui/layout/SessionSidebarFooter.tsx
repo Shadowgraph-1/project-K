@@ -50,13 +50,21 @@ export function SessionSidebarFooter({ pathname }: { pathname: string }) {
   const assistantOpen = useSessionSecondarySidebarStore((s) => s.open);
   const assistantPanel = useSessionSecondarySidebarStore((s) => s.panel);
   const setAssistantOpen = useSessionSecondarySidebarStore((s) => s.setOpen);
-  const openAssistantPanel = useSessionSecondarySidebarStore((s) => s.openPanel);
+  const openAssistantFloating = useSessionSecondarySidebarStore(
+    (s) => s.openAssistantFloating,
+  );
+  const assistantPresentation = useSessionSecondarySidebarStore(
+    (s) => s.assistantPresentation,
+  );
 
   const theme = useSessionThemeStore((s) => s.theme);
   const setTheme = useSessionThemeStore((s) => s.setTheme);
   const isDark = theme === "dark";
 
-  const assistantActive = assistantOpen && assistantPanel === "assistant";
+  const assistantActive =
+    assistantOpen &&
+    assistantPanel === "assistant" &&
+    assistantPresentation === "floating";
 
   return (
     <div className="flex items-center gap-1">
@@ -85,7 +93,7 @@ export function SessionSidebarFooter({ pathname }: { pathname: string }) {
                 setAssistantOpen(false);
                 return;
               }
-              openAssistantPanel("assistant");
+              openAssistantFloating();
             }}
           >
             <Bot className="size-4" aria-hidden />

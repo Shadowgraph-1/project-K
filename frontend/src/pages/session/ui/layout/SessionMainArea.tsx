@@ -5,6 +5,8 @@ import NewWorkspace from "../workspace/NewWorkspace";
 import {
   isMembersHubPath,
   isLlmKeysPath,
+  isConnectorsPath,
+  isMcpPath,
   isWorkspaceMembersPath,
   isWorkspaceTaskDetailsPath,
   isSessionTasksPath,
@@ -18,6 +20,8 @@ import SessionTasksPage from "../tasks/SessionTasksPage";
 import { WorkspaceMembersPage } from "../members/WorkspaceMembersPage";
 import { MembersHubPage } from "../members/MembersHubPage";
 import { LlmKeysPage } from "../settings/LlmKeysPage";
+import { ConnectorsPage } from "../connectors/ConnectorsPage";
+import { McpSettingsPage } from "../settings/McpSettingsPage";
 import { AccountSettingsPage } from "../settings/AccountSettingsPage";
 import { AdminPage } from "../admin/AdminPage";
 
@@ -34,6 +38,8 @@ export function SessionMainArea({
 
   const onMembersHub = isMembersHubPath(path);
   const onLlmKeys = isLlmKeysPath(path);
+  const onConnectors = isConnectorsPath(path);
+  const onMcp = isMcpPath(path);
   const onSettings = isSettingsPath(path);
   const onAdmin = isAdminPath(path);
   const onSystemStatus = isSystemStatusPath(path);
@@ -69,6 +75,22 @@ export function SessionMainArea({
     return (
       <div className="relative flex min-h-0 flex-1 flex-col overflow-auto px-6 pb-6 pt-4 [scrollbar-gutter:stable] sm:pt-6">
         <LlmKeysPage />
+      </div>
+    );
+  }
+
+  if (onConnectors) {
+    return (
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-auto px-6 pb-6 pt-4 [scrollbar-gutter:stable] sm:pt-6">
+        <ConnectorsPage />
+      </div>
+    );
+  }
+
+  if (onMcp) {
+    return (
+      <div className="relative flex min-h-0 flex-1 flex-col overflow-auto px-6 pb-6 pt-4 [scrollbar-gutter:stable] sm:pt-6">
+        <McpSettingsPage />
       </div>
     );
   }

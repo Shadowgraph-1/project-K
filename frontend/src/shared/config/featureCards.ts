@@ -32,6 +32,21 @@ const FEATURE_CAROUSEL_EXTRAS = [
     description:
       "Меняй состояние задачи прямо в карточке. Вся история изменений сохраняется автоматически.",
   },
+  {
+    title: "MCP",
+    description:
+      "Tools для проектов, задач и поиска — из встроенного агента или внешнего MCP-сервера с JWT.",
+  },
+  {
+    title: "API ключи",
+    description:
+      "LLM с вызовом функций: OpenRouter, Groq, LM Studio и другие провайдеры подключаются в одном месте.",
+  },
+  {
+    title: "Коннекторы",
+    description:
+      "Telegram, Slack, Notion и другие сервисы — уведомления и синхронизация рядом с задачами.",
+  },
 ] as const;
 
 export const FEATURE_CAROUSEL_CARDS = [

@@ -5,6 +5,8 @@ import AboutKonoSection from "./ui/sections/AboutKonoSection";
 import MainSection from "./ui/sections/MainSection";
 import GetStartedSection from "./ui/sections/GetStartedSection";
 import FeaturesSection from "./ui/sections/FeaturesSection";
+import McpHomeSection from "./ui/sections/McpHomeSection";
+import ConnectorsHomeSection from "./ui/sections/ConnectorsHomeSection";
 import Footer from "@/widgets/footer/ui/Footer";
 import { refreshHomeAos, useHomeAos } from "@/hooks/use-home-aos";
 import "./home.css";
@@ -32,6 +34,8 @@ export function HomePage() {
       <Header />
       <MainSection />
       <AboutKonoSection />
+      <McpHomeSection />
+      <ConnectorsHomeSection />
       <FeaturesSection />
       <GetStartedSection />
       <Footer />

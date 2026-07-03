@@ -15,6 +15,8 @@ import {
   isWorkspaceTaskDetailsPath,
   isWorkspaceDetailPath,
   isLlmKeysPath,
+  isConnectorsPath,
+  isMcpPath,
   isSettingsPath,
   isAdminPath,
   SESSION_PATHS,
@@ -66,6 +68,30 @@ export function SessionBreadcrumbs() {
         <BreadcrumbList className="text-xs sm:text-sm">
           <BreadcrumbItem className="min-w-0">
             <BreadcrumbPage className="truncate">API ключи</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  if (isConnectorsPath(pathname)) {
+    return (
+      <Breadcrumb className="min-w-0 flex-1">
+        <BreadcrumbList className="text-xs sm:text-sm">
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbPage className="truncate">Коннекторы</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
+
+  if (isMcpPath(pathname)) {
+    return (
+      <Breadcrumb className="min-w-0 flex-1">
+        <BreadcrumbList className="text-xs sm:text-sm">
+          <BreadcrumbItem className="min-w-0">
+            <BreadcrumbPage className="truncate">MCP</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

@@ -1,5 +1,5 @@
 import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
-import { Activity, KeyRound, Shield, Users } from "lucide-react";
+import { Activity, KeyRound, Plug2, Shield, Users } from "lucide-react";
 
 import {
   useDeleteAllLlmKeysMutation,
@@ -19,10 +19,13 @@ import {
 } from "@/shared/ui/sidebar";
 import { useAdminAccessQuery } from "@/hooks/use-admin-query";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
+import { McpLogo } from "@/shared/ui/icons/McpLogo";
 import {
   isMembersHubPath,
   isAdminPath,
+  isConnectorsPath,
   isLlmKeysPath,
+  isMcpPath,
   isWorkspaceMembersPath,
   isSystemStatusPath,
   SESSION_PATHS,
@@ -111,6 +114,30 @@ function AppSidebar() {
                   />
                 }
               />
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isConnectorsPath(pathname)}
+                  className={sessionSidebarNavButton}
+                >
+                  <Link to={SESSION_PATHS.connectors}>
+                    <Plug2 />
+                    <span>Коннекторы</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  isActive={isMcpPath(pathname)}
+                  className={sessionSidebarNavButton}
+                >
+                  <Link to={SESSION_PATHS.mcp}>
+                    <McpLogo className="size-4" />
+                    <span>MCP</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

@@ -1,8 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { FolderKanban, ListTodo, Search } from "lucide-react";
+import {
+  FolderKanban,
+  ListTodo,
+  PanelLeft,
+  Plus,
+  Search,
+  SquareMousePointer,
+} from "lucide-react";
 
+import { useAgentMode } from "@/pages/session/model/AgentModeContext";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
+import {
+  SESSION_SHORTCUTS,
+  dispatchSessionCreateTask,
+} from "@/shared/config/session-shortcuts";
+import { useSidebar } from "@/shared/ui/sidebar";
 import { useSearchQuery } from "@/entities/search/model/use-search-query";
 import {
   Command,
@@ -18,7 +31,7 @@ import {
 import { cn } from "@/shared/lib/utils";
 import { Kbd, KbdGroup } from "@/shared/ui/kbd";
 import { Spinner } from "@/shared/ui/spinner";
-import { SessionShortcutsHint } from "./SessionShortcutsHint";
+
 
 type Props = {
   className?: string;
@@ -26,8 +39,17 @@ type Props = {
   onFocusChange: (open: boolean) => void;
 };
 
+const COMMAND_ICONS = {
+  search: Search,
+  sidebar: PanelLeft,
+  "new-task": Plus,
+  agent: SquareMousePointer,
+} as const;
+
 export function SearchBar({ className, focused, onFocusChange }: Props) {
   const navigate = useNavigate();
+  const { toggle: toggleAgentMode } = useAgentMode();
+  const { toggleSidebar } = useSidebar();
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
 
@@ -64,12 +86,32 @@ export function SearchBar({ className, focused, onFocusChange }: Props) {
   const hasResults =
     (data?.workspaces.length ?? 0) > 0 || (data?.tasks.length ?? 0) > 0;
 
+  const runCommand = (id: string) => {
+    switch (id) {
+      case "agent":
+        toggleAgentMode();
+        handleOpenChange(false);
+        break;
+      case "sidebar":
+        toggleSidebar();
+        handleOpenChange(false);
+        break;
+      case "new-task":
+        dispatchSessionCreateTask();
+        handleOpenChange(false);
+        break;
+      case "search":
+      default:
+        break;
+    }
+  };
+
   return (
     <>
       <button
         type="button"
         className={cn(
-          "mx-auto flex h-8 w-full max-w-88 items-center gap-2 rounded-lg bg-muted/50 px-2.5 text-left ring-1 ring-border/35 transition-colors hover:bg-muted/70",
+          "flex h-8 w-auto min-w-[13rem] max-w-88 shrink-0 items-center gap-2 rounded-lg bg-muted/50 px-2.5 text-left ring-1 ring-border/35 transition-colors hover:bg-muted/70",
           className,
         )}
         onClick={() => onFocusChange(true)}
@@ -102,9 +144,26 @@ export function SearchBar({ className, focused, onFocusChange }: Props) {
           />
           <CommandList>
             {showShortcuts ? (
-              <CommandEmpty className="py-4">
-                <SessionShortcutsHint />
-              </CommandEmpty>
+              <CommandGroup heading="Команды">
+                {SESSION_SHORTCUTS.map((shortcut) => {
+                  const Icon =
+                    COMMAND_ICONS[
+                      shortcut.id as keyof typeof COMMAND_ICONS
+                    ] ?? Search;
+
+                  return (
+                    <CommandItem
+                      key={shortcut.id}
+                      value={`${shortcut.label} ${shortcut.keys.join(" ")}`}
+                      onSelect={() => runCommand(shortcut.id)}
+                    >
+                      <Icon className="opacity-60" />
+                      <span>{shortcut.label}</span>
+                      <CommandShortcut>{shortcut.keys[0]}</CommandShortcut>
+                    </CommandItem>
+                  );
+                })}
+              </CommandGroup>
             ) : null}
 
             {canSearch && isFetching ? (

@@ -199,6 +199,21 @@ export const aiChatResponse = {
   description: "Ответ AI-компаньона",
   properties: {
     reply: { type: "string", description: "Текст ответа модели" },
+    dataChanged: {
+      type: "object",
+      description: "Какие данные изменились через MCP-инструменты",
+      properties: {
+        workspaces: { type: "boolean" },
+        tasks: { type: "boolean" },
+        subtasks: { type: "boolean" },
+        activity: { type: "boolean" },
+      },
+    },
+    toolsFallback: {
+      type: "boolean",
+      description:
+        "true — модель не поддерживает tool calling, ответ без инструментов",
+    },
   },
   required: ["reply"],
 } as const;
@@ -360,6 +375,39 @@ export const llmKeysResponse = {
     },
   },
   required: ["useDefault", "keys"],
+} as const;
+
+export const connectorDto = {
+  type: "object",
+  description: "Состояние коннектора пользователя",
+  properties: {
+    id: { type: "string", description: "ID коннектора, например telegram" },
+    installed: {
+      type: "boolean",
+      description: "true — пользователь подключил коннектор",
+    },
+    enabled: {
+      type: "boolean",
+      description: "true — пользователь включил коннектор",
+    },
+    configured: {
+      type: "boolean",
+      description: "true — сервер настроен (env, токены)",
+    },
+  },
+  required: ["id", "installed", "enabled", "configured"],
+} as const;
+
+export const connectorsListResponse = {
+  type: "object",
+  description: "Список коннекторов пользователя",
+  properties: {
+    connectors: {
+      type: "array",
+      items: connectorDto,
+    },
+  },
+  required: ["connectors"],
 } as const;
 
 export const workspaceMemberDto = {

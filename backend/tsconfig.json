@@ -9,5 +9,5 @@
     "types": ["node"],
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "prisma.config.ts"]
+  "include": ["src/**/*.ts", "mcp-server/src/**/*.ts", "prisma.config.ts"]
 }

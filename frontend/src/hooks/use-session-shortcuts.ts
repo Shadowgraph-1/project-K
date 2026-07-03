@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 import { dispatchSessionCreateTask } from "@/shared/config/session-shortcuts";
-import { useSessionSecondarySidebarStore } from "@/shared/model/useSessionSecondarySidebarStore";
+import { useAgentMode } from "@/pages/session/model/AgentModeContext";
 import { useSidebar } from "@/shared/ui/sidebar";
 
 function isTypingTarget(target: EventTarget | null) {
@@ -17,7 +17,7 @@ function isTypingTarget(target: EventTarget | null) {
 
 export function useSessionShortcuts() {
   const { toggleSidebar } = useSidebar();
-  const openAssistant = useSessionSecondarySidebarStore((s) => s.openPanel);
+  const { toggle: toggleAgentMode } = useAgentMode();
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -37,7 +37,7 @@ export function useSessionShortcuts() {
           break;
         case "j":
           event.preventDefault();
-          openAssistant("assistant");
+          toggleAgentMode();
           break;
         default:
           break;
@@ -46,5 +46,5 @@ export function useSessionShortcuts() {
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [toggleSidebar, openAssistant]);
+  }, [toggleSidebar, toggleAgentMode]);
 }

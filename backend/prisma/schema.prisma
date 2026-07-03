@@ -129,6 +129,20 @@ model users {
   received_member_invites workspace_member_invites[] @relation("MemberInviteInvitee")
   sent_member_invites workspace_member_invites[] @relation("MemberInviteInviter")
   user_llm_keys user_llm_keys[]
+  user_connectors user_connectors[]
+}
+
+model user_connectors {
+  user_id      Int
+  connector_id String   @db.VarChar(32)
+  enabled      Boolean  @default(true)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime @updatedAt @db.Timestamptz(6)
+
+  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, connector_id])
+  @@index([user_id])
 }
 
 model workspaces {

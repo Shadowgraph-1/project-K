@@ -7,9 +7,12 @@ import { SECTION_ID } from "@/shared/config/sectionIds";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { KonoLogo } from "@/shared/ui/kono-logo";
+import { HeaderDocsMenu } from "./HeaderDocsMenu";
 
 const NAV_ITEMS = [
   { label: "О Kono", hash: SECTION_ID.ABOUT },
+  { label: "MCP", hash: SECTION_ID.MCP },
+  { label: "Коннекторы", hash: SECTION_ID.CONNECTORS },
   { label: "Возможности", hash: SECTION_ID.FEATURES },
   { label: "Начать", hash: SECTION_ID.START },
 ] as const;
@@ -78,6 +81,7 @@ export function Header() {
               </Link>
             );
           })}
+          <HeaderDocsMenu />
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">

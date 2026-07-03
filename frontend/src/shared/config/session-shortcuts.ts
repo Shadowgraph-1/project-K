@@ -1,13 +1,14 @@
 export type SessionShortcut = {
+  id: string;
   keys: string[];
   label: string;
 };
 
 export const SESSION_SHORTCUTS: SessionShortcut[] = [
-  { keys: ["Ctrl + K"], label: "Поиск" },
-  { keys: ["Ctrl + B"], label: "Боковая панель" },
-  { keys: ["Ctrl + N"], label: "Новая задача" },
-  { keys: ["Ctrl + J"], label: "Kono AI" },
+  { id: "search", keys: ["Ctrl + K"], label: "Поиск" },
+  { id: "sidebar", keys: ["Ctrl + B"], label: "Боковая панель" },
+  { id: "new-task", keys: ["Ctrl + N"], label: "Новая задача" },
+  { id: "agent", keys: ["Ctrl + J"], label: "Агент" },
 ];
 
 export const SESSION_CREATE_TASK_EVENT = "session:create-task";

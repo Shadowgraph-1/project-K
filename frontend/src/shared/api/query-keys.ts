@@ -23,6 +23,7 @@ export const queryKeys = {
     team: ['team'] as const,
     health: ['health'] as const,
     llmKeys: (params?: LlmKeyListParams) => ["llm-keys", params ?? {}] as const,
+    connectors: ["connectors"] as const,
     admin: {
       all: ['admin'] as const,
       access: () => [...queryKeys.admin.all, 'access'] as const,

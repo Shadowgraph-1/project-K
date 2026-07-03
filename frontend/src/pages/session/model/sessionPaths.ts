@@ -5,6 +5,8 @@ export const SESSION_PATHS = {
   sessionRoot: "/projects",
   membersHub: "/projects/members",
   llmKeys: "/projects/api-keys",
+  connectors: "/projects/connectors",
+  mcp: "/projects/mcp",
   settings: "/projects/settings",
   admin: "/projects/admin",
   systemStatus: "/projects/system",
@@ -22,6 +24,14 @@ export function isMembersHubPath(pathname: string) {
 
 export function isLlmKeysPath(pathname: string) {
   return pathname === SESSION_PATHS.llmKeys;
+}
+
+export function isConnectorsPath(pathname: string) {
+  return pathname === SESSION_PATHS.connectors;
+}
+
+export function isMcpPath(pathname: string) {
+  return pathname === SESSION_PATHS.mcp;
 }
 
 export function isSettingsPath(pathname: string) {
@@ -48,6 +58,8 @@ export function isSessionTasksPath(pathname: string) {
   if (isWorkspaceMembersPath(pathname)) return false;
   if (isMembersHubPath(pathname)) return false;
   if (isLlmKeysPath(pathname)) return false;
+  if (isConnectorsPath(pathname)) return false;
+  if (isMcpPath(pathname)) return false;
   if (isSettingsPath(pathname)) return false;
   if (isAdminPath(pathname)) return false;
   if (isSystemStatusPath(pathname)) return false;

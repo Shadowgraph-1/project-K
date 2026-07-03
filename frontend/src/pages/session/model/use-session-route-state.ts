@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import {
   isAdminPath,
   isLlmKeysPath,
+  isConnectorsPath,
+  isMcpPath,
   isMembersHubPath,
   isSessionTasksPath,
   isSettingsPath,
@@ -21,6 +23,8 @@ export type SessionRouteState = {
   onMembersPage: boolean;
   onMembersHub: boolean;
   onLlmKeys: boolean;
+  onConnectors: boolean;
+  onMcp: boolean;
   onSettings: boolean;
   onAdmin: boolean;
   onSystemStatus: boolean;
@@ -36,6 +40,8 @@ export function useSessionRouteState(): SessionRouteState {
   const onMembersPage = isWorkspaceMembersPath(pathname);
   const onMembersHub = isMembersHubPath(pathname);
   const onLlmKeys = isLlmKeysPath(pathname);
+  const onConnectors = isConnectorsPath(pathname);
+  const onMcp = isMcpPath(pathname);
   const onSettings = isSettingsPath(pathname);
   const onAdmin = isAdminPath(pathname);
   const onSystemStatus = isSystemStatusPath(pathname);
@@ -47,6 +53,8 @@ export function useSessionRouteState(): SessionRouteState {
     onMembersPage ||
     onMembersHub ||
     onLlmKeys ||
+    onConnectors ||
+    onMcp ||
     onSettings ||
     onAdmin ||
     onSystemStatus;
@@ -60,6 +68,8 @@ export function useSessionRouteState(): SessionRouteState {
     onMembersPage,
     onMembersHub,
     onLlmKeys,
+    onConnectors,
+    onMcp,
     onSettings,
     onAdmin,
     onSystemStatus,

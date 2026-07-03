@@ -37,6 +37,8 @@ export type ApiErrorCode =
   | "route_not_found"
   | "duplicate_record"
   | "record_not_found"
+  | "connector_not_found"
+  | "connector_not_configured"
   | "ai_unavailable"
   | "internal_server_error";
 
@@ -80,6 +82,8 @@ const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
   route_not_found: 404,
   duplicate_record: 409,
   record_not_found: 404,
+  connector_not_found: 404,
+  connector_not_configured: 503,
   ai_unavailable: 503,
   internal_server_error: 500,
 };
@@ -115,6 +119,9 @@ const API_ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   route_not_found: "Маршрут не найден",
   duplicate_record: "Запись уже существует",
   record_not_found: "Не найдено",
+  connector_not_found: "Коннектор не найден",
+  connector_not_configured:
+    "Коннектор не настроен на сервере. Проверьте TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID.",
   ai_unavailable:
     "AI-сервис недоступен. Проверь LM Studio и переменные окружения.",
   internal_server_error: "Внутренняя ошибка сервера",

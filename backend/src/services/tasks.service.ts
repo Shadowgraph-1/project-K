@@ -10,6 +10,8 @@ import type {
 } from "../schemas/task.schema.js";
 import { ApiHttpError } from "../utils/api-errors.js";
 
+import { notifyTelegramForUser } from "./telegram.service.js";
+
 export type { TaskCreateInput, TaskPatchInput as TaskPatch };
 
 export async function listTasksByWorkspace(
@@ -41,8 +43,8 @@ export async function createTask(
     throw new ApiHttpError("workspace_not_found");
   }
 
-  return prisma.$transaction(async (tx) => {
-    const created = await tx.tasks.create({
+  const created = await prisma.$transaction(async (tx) => {
+    const task = await tx.tasks.create({
       data: {
         workspace_id: input.workspaceId,
         title: input.title.trim(),
@@ -53,25 +55,33 @@ export async function createTask(
 
     await tx.task_activity.create({
       data: {
-        task_id: created.id,
+        task_id: task.id,
         user_id: userId,
         type: Activity.TASK_CREATED,
         title: "Задача создана",
-        body: created.title,
+        body: task.title,
         metadata: {},
       },
     });
 
     await recordTaskStatusChange(tx, {
-      taskId: created.id,
+      taskId: task.id,
       userId,
       fromStatus: null,
-      toStatus: created.status,
-      changedAt: created.created_at,
+      toStatus: task.status,
+      changedAt: task.created_at,
     });
 
-    return created;
+    return task;
   });
+
+  notifyTelegramForUser(userId, [
+    "Новая задача в Kono",
+    `Название: ${created.title}`,
+    `Статус: ${created.status}`,
+  ]);
+
+  return created;
 }
 
 export async function deleteTask(

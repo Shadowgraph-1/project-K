@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import { runAssistantChatWithTools } from "../ai/assistant-chat.js";
 import { aiChatSchema } from "../schemas/ai.schema.js";
 import { createLlmClient, createLlmSettings, llm } from "../llm/client.js";
 import { buildSystemPrompt } from "../llm/prompt.js";
@@ -18,6 +19,7 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
         summary: "Чат с компаньоном",
         description:
           "Отправляет сообщение AI с контекстом задач и подзадач проекта.\n\n" +
+          "Поддерживает tool calling (те же действия, что MCP): проекты, задачи, подзадачи, комментарии.\n\n" +
           "Использует активный LLM-ключ пользователя или системный LM из env (`LM_BASE_URL`).\n\n" +
           "Лимит: 20 запросов в минуту. Feature flag `assistant_enabled` → **403** если выключен.\n\n" +
           "**503** — LLM недоступен.",
@@ -41,29 +43,51 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
         ? createLlmClient({ ...createLlmSettings(), apiKey: userKey })
         : llm;
 
-      const { message, tasks, subtasks, history } = parseBody(
-        aiChatSchema,
-        request.body,
-      );
+      const {
+        message,
+        context,
+        workspaces,
+        tasks,
+        subtasks,
+        history,
+        toolsEnabled,
+        enabledTools,
+      } = parseBody(aiChatSchema, request.body);
 
-      const systemPrompt = buildSystemPrompt(tasks, subtasks);
+      const systemPrompt = buildSystemPrompt(
+        tasks,
+        subtasks,
+        context,
+        workspaces,
+      );
 
       const historyMessages = (history ?? [])
         .filter((m) => m.content?.trim())
         .map((m) => ({ role: m.role, content: m.content }));
 
       try {
-        const completion = await activeLlm.client.chat.completions.create({
+        const { reply: replyText, dataChanged, toolsFallback } =
+          await runAssistantChatWithTools({
+          client: activeLlm.client,
           model: activeLlm.model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            ...historyMessages,
-            { role: "user", content: message },
-          ],
+          systemPrompt,
+          history: historyMessages,
+          message,
+          userId: request.user.id,
+          toolsEnabled,
+          enabledTools,
         });
 
+        const hasDataChanged =
+          dataChanged.workspaces ||
+          dataChanged.tasks ||
+          dataChanged.subtasks ||
+          dataChanged.activity;
+
         return {
-          reply: completion.choices[0]?.message?.content ?? "",
+          reply: replyText,
+          dataChanged: hasDataChanged ? dataChanged : undefined,
+          toolsFallback: toolsFallback || undefined,
         };
       } catch (err) {
         request.log.error(err);

@@ -11,6 +11,7 @@ import { WorkspaceMemberRow } from "@/pages/session/ui/workspace/WorkspaceMember
 import { cn } from "@/shared/lib/utils";
 
 import { MemberRoleBadge } from "./MemberRoleBadge";
+import { PendingInvitesEmptyState } from "./PendingInvitesEmptyState";
 
 type PendingInvite = {
   id: string;
@@ -25,6 +26,10 @@ type WorkspacePendingInvitesSectionProps = {
 export function WorkspacePendingInvitesSection({
   invites,
 }: WorkspacePendingInvitesSectionProps) {
+  if (invites.length === 0) {
+    return <PendingInvitesEmptyState />;
+  }
+
   return (
     <section className={cn(sessionSurface, "flex flex-col gap-3 p-4")}>
       <div>
@@ -36,38 +41,34 @@ export function WorkspacePendingInvitesSection({
         </p>
       </div>
 
-      {invites.length === 0 ? (
-        <p className="text-xs text-muted-foreground">Нет активных приглашений</p>
-      ) : (
-        <ul className="flex flex-col gap-0.5">
-          {invites.map((invite) => (
-            <li
-              key={invite.id}
-              className={cn("rounded-xl px-1 py-0.5", sessionRowHover)}
-            >
-              <WorkspaceMemberRow name={invite.name} muted>
-                <div className="flex items-center gap-1">
-                  <MemberRoleBadge
-                    memberRole={invite.role as WorkspaceRole}
-                    interactive
-                  />
-                  <SessionTooltip label="Отменить приглашение">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="size-7 rounded-md text-muted-foreground hover:text-destructive"
-                      aria-label="Отменить приглашение"
-                    >
-                      <UserMinus className="size-3.5" />
-                    </Button>
-                  </SessionTooltip>
-                </div>
-              </WorkspaceMemberRow>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ul className="flex flex-col gap-0.5">
+        {invites.map((invite) => (
+          <li
+            key={invite.id}
+            className={cn("rounded-xl px-1 py-0.5", sessionRowHover)}
+          >
+            <WorkspaceMemberRow name={invite.name} muted>
+              <div className="flex items-center gap-1">
+                <MemberRoleBadge
+                  memberRole={invite.role as WorkspaceRole}
+                  interactive
+                />
+                <SessionTooltip label="Отменить приглашение">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="size-7 rounded-md text-muted-foreground hover:text-destructive"
+                    aria-label="Отменить приглашение"
+                  >
+                    <UserMinus className="size-3.5" />
+                  </Button>
+                </SessionTooltip>
+              </div>
+            </WorkspaceMemberRow>
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
