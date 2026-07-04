@@ -10,6 +10,7 @@ import {
 } from "@/pages/session/lib/session-styles";
 import { cn } from "@/shared/lib/utils";
 
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
 import { DeleteAccountDialog } from "./DeleteAccountDialog";
 import { SettingsAccountSection } from "./SettingsAccountSection";
 import { SettingsNotificationsSection } from "./SettingsNotificationsSection";
@@ -35,6 +36,7 @@ export function SettingsPanel({
   const [activeSection, setActiveSection] =
     React.useState<SettingsSection>("account");
   const [profileEditing, setProfileEditing] = React.useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = React.useState(false);
 
   function handleLogout() {
@@ -103,6 +105,7 @@ export function SettingsPanel({
 
             {activeSection === "security" ? (
               <SettingsSecuritySection
+                onChangePassword={() => setChangePasswordOpen(true)}
                 onLogout={handleLogout}
                 onDeleteAccount={() => setDeleteAccountOpen(true)}
               />
@@ -110,6 +113,11 @@ export function SettingsPanel({
           </div>
         </div>
       </div>
+
+      <ChangePasswordDialog
+        open={changePasswordOpen}
+        onOpenChange={setChangePasswordOpen}
+      />
 
       <DeleteAccountDialog
         open={deleteAccountOpen}

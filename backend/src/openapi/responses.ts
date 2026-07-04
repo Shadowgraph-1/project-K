@@ -63,6 +63,19 @@ export const authTokenResponse = {
   required: ["token", "user"],
 } as const;
 
+export const userResponse = {
+  type: "object",
+  description: "Профиль пользователя",
+  properties: {
+    user: userDto,
+    token: {
+      type: "string",
+      description: "Новый JWT - только изменился email. Обновите Authorization: Bearer <token>",
+    },
+  },
+  required: ["user"], 
+} as const;
+
 export const workspaceDto = {
   type: "object",
   description: "Проект (workspace)",

@@ -1,23 +1,32 @@
 import { Button } from "@/shared/ui/button";
 
-import {
-  ComingSoonBadge,
-  SettingsDivider,
-  SettingsRow,
-} from "./settings-panel-shared";
+import { SettingsDivider, SettingsRow } from "./settings-panel-shared";
 
 type SettingsSecuritySectionProps = {
+  onChangePassword: () => void;
   onLogout: () => void;
   onDeleteAccount: () => void;
 };
 
 export function SettingsSecuritySection({
+  onChangePassword,
   onLogout,
   onDeleteAccount,
 }: SettingsSecuritySectionProps) {
   return (
     <div className="flex w-full flex-col gap-4">
-      <SettingsRow action={<ComingSoonBadge />}>
+      <SettingsRow
+        action={
+          <Button
+            type="button"
+            variant="outline"
+            className="h-8 rounded-[10px] text-xs"
+            onClick={onChangePassword}
+          >
+            Изменить
+          </Button>
+        }
+      >
         <div className="text-sm font-medium">Пароль</div>
       </SettingsRow>
       <SettingsDivider />

@@ -23,6 +23,22 @@ export type LoginPayload = {
   password: string;
 };
 
+export type UpdateProfilePayload = {
+  name: string;
+  email: string;
+};
+
+export type UpdateProfileResponse = {
+  user: AuthUser;
+  token?: string;
+};
+
+export type ChangePasswordPayload = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
 export async function createUserOnApi(
   payload: RegisterPayload,
 ): Promise<AuthResponse> {
@@ -35,6 +51,19 @@ export async function loginUserOnApi(
 ): Promise<AuthResponse> {
   const { data } = await api.post<AuthResponse>("/auth/login", payload);
   return data;
+}
+
+export async function updateProfileOnApi(
+  payload: UpdateProfilePayload,
+): Promise<UpdateProfileResponse> {
+  const { data } = await api.patch<UpdateProfileResponse>("/users/me", payload);
+  return data;
+}
+
+export async function changePasswordOnApi(
+  payload: ChangePasswordPayload,
+): Promise<void> {
+  await api.patch("/users/me/password", payload);
 }
 
 export async function deleteAccountOnApi(password: string): Promise<void> {

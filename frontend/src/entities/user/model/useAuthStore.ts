@@ -11,6 +11,7 @@ type AuthStore = {
   isAuthenticated: boolean;
   register: (user: AuthUser) => void;
   login: (user: AuthUser) => void;
+  updateUser: (user: AuthUser) => void;
   logout: () => void;
 };
 
@@ -28,6 +29,10 @@ export const useAuthStore = create<AuthStore>()(
 
       login: (user) => {
         resetSessionData();
+        set({ user, isAuthenticated: true });
+      },
+
+      updateUser: (user) => {
         set({ user, isAuthenticated: true });
       },
 

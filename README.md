@@ -98,7 +98,7 @@
 | Серверное состояние   | [TanStack Query](#glossary-tanstack-query) | **Внедрено** ([workspaces](#glossary-workspace), invites, tasks, subtasks, [activity](#glossary-activity), members, health, search, [LLM](#glossary-llm)-ключи, коннекторы, [admin](#glossary-admin)) |
 | Клиентское состояние  | [Zustand](#glossary-zustand) + локальный UI state | **Внедрено** (auth, тема сессии, prefs уведомлений, модалки, [bulk](#glossary-bulk)-selection, [kanban](#glossary-kanban) [DnD](#glossary-drag-and-drop)) |
 | HTTP-клиент           | [Axios](#glossary-axios)              | **Внедрено**                                    |
-| [API](#glossary-api)  | [Node.js](#glossary-nodejs), [Fastify](#glossary-fastify), [Zod](#glossary-zod) | **Внедрено** (auth, workspaces, tasks, team, search, AI, LLM-ключи, коннекторы, admin) |
+| [API](#glossary-api)  | [Node.js](#glossary-nodejs), [Fastify](#glossary-fastify), [Zod](#glossary-zod) | **Внедрено** (auth, users, workspaces, tasks, team, search, AI, LLM-ключи, коннекторы, admin) |
 | [ORM](#glossary-orm) / миграции | [Prisma](#glossary-prisma)      | **Внедрено**                                    |
 | СУБД                  | [PostgreSQL](#glossary-postgresql)    | **Внедрено**                                    |
 | Документация API      | [Swagger](#glossary-swagger) UI (`/docs`) | **Внедрено**                                    |
@@ -118,7 +118,7 @@
 | **Уведомления**    | [In-app](#glossary-in-app) колокольчик в сессии (история [toast](#glossary-toast) + входящие инвайты); переключатели в настройках (задачи / приглашения). Email и рассылки не планируются |
 | **MCP**            | `/projects/mcp` — обзор (агенты, LLM, tools), docs-view (JWT, `.env`, конфиг stdio-сервера); 12 tools в чате и во внешних клиентах. Подробно: [§17 Настройка MCP](#17-настройка-mcp) |
 | **Коннекторы**     | `/projects/connectors` — каталог интеграций, вкладка «Документация», Telegram-коннектор с состояниями `installed` / `enabled` / `configured`, включение через switch и удаление через меню карточки. Подробно: [§18 Настройка коннекторов](#18-настройка-коннекторов) |
-| **Настройки**      | Профиль (просмотр), **[LLM](#glossary-llm)-ключи** (таблица + «Документация»), переключатели in-app уведомлений, выход, удаление аккаунта |
+| **Настройки**      | Личный кабинет `/projects/settings`: профиль (редактирование и сохранение на сервер, `PATCH /api/users/me`), смена пароля (`PATCH /api/users/me/password`), переключатели in-app уведомлений, выход, удаление аккаунта; **[LLM](#glossary-llm)-ключи** — отдельная страница (таблица + «Документация») |
 | **Статус сервиса** | [Health-check](#glossary-health-check) [API](#glossary-api) и страница состояния сервисов в сессии                    |
 
 ### Роль [`admin`](#glossary-admin)
@@ -287,11 +287,13 @@ stateDiagram-v2
 
 **4. Коннекторы.** В разделе `/projects/connectors` пользователь открывает каталог, подключает Telegram, включает или выключает уведомления switch-переключателем, удаляет подключение через меню карточки. Вкладка **«Документация»** описывает локальную настройку BotFather, `chat_id`, env и API.
 
-**5. Карточка задачи.** Открывает детали: заголовок, подзадачи, свойства. Внизу — секция **«Комментарии»**: корневой composer для новых сообщений; ниже лента событий и комментариев с ветками ответов. Кнопка **«Ответить»** открывает поле ввода прямо под сообщением; ветки со счётчиком **«ответов N»** можно сворачивать и разворачивать.
+**5. Личный кабинет.** В `/projects/settings` пользователь редактирует имя и email (сохранение на сервер), меняет пароль, настраивает in-app уведомления, выходит из сессии или удаляет аккаунт. API ключи LLM — на отдельной странице `/projects/api-keys`.
 
-**6. Командная работа.** Приглашает коллег по ссылке, работает с участниками проекта, обсуждает задачи в комментариях и следит за активностью через уведомления. *([Спринты](#glossary-sprint) — в планах, пока не реализованы.)*
+**6. Карточка задачи.** Открывает детали: заголовок, подзадачи, свойства. Внизу — секция **«Комментарии»**: корневой composer для новых сообщений; ниже лента событий и комментариев с ветками ответов. Кнопка **«Ответить»** открывает поле ввода прямо под сообщением; ветки со счётчиком **«ответов N»** можно сворачивать и разворачивать.
 
-**7. Администратор.** Раздел `/projects/admin`: сводка платформы, список пользователей с удалением, [feature flags](#glossary-feature-flags), журнал ошибок. *(Браузер всех проектов — не реализован.)*
+**7. Командная работа.** Приглашает коллег по ссылке, работает с участниками проекта, обсуждает задачи в комментариях и следит за активностью через уведомления. *([Спринты](#glossary-sprint) — в планах, пока не реализованы.)*
+
+**8. Администратор.** Раздел `/projects/admin`: сводка платформы, список пользователей с удалением, [feature flags](#glossary-feature-flags), журнал ошибок. *(Браузер всех проектов — не реализован.)*
 
 **Побочный путь.** Пользователь вводит несуществующий URL — видит страницу 404 с иллюстрацией и кнопками возврата на главную или в проекты.
 
@@ -351,9 +353,9 @@ Toolbar задач в шапке страницы (`SessionTasksPageHeader` → 
 | **Must**           | Регистрация и вход, [CRUD](#glossary-crud) задач и проектов, [канбан](#glossary-kanban) по статусам, инвайты в команду, роли [user](#glossary-user)/[admin](#glossary-admin), личный кабинет, [pagination](#glossary-pagination) и поиск, [API](#glossary-api) + БД для всего ядра           |
 | **Should**         | AI-компаньон с контекстом задач, история статусов, подзадачи, [спринты](#glossary-sprint), [in-app](#glossary-in-app) уведомления в проекте, админ-панель                                               |
 | **Could**          | [Command palette](#glossary-command-palette) / глобальный поиск, [keyboard shortcuts](#glossary-keyboard-shortcuts) — **реализовано**                                                                                     |
-| **Фактически в проекте** | [JWT](#glossary-jwt), [CRUD](#glossary-crud) ядра, [kanban](#glossary-kanban), три вида задач, история статусов, поиск, горячие клавиши, in-app уведомления, LLM-ключи, админка, Swagger, Docker Compose, лендинг с демо; **[MCP](#glossary-mcp) tool calling** (12 tools), **stdio MCP-сервер**, docs-view API ключей / MCP / коннекторов, **каталог коннекторов**, **Telegram-коннектор** с включением/выключением/удалением, обновлённый лендинг |
+| **Фактически в проекте** | [JWT](#glossary-jwt), [CRUD](#glossary-crud) ядра, [kanban](#glossary-kanban), три вида задач, история статусов, поиск, горячие клавиши, in-app уведомления, **личный кабинет** (профиль, смена пароля, удаление аккаунта), LLM-ключи, админка, Swagger, Docker Compose, лендинг с демо; **[MCP](#glossary-mcp) tool calling** (12 tools), **stdio MCP-сервер**, docs-view API ключей / MCP / коннекторов, **каталог коннекторов**, **Telegram-коннектор** с включением/выключением/удалением, обновлённый лендинг |
 
-**Ограничения текущей версии:** спринты, смена пароля, сохранение профиля на сервер, назначение исполнителя из команды, OAuth-коннекторы и индивидуальная привязка Telegram через `/start token`, email-уведомления, [push](#glossary-push) от действий других участников, [pagination](#glossary-pagination) списка задач, браузер всех проектов в админке и автотесты.
+**Ограничения текущей версии:** спринты, назначение исполнителя из команды, OAuth-коннекторы и индивидуальная привязка Telegram через `/start token`, email-уведомления, [push](#glossary-push) от действий других участников, [pagination](#glossary-pagination) списка задач, браузер всех проектов в админке и автотесты.
 
 ---
 
@@ -416,6 +418,7 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 - [x] Фильтр списка задач по статусу (`GET /tasks?workspaceId=&status=`)
 - [x] История статусов задач (`task_status_history`, `GET /tasks/:taskId/status-history`, запись при create/update)
 - [x] Коннекторы: таблица `user_connectors`, `GET /api/connectors`, `PATCH /api/connectors/:id`, `DELETE /api/connectors/:id`
+- [x] Профиль пользователя: `PATCH /api/users/me`, смена пароля `PATCH /api/users/me/password`, удаление `DELETE /api/users/me`
 - [x] [Swagger](#glossary-swagger) / [OpenAPI](#glossary-openapi) UI (`/docs`)
 
 </details>
@@ -437,7 +440,7 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 - [x] Фильтр по статусу (сервер + toolbar «Фильтрация», все 4 статуса + «Все задачи»), [bulk](#glossary-bulk)-удаление и смена статуса выбранных
 - [x] Сортировка задач на клиенте: по дате создания и названию, asc/desc (`sort-tasks.ts`, toolbar «Сортировка»)
 - [x] Обзор задач: [hub](#glossary-hub) проектов (`WorkspaceHubPicker`), список / «Даты» / [kanban](#glossary-kanban) внутри workspace
-- [x] Страница настроек и [LLM](#glossary-llm)-ключей (`AccountSettingsPage`, `LlmKeysPage`); профиль — просмотр и локальный UI редактирования без сохранения на сервер
+- [x] Страница настроек и [LLM](#glossary-llm)-ключей (`AccountSettingsPage`, `LlmKeysPage`); личный кабинет: редактирование профиля с сохранением на сервер (`PATCH /api/users/me`), смена пароля (`ChangePasswordDialog`, `PATCH /api/users/me/password`)
 - [x] Удаление аккаунта с подтверждением пароля (`DELETE /api/users/me`)
 - [x] Страница статуса сервисов (`SystemStatusPage`)
 - [x] Лендинг: демо-видео, [bento](#glossary-bento)-карточки; секции **MCP**, **коннекторы**, обновлённая карусель «Собрано»
@@ -561,6 +564,7 @@ API слушает **порт 3000**.
 | Раздел | Содержимое |
 | ------ | ---------- |
 | Авторизация | Регистрация, вход |
+| Пользователь | `PATCH /api/users/me` (профиль), `PATCH /api/users/me/password`, `DELETE /api/users/me` |
 | Состояние сервисов | Health API / БД / LLM |
 | Проекты | CRUD workspace |
 | Участники | Команда, инвайты, роли |
@@ -898,6 +902,8 @@ project-K/
 | `frontend/src/pages/home/ui/sections/McpHomeSection.tsx` | Секция MCP на лендинге (агенты, LLM, tools) |
 | `frontend/src/pages/home/ui/sections/ConnectorsHomeSection.tsx` | Секция коннекторов на лендинге |
 | `frontend/src/pages/session/ui/settings/mcp/` | MCP: landing + docs, TOC, install blocks |
+| `frontend/src/pages/session/ui/settings/AccountSettingsPage.tsx` | Личный кабинет: профиль, уведомления, безопасность |
+| `frontend/src/pages/session/ui/settings/ChangePasswordDialog.tsx` | Диалог смены пароля |
 | `frontend/src/pages/session/ui/settings/LlmKeysPage.tsx` | API ключи: таблица + docs |
 | `frontend/src/pages/session/ui/connectors/ConnectorsPage.tsx` | Каталог коннекторов: подключение, switch, удаление |
 | `frontend/src/pages/session/ui/connectors/ConnectorsDocsView.tsx` | Документация коннекторов в приложении |
@@ -1032,4 +1038,4 @@ project-K/
 | <a id="glossary-zod"></a> <ins>`Zod`</ins> | валидация схем | Входные данные routes + OpenAPI |
 
 > [!NOTE]
-> Актуальность документа: 03.07.2026. README отражает текущее состояние локальной разработки, включая MCP, API-ключи, Telegram-коннектор и обновлённый лендинг.
+> **Pre-release.** Документ находится в pre-release версии: описание может опережать или слегка отставать от кода до стабильного релиза. Актуальность: 04.07.2026. README отражает текущее состояние локальной разработки, включая личный кабинет, MCP, API-ключи, Telegram-коннектор и обновлённый лендинг.
