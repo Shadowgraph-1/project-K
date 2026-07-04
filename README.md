@@ -103,6 +103,7 @@
 | СУБД                  | [PostgreSQL](#glossary-postgresql)    | **Внедрено**                                    |
 | Документация API      | [Swagger](#glossary-swagger) UI (`/docs`) | **Внедрено**                                    |
 | Контейнеризация       | [Docker](#glossary-docker), [Docker Compose](#glossary-docker-compose), [Nginx](#glossary-nginx) | **Внедрено**                                    |
+| Тестирование          | Vitest (unit-тесты критичных сервисов backend) | **Внедрено** (`auth`, `users`, Zod-схемы)      |
 
 ---
 
@@ -353,9 +354,9 @@ Toolbar задач в шапке страницы (`SessionTasksPageHeader` → 
 | **Must**           | Регистрация и вход, [CRUD](#glossary-crud) задач и проектов, [канбан](#glossary-kanban) по статусам, инвайты в команду, роли [user](#glossary-user)/[admin](#glossary-admin), личный кабинет, [pagination](#glossary-pagination) и поиск, [API](#glossary-api) + БД для всего ядра           |
 | **Should**         | AI-компаньон с контекстом задач, история статусов, подзадачи, [спринты](#glossary-sprint), [in-app](#glossary-in-app) уведомления в проекте, админ-панель                                               |
 | **Could**          | [Command palette](#glossary-command-palette) / глобальный поиск, [keyboard shortcuts](#glossary-keyboard-shortcuts) — **реализовано**                                                                                     |
-| **Фактически в проекте** | [JWT](#glossary-jwt), [CRUD](#glossary-crud) ядра, [kanban](#glossary-kanban), три вида задач, история статусов, поиск, горячие клавиши, in-app уведомления, **личный кабинет** (профиль, смена пароля, удаление аккаунта), LLM-ключи, админка, Swagger, Docker Compose, лендинг с демо; **[MCP](#glossary-mcp) tool calling** (12 tools), **stdio MCP-сервер**, docs-view API ключей / MCP / коннекторов, **каталог коннекторов**, **Telegram-коннектор** с включением/выключением/удалением, обновлённый лендинг |
+| **Фактически в проекте** | [JWT](#glossary-jwt), [CRUD](#glossary-crud) ядра, [kanban](#glossary-kanban), три вида задач, история статусов, поиск, горячие клавиши, in-app уведомления, **личный кабинет** (профиль, смена пароля, удаление аккаунта), LLM-ключи, админка, Swagger, Docker Compose, unit-тесты критичных сервисов, лендинг с демо; **[MCP](#glossary-mcp) tool calling** (12 tools), **stdio MCP-сервер**, docs-view API ключей / MCP / коннекторов, **каталог коннекторов**, **Telegram-коннектор** с включением/выключением/удалением, обновлённый лендинг |
 
-**Ограничения текущей версии:** спринты, назначение исполнителя из команды, OAuth-коннекторы и индивидуальная привязка Telegram через `/start token`, email-уведомления, [push](#glossary-push) от действий других участников, [pagination](#glossary-pagination) списка задач, браузер всех проектов в админке и автотесты.
+**Ограничения текущей версии:** спринты, назначение исполнителя из команды, OAuth-коннекторы и индивидуальная привязка Telegram через `/start token`, email-уведомления, [push](#glossary-push) от действий других участников, [pagination](#glossary-pagination) списка задач, браузер всех проектов в админке, e2e-тесты UI.
 
 ---
 
@@ -470,7 +471,7 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 <details>
 <summary><b>5. Финализация</b> — <i>до 1 июля</i></summary>
 
-- [ ] Тесты: критичные сервисы
+- [x] Тесты: критичные сервисы (`auth.service`, `user.service`, Zod-схемы профиля/пароля; `npm test` в `backend/`)
 - [x] [Docker Compose](#glossary-docker-compose): frontend, backend, [PostgreSQL](#glossary-postgresql)
 - [x] Обработка ошибок [API](#glossary-api), [toast](#glossary-toast)-уведомления, [empty states](#glossary-empty-state) (`EmptySession`)
 - [x] [Скелетоны](#glossary-skeleton) загрузки (задачи, проекты, участники, админка, карточка задачи, LLM-ключи)
@@ -538,6 +539,13 @@ npm run dev
 ```
 
 API слушает **порт 3000**.
+
+**Тесты backend** (Vitest, без поднятой БД — Prisma замокан):
+
+```bash
+cd backend
+npm test
+```
 
 ### Endpoints
 
@@ -911,6 +919,8 @@ project-K/
 | `frontend/src/hooks/use-connectors-query.ts` | TanStack Query для `GET/PATCH/DELETE /api/connectors` |
 | `frontend/src/widgets/assistant/ui/AssistantMcpMenu.tsx` | Переключатель MCP tools в чате |
 | `backend/src/ai/kono-tools.ts` | 12 MCP tools для чата и сервера |
+| `backend/src/services/*.test.ts` | Unit-тесты auth и user (профиль, пароль, удаление) |
+| `backend/src/schemas/user.schema.test.ts` | Тесты Zod-схем личного кабинета |
 | `backend/src/routes/connectors.routes.ts` | API коннекторов (`GET/PATCH/DELETE /api/connectors`) |
 | `backend/src/services/connectors.service.ts` | Состояние `installed/enabled/configured` для коннекторов |
 | `backend/src/services/telegram.service.ts` | Отправка Telegram-уведомлений через Bot API |
@@ -1038,4 +1048,4 @@ project-K/
 | <a id="glossary-zod"></a> <ins>`Zod`</ins> | валидация схем | Входные данные routes + OpenAPI |
 
 > [!NOTE]
-> **Pre-release.** Документ находится в pre-release версии: описание может опережать или слегка отставать от кода до стабильного релиза. Актуальность: 04.07.2026. README отражает текущее состояние локальной разработки, включая личный кабинет, MCP, API-ключи, Telegram-коннектор и обновлённый лендинг.
+> **Окончательная версия документа.** Актуальность: 04.07.2026. README соответствует финальной версии проекта Kono: личный кабинет, MCP, API-ключи, Telegram-коннектор, Docker Compose, unit-тесты критичных сервисов backend и обновлённый лендинг.
