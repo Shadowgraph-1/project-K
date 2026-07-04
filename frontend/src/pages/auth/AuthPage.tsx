@@ -86,7 +86,10 @@ function LoginPanel({
   async function onValid(data: LoginInput) {
     try {
       const result = await loginUserOnApi(data);
-      if (result.token) setAuthToken(result.token);
+      if (!result.token || !result.user) {
+        throw new Error("invalid_auth_response");
+      }
+      setAuthToken(result.token);
       loginUser(result.user);
       onSuccess();
     } catch {
@@ -185,7 +188,10 @@ function RegisterPanel({
         password: data.password,
         confirmPassword: data.confirmPassword,
       });
-      if (result.token) setAuthToken(result.token);
+      if (!result.token || !result.user) {
+        throw new Error("invalid_auth_response");
+      }
+      setAuthToken(result.token);
       register(result.user);
       onSuccess();
     } catch {

@@ -11,14 +11,18 @@ import {
   type FeatureFlagKey,
 } from "@/api/admin";
 import { queryKeys } from "@/shared/api/query-keys";
+import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { notify } from "@/shared/lib/notify";
 
 export function useAdminAccessQuery() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   return useQuery({
     queryKey: queryKeys.admin.access(),
     queryFn: fetchAdminAccess,
+    enabled: isAuthenticated,
     staleTime: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: isAuthenticated,
   });
 }
 

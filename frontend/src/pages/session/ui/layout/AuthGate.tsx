@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import without_login from "@/assets/wo_login.jpg";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
+import { useAuthHydrated } from "@/entities/user/model/useAuthHydrated";
 import { AUTH_PATHS, authPathWithRedirect } from "@/pages/auth/auth-paths";
 import { Button } from "@/shared/ui/button";
 
@@ -13,7 +14,19 @@ type AuthGateProps = {
 export function AuthGate({ children }: AuthGateProps) {
   const user = useAuthStore((state) => state.user);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hydrated = useAuthHydrated();
   const { pathname } = useLocation();
+
+  if (!hydrated) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <div
+          className="size-5 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground/70"
+          aria-hidden
+        />
+      </div>
+    );
+  }
 
   if (!isAuthenticated || !user) {
     return (
