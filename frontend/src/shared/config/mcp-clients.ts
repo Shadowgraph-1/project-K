@@ -15,7 +15,6 @@ const MCP_CLIENT_LOGOS = {
   cursor: "/mcp-clients/cursor.svg",
   anthropic: "/mcp-clients/anthropic.svg",
   windsurf: "/mcp-clients/windsurf.svg",
-  kono: "/kono-icon.svg",
 } as const;
 
 /** MCP-хосты, с которыми совместим Kono MCP-сервер. */
@@ -49,15 +48,5 @@ export const MCP_SUPPORTED_CLIENTS: McpSupportedClient[] = [
     brandColor: "#0FB982",
     logoOnBrand: true,
     external: true,
-  },
-  {
-    id: "kono",
-    title: "Kono AI",
-    description: "Встроенный агент — включите MCP под полем ввода в чате",
-    href: "/projects/mcp",
-    logo: MCP_CLIENT_LOGOS.kono,
-    brandColor: "#171717",
-    logoOnBrand: false,
-    external: false,
   },
 ];

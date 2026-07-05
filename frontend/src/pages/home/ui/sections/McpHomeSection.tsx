@@ -86,23 +86,6 @@ export default function McpHomeSection() {
                     />
                   </li>
                 ))}
-                <li>
-                  <HomeIntegrationCard
-                    title="API ключи Kono"
-                    description="Сохранить и активировать ключ провайдера"
-                    href={SESSION_PATHS.llmKeys}
-                    icon={
-                      <LlmProviderIcon
-                        source={{
-                          title: "API ключи Kono",
-                          logo: "/kono-icon.svg",
-                          brandColor: "#171717",
-                          logoOnBrand: false,
-                        }}
-                      />
-                    }
-                  />
-                </li>
               </ul>
             </div>
           </div>
