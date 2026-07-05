@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
+import { HomeFeatureLinkCard } from "@/pages/home/ui/components/HomeFeatureLinkCard";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
+import { HOME_FEATURE_LINKS } from "@/shared/config/home-feature-links";
 import { SECTION_ID } from "@/shared/config/sectionIds";
 import { Button } from "@/shared/ui/button";
 
@@ -14,10 +16,10 @@ const sectionScroll = (id: string) => {
 
 function MainSection() {
   return (
-    <section className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-black px-4 py-24 md:py-28">
+    <section className="relative flex min-h-dvh flex-col justify-start overflow-hidden bg-black px-4 pb-16 pt-24 sm:pb-20 sm:pt-28 md:pt-32">
       <div className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[640px] -translate-x-1/2 rounded-full bg-neutral-600/15 blur-[120px]" />
 
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-14 sm:gap-16 lg:max-w-7xl">
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-10 sm:gap-12 lg:max-w-7xl">
         <div className="w-full max-w-3xl text-center">
           <h1
             className="text-balance text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl"
@@ -64,6 +66,17 @@ function MainSection() {
               Возможности
             </Button>
           </div>
+        </div>
+
+        <div
+          className="home-features-home w-full"
+          data-aos="fade-up"
+          data-aos-delay="200"
+          data-aos-duration="800"
+        >
+          {HOME_FEATURE_LINKS.map((item) => (
+            <HomeFeatureLinkCard key={item.id} item={item} />
+          ))}
         </div>
       </div>
     </section>
