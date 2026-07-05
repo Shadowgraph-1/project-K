@@ -14,8 +14,8 @@ export type HomeFeatureLink = {
   title: string;
   description: string;
   href: string;
+  image: string;
   icon: HomeFeatureLinkIcon;
-  accent: string;
 };
 
 export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
@@ -26,8 +26,8 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
     description:
       "Tools для проектов, задач и поиска — из агента или внешнего сервера с JWT.",
     href: SESSION_PATHS.mcp,
+    image: "/features-home/fea-1.jpg",
     icon: { type: "mcp" },
-    accent: "from-violet-500/12 via-indigo-500/6 to-transparent",
   },
   {
     id: "connectors",
@@ -36,8 +36,8 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
     description:
       "Telegram, Slack, Notion и другие сервисы — уведомления рядом с задачами.",
     href: SESSION_PATHS.connectors,
+    image: "/features-home/fea-2.jpg",
     icon: { type: "lucide", icon: PlugZap },
-    accent: "from-emerald-500/12 via-teal-500/6 to-transparent",
   },
   {
     id: "kono-ai",
@@ -46,8 +46,8 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
     description:
       "Боковой чат рядом с задачами: вопросы по проекту, не уходя со страницы.",
     href: SESSION_PATHS.sessionRoot,
+    image: "/features-home/fea-3.jpg",
     icon: { type: "image", src: "/kono-icon.svg", alt: "" },
-    accent: "from-white/10 via-white/4 to-transparent",
   },
   {
     id: "api",
@@ -56,7 +56,7 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
     description:
       "OpenRouter, Groq, LM Studio и другие LLM с вызовом функций в одном месте.",
     href: SESSION_PATHS.llmKeys,
+    image: "/features-home/fea-4.jpg",
     icon: { type: "lucide", icon: Key },
-    accent: "from-amber-500/12 via-orange-500/6 to-transparent",
   },
 ] as const;
