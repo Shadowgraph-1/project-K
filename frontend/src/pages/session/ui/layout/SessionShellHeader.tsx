@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import { Bell } from "lucide-react";
 
 import { useNotifys } from "@/entities/notification/model/useNotifys";
-import { useInvitesQuery } from "@/hooks/use-invites-query";
+import { useInviteCountQuery } from "@/hooks/use-invites-query";
 import { useNotificationPrefsStore } from "@/shared/model/useNotificationPrefsStore";
 import { useSearchBar } from "@/hooks/use-searchBar";
 import { Button } from "@/shared/ui/button";
@@ -43,11 +43,11 @@ export function SessionShellHeader() {
     (s) => s.teamInvitesEnabled,
   );
 
-  const { data: incoming } = useInvitesQuery();
-  const inviteCount = teamInvitesEnabled ? (incoming?.length ?? 0) : 0;
+  const { data: inviteCount = 0 } = useInviteCountQuery();
+  const effectiveInviteCount = teamInvitesEnabled ? inviteCount : 0;
   const toastCount = useNotifys((s) => s.notifys.length);
   const notifyCount =
-    (taskHistoryEnabled ? toastCount : 0) + inviteCount;
+    (taskHistoryEnabled ? toastCount : 0) + effectiveInviteCount;
 
   const [openCenter, setOpenCenter] = useState(false);
   const sectionConfig = useSessionPageSectionConfig();

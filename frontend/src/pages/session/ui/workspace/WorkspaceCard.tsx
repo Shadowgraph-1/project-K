@@ -1,4 +1,4 @@
-import { type KeyboardEvent } from "react";
+import { memo, type KeyboardEvent } from "react";
 import { Box, MoreVertical, Trash2, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/shared/ui/dropdown-menu";
-import { getTaskStatus } from "@/entities/task/model/types";
 import { cn } from "@/shared/lib/utils";
 import { sessionToolbarIconButton } from "../../lib/session-styles";
 import { SessionTooltip } from "../layout/SessionTooltip";
@@ -20,22 +19,22 @@ import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { WORKSPACE_LIST_GRID } from "./workspaceListLayout";
 import { useDeleteWorkspaceMutation } from "@/entities/workspace/model/use-workspace-query";
 import type { Workspace } from "@/entities/workspace/model/workspace";
-import { useTasksQuery } from "@/entities/task/model/use-tasks-query";
+export type WorkspaceTaskStats = {
+  total: number;
+  completed: number;
+};
 
 type WorkspaceCardProps = {
   item: Workspace;
+  taskStats: WorkspaceTaskStats;
 };
 
-function WorkspaceCard({ item }: WorkspaceCardProps) {
+function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const deleteWorkspace = useDeleteWorkspaceMutation();
-  
-  const { data: workspaceTasks = [] } = useTasksQuery(item.id);
-  const total = workspaceTasks.length;
-  const completed = workspaceTasks.filter(
-    (task) => getTaskStatus(task) === "DONE",
-  ).length;
+
+  const { total, completed } = taskStats;
   const completionPercent =
     total > 0 ? Math.round((completed / total) * 100) : null;
 
@@ -169,4 +168,4 @@ function WorkspaceCard({ item }: WorkspaceCardProps) {
   );
 }
 
-export default WorkspaceCard;
+export default memo(WorkspaceCard);

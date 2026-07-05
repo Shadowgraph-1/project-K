@@ -49,12 +49,14 @@ function AppSidebar() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const membersHref = SESSION_PATHS.membersHub;
-  const { data: adminAccess } = useAdminAccessQuery();
-  const isAdmin = adminAccess?.isAdmin === true;
+  const { data: isAdmin = false } = useAdminAccessQuery(
+    (access) => access.isAdmin === true,
+  );
 
-  const { data: llmKeysData } = useLlmKeysQuery();
+  const { data: llmKeysCount = 0 } = useLlmKeysQuery(undefined, {
+    select: (data) => data.keys.length,
+  });
   const deleteAllLlmKeys = useDeleteAllLlmKeysMutation();
-  const llmKeysCount = llmKeysData?.keys.length ?? 0;
 
   const membersRouteMatch = matchPath(
     { path: "/workspaces/:publicKey/members", end: true },

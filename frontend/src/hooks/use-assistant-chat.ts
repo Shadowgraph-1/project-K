@@ -144,17 +144,18 @@ export function useAssistantChat(options: AssistantChatOptions = {}) {
 
       try {
         const toolsActive = withMcp && enabledToolNames.length > 0;
+        const contextPayload = getContext?.() ?? {
+          workspaces: [],
+          tasks: [],
+          subtasks: [],
+        };
 
         const data = await postChat(apiUrl, {
           message: q,
           history: historyForApi,
           toolsEnabled: toolsActive,
           enabledTools: enabledToolNames,
-          contextPayload: getContext?.() ?? {
-            workspaces: [],
-            tasks: [],
-            subtasks: [],
-          },
+          contextPayload,
         });
 
         const assistantFull = normalizeAssistantText(data.reply);
@@ -173,25 +174,46 @@ export function useAssistantChat(options: AssistantChatOptions = {}) {
           );
         }
 
+        const activeWorkspaceId = contextPayload.context?.workspaceId;
+        const activeTaskId = contextPayload.context?.taskId;
+
         if (data.dataChanged?.workspaces) {
           await queryClient.invalidateQueries({
             queryKey: queryKeys.workspaces,
           });
         }
         if (data.dataChanged?.tasks) {
-          await queryClient.invalidateQueries({
-            queryKey: queryKeys.tasks.all,
-          });
+          if (activeWorkspaceId) {
+            await queryClient.invalidateQueries({
+              queryKey: [...queryKeys.tasks.all, activeWorkspaceId],
+            });
+          } else {
+            await queryClient.invalidateQueries({
+              queryKey: queryKeys.tasks.all,
+            });
+          }
         }
         if (data.dataChanged?.subtasks) {
-          await queryClient.invalidateQueries({
-            queryKey: ["subtasks"],
-          });
+          if (activeTaskId) {
+            await queryClient.invalidateQueries({
+              queryKey: queryKeys.subtasks(activeTaskId),
+            });
+          } else {
+            await queryClient.invalidateQueries({
+              queryKey: ["subtasks"],
+            });
+          }
         }
         if (data.dataChanged?.activity) {
-          await queryClient.invalidateQueries({
-            queryKey: ["task-activity"],
-          });
+          if (activeTaskId) {
+            await queryClient.invalidateQueries({
+              queryKey: queryKeys.taskActivity(activeTaskId),
+            });
+          } else {
+            await queryClient.invalidateQueries({
+              queryKey: ["task-activity"],
+            });
+          }
         }
 
         setAnswer(assistantFull);

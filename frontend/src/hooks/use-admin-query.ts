@@ -14,7 +14,11 @@ import { queryKeys } from "@/shared/api/query-keys";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { notify } from "@/shared/lib/notify";
 
-export function useAdminAccessQuery() {
+export function useAdminAccessQuery<TData = Awaited<
+  ReturnType<typeof fetchAdminAccess>
+>>(
+  select?: (data: Awaited<ReturnType<typeof fetchAdminAccess>>) => TData,
+) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
@@ -23,6 +27,8 @@ export function useAdminAccessQuery() {
     enabled: isAuthenticated,
     staleTime: 30_000,
     refetchOnWindowFocus: isAuthenticated,
+    select,
+    notifyOnChangeProps: ["data", "error"],
   });
 }
 

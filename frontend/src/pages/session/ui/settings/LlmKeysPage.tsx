@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 
@@ -28,7 +28,6 @@ export function LlmKeysPage() {
   useLegacyDocsViewRedirect(DOCS_PATHS.apiKeys);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [createDialogKey, setCreateDialogKey] = useState(0);
   const [createPresetLabel, setCreatePresetLabel] = useState("");
@@ -47,22 +46,36 @@ export function LlmKeysPage() {
 
   const keys = useMemo(() => data?.keys ?? [], [data?.keys]);
 
-  const filteredKeys = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return keys;
-    return keys.filter((key) => {
-      const title = keyTitle(key).toLowerCase();
-      const hint = key.hint?.toLowerCase() ?? "";
-      const author = key.createdByName.toLowerCase();
-      return title.includes(q) || hint.includes(q) || author.includes(q);
-    });
-  }, [keys, search]);
+  const toolbarBusy =
+    createMutation.isPending || deleteAllMutation.isPending;
 
-  const busy =
-    createMutation.isPending ||
-    activateMutation.isPending ||
-    deleteMutation.isPending ||
-    deleteAllMutation.isPending;
+  const busyKeyId = activateMutation.isPending
+    ? (activateMutation.variables ?? null)
+    : deleteMutation.isPending
+      ? (deleteMutation.variables ?? null)
+      : null;
+
+  const handleActivate = useCallback(
+    (keyId: string) => {
+      activateMutation.mutate(keyId);
+    },
+    [activateMutation],
+  );
+
+  const handleDeleteKey = useCallback(
+    async (key: (typeof keys)[number]) => {
+      const title = keyTitle(key);
+      const confirmed = await notifyConfirm({
+        title: "Удалить API ключ?",
+        description: `«${title}» будет удалён без возможности восстановления.`,
+        confirmLabel: "Удалить",
+        cancelLabel: "Отмена",
+      });
+      if (!confirmed) return;
+      deleteMutation.mutate(key.id);
+    },
+    [deleteMutation],
+  );
 
   function openCreateDialog(presetLabel = "") {
     setCreatePresetLabel(presetLabel);
@@ -120,18 +133,6 @@ export function LlmKeysPage() {
     deleteAllMutation.mutate();
   }
 
-  async function handleDeleteKey(key: (typeof keys)[number]) {
-    const title = keyTitle(key);
-    const confirmed = await notifyConfirm({
-      title: "Удалить API ключ?",
-      description: `«${title}» будет удалён без возможности восстановления.`,
-      confirmLabel: "Удалить",
-      cancelLabel: "Отмена",
-    });
-    if (!confirmed) return;
-    deleteMutation.mutate(key.id);
-  }
-
   const toolbarActions = !isLoading ? (
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
       <SectionDocsLink to={DOCS_PATHS.apiKeys} />
@@ -141,7 +142,7 @@ export function LlmKeysPage() {
           variant="outline"
           className={cn(sessionPillOutline, "h-9 gap-1 px-4")}
           onClick={handleDeleteAll}
-          disabled={busy}
+          disabled={toolbarBusy}
         >
           <Trash2 className="size-4" />
           Удалить все
@@ -151,7 +152,7 @@ export function LlmKeysPage() {
         type="button"
         className="h-9 gap-1 rounded-full px-4 shadow-sm"
         onClick={() => openCreateDialog()}
-        disabled={busy}
+        disabled={toolbarBusy}
       >
         <Plus className="size-4" />
         Создать ключ
@@ -171,14 +172,11 @@ export function LlmKeysPage() {
         <LlmKeysTable
           userName={userName}
           keys={keys}
-          filteredKeys={filteredKeys}
-          search={search}
           sorting={sorting}
           ordering={ordering}
-          busy={busy}
-          onSearchChange={setSearch}
+          busyKeyId={busyKeyId}
           onToggleSort={toggleSort}
-          onActivate={(keyId) => activateMutation.mutate(keyId)}
+          onActivate={handleActivate}
           onDelete={handleDeleteKey}
         />
       )}
@@ -186,7 +184,7 @@ export function LlmKeysPage() {
       <LlmCreateKeyDialog
         key={createDialogKey}
         open={createOpen}
-        busy={busy}
+        busy={toolbarBusy}
         isCreating={createMutation.isPending}
         initialLabel={createPresetLabel}
         onOpenChange={setCreateOpen}

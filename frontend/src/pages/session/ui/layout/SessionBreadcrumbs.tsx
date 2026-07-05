@@ -1,6 +1,6 @@
 import { Link, useLocation, useParams } from "react-router-dom";
 
-import { useTasksQuery } from "@/entities/task/model/use-tasks-query";
+import { useTaskTitleQuery } from "@/entities/task/model/use-tasks-query";
 import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
 import {
   Breadcrumb,
@@ -28,15 +28,16 @@ export function SessionBreadcrumbs() {
     publicKey?: string;
     taskId?: string;
   }>();
-  const { data: workspaces = [] } = useWorkspaceQuery();
+  const { data: activeWorkspace } = useWorkspaceQuery((workspaces) => {
+    if (!publicKey) return null;
+    const workspace = workspaces.find((item) => item.publicKey === publicKey);
+    return workspace
+      ? { id: workspace.id, title: workspace.title }
+      : null;
+  });
+  const workspaceTitle = activeWorkspace?.title ?? "Проект";
 
-  const workspace = publicKey
-    ? workspaces.find((item) => item.publicKey === publicKey)
-    : undefined;
-  const workspaceTitle = workspace?.title ?? "Проект";
-
-  const { data: tasks = [] } = useTasksQuery(workspace?.id);
-  const task = taskId ? tasks.find((item) => item.id === taskId) : undefined;
+  const { data: taskTitle } = useTaskTitleQuery(activeWorkspace?.id, taskId);
 
   if (isAdminPath(pathname)) {
     return (
@@ -99,7 +100,7 @@ export function SessionBreadcrumbs() {
   }
 
   if (isWorkspaceTaskDetailsPath(pathname) && publicKey) {
-    const taskTitle = task?.title ?? "Задача";
+    const resolvedTaskTitle = taskTitle ?? "Задача";
 
     return (
       <Breadcrumb className="min-w-0 flex-1">
@@ -119,8 +120,8 @@ export function SessionBreadcrumbs() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem className="min-w-0 flex-1">
-            <BreadcrumbPage className="block truncate" title={taskTitle}>
-              {taskTitle}
+            <BreadcrumbPage className="block truncate" title={resolvedTaskTitle}>
+              {resolvedTaskTitle}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>

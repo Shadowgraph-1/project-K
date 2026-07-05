@@ -2,6 +2,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Bot, KeyRound, Settings, X } from "lucide-react";
 
+import { useAssistantChatProps } from "@/pages/session/model/AssistantChatContext";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { Button, buttonVariants } from "@/shared/ui/button";
 import {
@@ -17,19 +18,10 @@ import { cn } from "@/shared/lib/utils";
 import { sessionToolbarIconButton } from "@/pages/session/lib/session-styles";
 import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
 
-import {
-  AssistantChatInput,
-  AssistantChatMessages,
-  type AssistantChatProps,
-} from "./assistant-chat-ui";
+import { AssistantChatInput, AssistantChatMessages } from "./assistant-chat-ui";
 
-export type AssistantFloatingPanelChatProps = AssistantChatProps;
-
-type AssistantFloatingPanelProps = {
-  chat: AssistantChatProps | null;
-};
-
-export function AssistantFloatingPanel({ chat }: AssistantFloatingPanelProps) {
+export function AssistantFloatingPanel() {
+  const chat = useAssistantChatProps();
   const navigate = useNavigate();
   const open = useSessionSecondarySidebarStore((s) => s.open);
   const panel = useSessionSecondarySidebarStore((s) => s.panel);

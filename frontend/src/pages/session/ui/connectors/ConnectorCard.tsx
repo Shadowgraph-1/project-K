@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { AlertCircle, MoreVertical } from "lucide-react";
 
 import type { ConnectorDefinition } from "@/shared/config/connectors";
@@ -19,13 +20,13 @@ type ConnectorCardProps = {
   enabled?: boolean;
   configured?: boolean;
   busy?: boolean;
-  onConnect?: () => void;
-  onToggle?: (enabled: boolean) => void;
-  onRemove?: () => void;
+  onConnect?: (connectorId: string) => void;
+  onToggle?: (connectorId: string, enabled: boolean) => void;
+  onRemove?: (connectorId: string) => void;
   className?: string;
 };
 
-export function ConnectorCard({
+export const ConnectorCard = memo(function ConnectorCard({
   connector,
   connected = false,
   enabled = false,
@@ -95,7 +96,7 @@ export function ConnectorCard({
             <Switch
               checked={enabled}
               disabled={busy || !configured}
-              onCheckedChange={(checked) => onToggle?.(checked)}
+              onCheckedChange={(checked) => onToggle?.(connector.id, checked)}
               aria-label={`${enabled ? "Выключить" : "Включить"} ${connector.name}`}
             />
           )}
@@ -115,7 +116,7 @@ export function ConnectorCard({
             <DropdownMenuContent align="end" className="min-w-40">
               <DropdownMenuItem
                 disabled={busy}
-                onClick={onRemove}
+                onClick={() => onRemove?.(connector.id)}
               >
                 Удалить
               </DropdownMenuItem>
@@ -128,7 +129,7 @@ export function ConnectorCard({
           size="xs"
           className="shrink-0 rounded-full"
           disabled={busy}
-          onClick={onConnect}
+          onClick={() => onConnect?.(connector.id)}
         >
           Подключить
         </Button>
@@ -143,4 +144,4 @@ export function ConnectorCard({
       ) : null}
     </div>
   );
-}
+});

@@ -1,4 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
 import { Box, ChevronDown, LayoutGrid, Trash2, Users } from "lucide-react";
 
@@ -29,6 +30,8 @@ import {
   SidebarTaskContextMenuItems,
   SidebarWorkspaceContextMenuItems,
 } from "./sidebar-context-menus";
+import { queryKeys } from "@/shared/api/query-keys";
+
 import {
   isSessionProjectsListPath,
   SESSION_PATHS,
@@ -338,6 +341,7 @@ function WorkspaceTreeItem({
 }
 
 export function AppSidebarProjectsTree() {
+  const queryClient = useQueryClient();
   const { pathname } = useLocation();
   const { data: workspaces = [], isLoading } = useWorkspaceQuery();
   const [projectsOpen, setProjectsOpen] = useState(true);
@@ -357,19 +361,48 @@ export function AppSidebarProjectsTree() {
     return [...owned, ...shared];
   }, [workspaces]);
 
-  const workspaceIds = useMemo(
-    () => activeWorkspaces.map((workspace) => workspace.id),
-    [activeWorkspaces],
-  );
+  const subscribedWorkspaceIds = useMemo(() => {
+    const ids = new Set<string>();
 
-  const taskQueries = useTasksQueries(workspaceIds);
+    for (const workspace of activeWorkspaces) {
+      const isExpanded = !collapsedWorkspaceIds.has(workspace.id);
+      const isRouteWorkspace = routePublicKey === workspace.publicKey;
+
+      if (isExpanded || isRouteWorkspace) {
+        ids.add(workspace.id);
+      }
+    }
+
+    return [...ids];
+  }, [activeWorkspaces, collapsedWorkspaceIds, routePublicKey]);
+
+  const taskQueries = useTasksQueries(subscribedWorkspaceIds);
   const tasksByWorkspaceId = useMemo(() => {
     const map = new Map<string, Task[]>();
-    activeWorkspaces.forEach((workspace, index) => {
-      map.set(workspace.id, taskQueries[index]?.data ?? []);
-    });
+
+    for (const workspace of activeWorkspaces) {
+      const subscribedIndex = subscribedWorkspaceIds.indexOf(workspace.id);
+
+      if (subscribedIndex >= 0) {
+        map.set(workspace.id, taskQueries[subscribedIndex]?.data ?? []);
+        continue;
+      }
+
+      map.set(
+        workspace.id,
+        queryClient.getQueryData<Task[]>(
+          queryKeys.tasks.byWorkspace(workspace.id),
+        ) ?? [],
+      );
+    }
+
     return map;
-  }, [activeWorkspaces, taskQueries]);
+  }, [
+    activeWorkspaces,
+    subscribedWorkspaceIds,
+    taskQueries,
+    queryClient,
+  ]);
 
   const isProjectsHubActive = isSessionProjectsListPath(pathname);
 

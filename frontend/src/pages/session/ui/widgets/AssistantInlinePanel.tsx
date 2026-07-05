@@ -1,15 +1,14 @@
+import { useAssistantChatProps } from "@/pages/session/model/AssistantChatContext";
+
 import {
   AssistantChatDisclaimer,
   AssistantChatInput,
   AssistantChatMessages,
-  type AssistantChatProps,
 } from "./assistant-chat-ui";
 
-type AssistantInlinePanelProps = {
-  chat: AssistantChatProps | null;
-};
+export function AssistantInlinePanel() {
+  const chat = useAssistantChatProps();
 
-export function AssistantInlinePanel({ chat }: AssistantInlinePanelProps) {
   return (
     <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1 flex-col px-4 py-4 sm:px-6">

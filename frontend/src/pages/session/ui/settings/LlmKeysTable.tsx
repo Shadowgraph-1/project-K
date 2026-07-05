@@ -1,3 +1,4 @@
+import { memo, useMemo, useState } from "react";
 import { MoreHorizontal, Plug2, Search, Trash2 } from "lucide-react";
 
 import type { LlmKeyItem } from "@/api/llm-settings";
@@ -27,15 +28,93 @@ import {
 } from "./llm-keys-utils";
 import { LlmKeysTableEmptyState } from "./LlmKeysTableEmptyState";
 
+type LlmKeyRowProps = {
+  keyItem: LlmKeyItem;
+  busy: boolean;
+  onActivate: (keyId: string) => void;
+  onDelete: (key: LlmKeyItem) => void;
+};
+
+const LlmKeyRow = memo(function LlmKeyRow({
+  keyItem,
+  busy,
+  onActivate,
+  onDelete,
+}: LlmKeyRowProps) {
+  const title = keyTitle(keyItem);
+  const relative = formatLastUpdated(keyItem.createdAt);
+  const fullDate = formatFullDate(keyItem.createdAt);
+
+  return (
+    <tr style={{ height: "3rem" }}>
+      <td className={cn(tdClass, "!pl-0")}>
+        <div
+          className="flex items-center gap-3"
+          style={{ ["--max-name-length" as string]: "500px" }}
+        >
+          <button type="button" className="min-w-0 text-left">
+            <p className="max-w-[var(--max-name-length)] cursor-pointer truncate text-sm text-foreground hover:underline">
+              {title}
+            </p>
+          </button>
+        </div>
+      </td>
+      <td className={cn(tdClass, "w-full")}>
+        <p className="text-sm text-muted-foreground">{keyItem.hint ?? "—"}</p>
+      </td>
+      <td className={tdClass}>
+        <p className="text-sm text-foreground">{keyItem.createdByName}</p>
+      </td>
+      <td className={cn(tdClass, "min-w-36")}>
+        {fullDate ? (
+          <SessionTooltip label={fullDate}>
+            <button type="button" className="text-left">
+              <p className="inline-block text-sm text-muted-foreground">
+                Создан {relative}
+              </p>
+            </button>
+          </SessionTooltip>
+        ) : (
+          <p className="text-sm text-muted-foreground">—</p>
+        )}
+      </td>
+      <td className={cn(tdClass, "w-15 !pr-0")}>
+        <div className="flex items-center justify-end">
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={sessionMenuTrigger}
+              aria-label={`Действия для ${title}`}
+              disabled={busy}
+            >
+              <MoreHorizontal className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44 rounded-xl">
+              <DropdownMenuItem onSelect={() => onActivate(keyItem.id)}>
+                <Plug2 className="size-4" />
+                Использовать ключ
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                variant="destructive"
+                onSelect={() => void onDelete(keyItem)}
+              >
+                <Trash2 className="size-4" />
+                Удалить
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </td>
+    </tr>
+  );
+});
+
 type LlmKeysTableProps = {
   userName: string;
   keys: LlmKeyItem[];
-  filteredKeys: LlmKeyItem[];
-  search: string;
   sorting: "name" | "created";
   ordering: "asc" | "desc";
-  busy: boolean;
-  onSearchChange: (value: string) => void;
+  busyKeyId: string | null;
   onToggleSort: (field: "name" | "created") => void;
   onActivate: (keyId: string) => void;
   onDelete: (key: LlmKeyItem) => void;
@@ -44,16 +123,26 @@ type LlmKeysTableProps = {
 export function LlmKeysTable({
   userName,
   keys,
-  filteredKeys,
-  search,
   sorting,
   ordering,
-  busy,
-  onSearchChange,
+  busyKeyId,
   onToggleSort,
   onActivate,
   onDelete,
 }: LlmKeysTableProps) {
+  const [search, setSearch] = useState("");
+
+  const filteredKeys = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return keys;
+    return keys.filter((key) => {
+      const title = keyTitle(key).toLowerCase();
+      const hint = key.hint?.toLowerCase() ?? "";
+      const author = key.createdByName.toLowerCase();
+      return title.includes(q) || hint.includes(q) || author.includes(q);
+    });
+  }, [keys, search]);
+
   return (
     <>
       <div className="relative w-full max-w-64 px-1">
@@ -62,7 +151,7 @@ export function LlmKeysTable({
           type="search"
           placeholder="Поиск"
           value={search}
-          onChange={(e) => onSearchChange(e.target.value)}
+          onChange={(e) => setSearch(e.target.value)}
           className={cn(sessionField, "pl-10")}
         />
       </div>
@@ -139,86 +228,18 @@ export function LlmKeysTable({
                   </td>
                 </tr>
               ) : (
-                filteredKeys.map((key) => {
-                const title = keyTitle(key);
-                const relative = formatLastUpdated(key.createdAt);
-                const fullDate = formatFullDate(key.createdAt);
-
-                return (
-                  <tr key={key.id} style={{ height: "3rem" }}>
-                    <td className={cn(tdClass, "!pl-0")}>
-                      <div
-                        className="flex items-center gap-3"
-                        style={{ ["--max-name-length" as string]: "500px" }}
-                      >
-                        <button type="button" className="min-w-0 text-left">
-                          <p className="max-w-[var(--max-name-length)] cursor-pointer truncate text-sm text-foreground hover:underline">
-                            {title}
-                          </p>
-                        </button>
-                      </div>
-                    </td>
-                    <td className={cn(tdClass, "w-full")}>
-                      <p className="text-sm text-muted-foreground">
-                        {key.hint ?? "—"}
-                      </p>
-                    </td>
-                    <td className={tdClass}>
-                      <p className="text-sm text-foreground">
-                        {key.createdByName}
-                      </p>
-                    </td>
-                    <td className={cn(tdClass, "min-w-36")}>
-                      {fullDate ? (
-                        <SessionTooltip label={fullDate}>
-                          <button type="button" className="text-left">
-                            <p className="inline-block text-sm text-muted-foreground">
-                              Создан {relative}
-                            </p>
-                          </button>
-                        </SessionTooltip>
-                      ) : (
-                        <p className="text-sm text-muted-foreground">—</p>
-                      )}
-                    </td>
-                    <td className={cn(tdClass, "w-15 !pr-0")}>
-                      <div className="flex items-center justify-end">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger
-                            className={sessionMenuTrigger}
-                            aria-label={`Действия для ${title}`}
-                            disabled={busy}
-                          >
-                            <MoreHorizontal className="size-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align="end"
-                            className="w-44 rounded-xl"
-                          >
-                            <DropdownMenuItem
-                              onSelect={() => onActivate(key.id)}
-                            >
-                              <Plug2 className="size-4" />
-                              Использовать ключ
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              variant="destructive"
-                              onSelect={() => void onDelete(key)}
-                            >
-                              <Trash2 className="size-4" />
-                              Удалить
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                filteredKeys.map((key) => (
+                  <LlmKeyRow
+                    key={key.id}
+                    keyItem={key}
+                    busy={busyKeyId === key.id}
+                    onActivate={onActivate}
+                    onDelete={onDelete}
+                  />
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       )}
     </>

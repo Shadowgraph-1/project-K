@@ -1,4 +1,6 @@
 import { useMemo } from "react";
+
+import { useWorkspaceTaskStatsQueries } from "@/entities/task/model/use-tasks-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FolderKanban, Plus } from "lucide-react";
 import { partitionWorkspaces } from "@/entities/workspace/lib/partition-workspaces";
@@ -11,6 +13,7 @@ import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { Button } from "@/shared/ui/button";
 import EmptySession from "./EmptySession";
 import { WorkspaceGridSkeleton } from "./WorkspaceGridSkeleton";
+import type { WorkspaceTaskStats } from "./WorkspaceCard";
 import { WorkspaceListSection } from "./WorkspaceListSection";
 import { SESSION_PATHS } from "../../model/sessionPaths";
 import { SessionPageHeader } from "../layout/SessionPageHeader";
@@ -25,6 +28,24 @@ function Session() {
     () => partitionWorkspaces(workspaces),
     [workspaces],
   );
+
+  const workspaceIds = useMemo(
+    () => workspaces.map((workspace) => workspace.id),
+    [workspaces],
+  );
+  const taskStatsQueries = useWorkspaceTaskStatsQueries(workspaceIds);
+  const taskStatsByWorkspaceId = useMemo(() => {
+    const map = new Map<string, WorkspaceTaskStats>();
+
+    workspaces.forEach((workspace, index) => {
+      map.set(
+        workspace.id,
+        taskStatsQueries[index]?.data ?? { total: 0, completed: 0 },
+      );
+    });
+
+    return map;
+  }, [workspaces, taskStatsQueries]);
 
   async function handleDeleteAllWorkspaces() {
     const confirmed = await notifyConfirm({
@@ -96,6 +117,7 @@ function Session() {
               <WorkspaceListSection
                 title="Мои проекты"
                 items={owned}
+                taskStatsByWorkspaceId={taskStatsByWorkspaceId}
                 showColumnHeader={owned.length > 0}
                 headerAction={
                   <div className="flex items-center gap-2">
@@ -127,6 +149,7 @@ function Session() {
               <WorkspaceListSection
                 title="Совместная работа"
                 items={shared}
+                taskStatsByWorkspaceId={taskStatsByWorkspaceId}
               />
             </div>
           </div>

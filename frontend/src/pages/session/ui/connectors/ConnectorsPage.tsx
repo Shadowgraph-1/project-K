@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { ChevronDown, Plus, Search } from "lucide-react";
 
 import {
@@ -61,33 +61,50 @@ function mergeConnectorState(
   });
 }
 
-export function ConnectorsPage() {
-  useLegacyDocsViewRedirect(DOCS_PATHS.connectors);
+type ConnectorsCatalogProps = {
+  catalog: ConnectorWithState[];
+  stateById: Map<
+    string,
+    { installed: boolean; enabled: boolean; configured: boolean }
+  >;
+  isLoading: boolean;
+};
 
+const ConnectorsCatalog = memo(function ConnectorsCatalog({
+  catalog,
+  stateById,
+  isLoading,
+}: ConnectorsCatalogProps) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const { data, isLoading } = useConnectorsQuery();
   const patchConnector = usePatchConnectorMutation();
   const deleteConnector = useDeleteConnectorMutation();
 
-  const stateById = useMemo(() => {
-    const map = new Map<
-      string,
-      { installed: boolean; enabled: boolean; configured: boolean }
-    >();
-    for (const item of data?.connectors ?? []) {
-      map.set(item.id, {
-        installed: item.installed,
-        enabled: item.enabled,
-        configured: item.configured,
-      });
-    }
-    return map;
-  }, [data?.connectors]);
+  const busyConnectorId = patchConnector.isPending
+    ? (patchConnector.variables?.connectorId ?? null)
+    : deleteConnector.isPending
+      ? (deleteConnector.variables ?? null)
+      : null;
 
-  const catalog = useMemo(
-    () => mergeConnectorState(ALL_CATALOG, stateById),
-    [stateById],
+  const handleToggle = useCallback(
+    (connectorId: string, enabled: boolean) => {
+      patchConnector.mutate({ connectorId, enabled });
+    },
+    [patchConnector],
+  );
+
+  const handleConnect = useCallback(
+    (connectorId: string) => {
+      patchConnector.mutate({ connectorId, enabled: true });
+    },
+    [patchConnector],
+  );
+
+  const handleRemove = useCallback(
+    (connectorId: string) => {
+      deleteConnector.mutate(connectorId);
+    },
+    [deleteConnector],
   );
 
   const connected = useMemo(
@@ -113,25 +130,8 @@ export function ConnectorsPage() {
       (item) => !stateById.get(item.id)?.installed,
     );
 
-  const handleToggle = (connectorId: string, enabled: boolean) => {
-    patchConnector.mutate({ connectorId, enabled });
-  };
-
   return (
-    <div className="mx-auto w-full max-w-3xl pb-4">
-      <div className="mb-3 flex min-h-0 w-full items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          Коннекторы
-        </h1>
-        <div className="flex shrink-0 items-center gap-2">
-          <SectionDocsLink to={DOCS_PATHS.connectors} />
-          <Button type="button" size="sm" className="rounded-full" disabled>
-            <Plus />
-            Новый коннектор
-          </Button>
-        </div>
-      </div>
-
+    <>
       <div className="mb-4 flex justify-end">
         <div className="relative w-full sm:w-48">
           <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -160,9 +160,9 @@ export function ConnectorsPage() {
                 connected
                 enabled={connector.enabled}
                 configured={connector.configured}
-                busy={patchConnector.isPending || deleteConnector.isPending}
-                onToggle={(enabled) => handleToggle(connector.id, enabled)}
-                onRemove={() => deleteConnector.mutate(connector.id)}
+                busy={busyConnectorId === connector.id}
+                onToggle={handleToggle}
+                onRemove={handleRemove}
               />
             ))}
           </div>
@@ -187,8 +187,8 @@ export function ConnectorsPage() {
                 connector={connector}
                 enabled={connector.enabled}
                 configured={connector.configured}
-                busy={patchConnector.isPending || deleteConnector.isPending}
-                onConnect={() => handleToggle(connector.id, true)}
+                busy={busyConnectorId === connector.id}
+                onConnect={handleConnect}
               />
             ))}
           </div>
@@ -211,6 +211,55 @@ export function ConnectorsPage() {
           </Button>
         </div>
       ) : null}
+    </>
+  );
+});
+
+export function ConnectorsPage() {
+  useLegacyDocsViewRedirect(DOCS_PATHS.connectors);
+
+  const { data, isLoading } = useConnectorsQuery();
+
+  const stateById = useMemo(() => {
+    const map = new Map<
+      string,
+      { installed: boolean; enabled: boolean; configured: boolean }
+    >();
+    for (const item of data?.connectors ?? []) {
+      map.set(item.id, {
+        installed: item.installed,
+        enabled: item.enabled,
+        configured: item.configured,
+      });
+    }
+    return map;
+  }, [data?.connectors]);
+
+  const catalog = useMemo(
+    () => mergeConnectorState(ALL_CATALOG, stateById),
+    [stateById],
+  );
+
+  return (
+    <div className="mx-auto w-full max-w-3xl pb-4">
+      <div className="mb-3 flex min-h-0 w-full items-center justify-between gap-3">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Коннекторы
+        </h1>
+        <div className="flex shrink-0 items-center gap-2">
+          <SectionDocsLink to={DOCS_PATHS.connectors} />
+          <Button type="button" size="sm" className="rounded-full" disabled>
+            <Plus />
+            Новый коннектор
+          </Button>
+        </div>
+      </div>
+
+      <ConnectorsCatalog
+        catalog={catalog}
+        stateById={stateById}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

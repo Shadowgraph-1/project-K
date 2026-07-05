@@ -1,5 +1,10 @@
 import { type ReactNode } from "react";
-import { Controller, useForm } from "react-hook-form";
+import {
+  Controller,
+  useForm,
+  useFormState,
+  type Control,
+} from "react-hook-form";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -69,6 +74,70 @@ function AuthImagePanel({ className }: { className?: string }) {
   );
 }
 
+function LoginEmailField({ control }: { control: Control<LoginInput> }) {
+  const { errors } = useFormState({ control, name: "email" });
+
+  return (
+    <AuthField label="Email" htmlFor="login-email" error={errors.email?.message}>
+      <Controller
+        name="email"
+        control={control}
+        render={({ field }) => (
+          <Input
+            id="login-email"
+            type="email"
+            autoComplete="email"
+            className={authInputClassName}
+            aria-invalid={Boolean(errors.email)}
+            {...field}
+          />
+        )}
+      />
+    </AuthField>
+  );
+}
+
+function LoginPasswordField({ control }: { control: Control<LoginInput> }) {
+  const { errors } = useFormState({ control, name: "password" });
+
+  return (
+    <AuthField
+      label="Пароль"
+      htmlFor="login-password"
+      error={errors.password?.message}
+    >
+      <Controller
+        name="password"
+        control={control}
+        render={({ field }) => (
+          <Input
+            id="login-password"
+            type="password"
+            autoComplete="current-password"
+            className={authInputClassName}
+            aria-invalid={Boolean(errors.password)}
+            {...field}
+          />
+        )}
+      />
+    </AuthField>
+  );
+}
+
+function LoginSubmitButton({ control }: { control: Control<LoginInput> }) {
+  const { isSubmitting } = useFormState({ control });
+
+  return (
+    <Button
+      type="submit"
+      disabled={isSubmitting}
+      className="mt-3 h-10 w-full rounded-full bg-white text-neutral-950 hover:bg-neutral-200"
+    >
+      Войти
+    </Button>
+  );
+}
+
 function LoginPanel({
   redirectTo,
   onSuccess,
@@ -78,7 +147,7 @@ function LoginPanel({
 }) {
   const loginUser = useAuthStore((s) => s.login);
 
-  const form = useForm<LoginInput>({
+  const { control, handleSubmit } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
@@ -101,51 +170,16 @@ function LoginPanel({
     }
   }
 
-  const { errors, isSubmitting } = form.formState;
-
   return (
     <>
       <h1 className="mb-10 text-center text-2xl font-medium tracking-tight text-white sm:text-3xl">
         Войти в ваш аккаунт
       </h1>
 
-      <form
-        className="grid gap-1"
-        onSubmit={form.handleSubmit(onValid)}
-      >
-        <AuthField label="Email" htmlFor="login-email" error={errors.email?.message}>
-          <Input
-            id="login-email"
-            type="email"
-            autoComplete="email"
-            className={authInputClassName}
-            aria-invalid={Boolean(errors.email)}
-            {...form.register("email")}
-          />
-        </AuthField>
-
-        <AuthField
-          label="Пароль"
-          htmlFor="login-password"
-          error={errors.password?.message}
-        >
-          <Input
-            id="login-password"
-            type="password"
-            autoComplete="current-password"
-            className={authInputClassName}
-            aria-invalid={Boolean(errors.password)}
-            {...form.register("password")}
-          />
-        </AuthField>
-
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-3 h-10 w-full rounded-full bg-white text-neutral-950 hover:bg-neutral-200"
-        >
-          Войти
-        </Button>
+      <form className="grid gap-1" onSubmit={handleSubmit(onValid)}>
+        <LoginEmailField control={control} />
+        <LoginPasswordField control={control} />
+        <LoginSubmitButton control={control} />
       </form>
 
       <p className="text-center text-sm text-white/45">
@@ -161,6 +195,123 @@ function LoginPanel({
   );
 }
 
+function RegisterNameField({ control }: { control: Control<RegisterInput> }) {
+  const { errors } = useFormState({ control, name: "name" });
+
+  return (
+    <AuthField label="Имя" htmlFor="reg-name" error={errors.name?.message}>
+      <Controller
+        name="name"
+        control={control}
+        render={({ field }) => (
+          <Input
+            id="reg-name"
+            maxLength={FIELD_LIMITS.userName}
+            className={authInputClassName}
+            aria-invalid={Boolean(errors.name)}
+            {...field}
+          />
+        )}
+      />
+    </AuthField>
+  );
+}
+
+function RegisterEmailField({ control }: { control: Control<RegisterInput> }) {
+  const { errors } = useFormState({ control, name: "email" });
+
+  return (
+    <AuthField label="Email" htmlFor="reg-email" error={errors.email?.message}>
+      <Controller
+        name="email"
+        control={control}
+        render={({ field }) => (
+          <Input
+            id="reg-email"
+            type="email"
+            autoComplete="email"
+            className={authInputClassName}
+            aria-invalid={Boolean(errors.email)}
+            {...field}
+          />
+        )}
+      />
+    </AuthField>
+  );
+}
+
+function RegisterPasswordField({ control }: { control: Control<RegisterInput> }) {
+  const { errors } = useFormState({ control, name: "password" });
+
+  return (
+    <AuthField
+      label="Пароль"
+      htmlFor="reg-password"
+      error={errors.password?.message}
+    >
+      <Controller
+        name="password"
+        control={control}
+        render={({ field }) => (
+          <Input
+            id="reg-password"
+            type="password"
+            autoComplete="new-password"
+            className={authInputClassName}
+            aria-invalid={Boolean(errors.password)}
+            {...field}
+          />
+        )}
+      />
+    </AuthField>
+  );
+}
+
+function RegisterConfirmPasswordField({
+  control,
+}: {
+  control: Control<RegisterInput>;
+}) {
+  const { errors } = useFormState({ control, name: "confirmPassword" });
+
+  return (
+    <AuthField
+      label="Подтвердите пароль"
+      htmlFor="reg-confirm"
+      error={errors.confirmPassword?.message}
+    >
+      <Controller
+        name="confirmPassword"
+        control={control}
+        render={({ field }) => (
+          <Input
+            id="reg-confirm"
+            type="password"
+            autoComplete="new-password"
+            className={authInputClassName}
+            aria-invalid={Boolean(errors.confirmPassword)}
+            {...field}
+          />
+        )}
+      />
+    </AuthField>
+  );
+}
+
+function RegisterSubmitButton({ control }: { control: Control<RegisterInput> }) {
+  const { isSubmitting } = useFormState({ control });
+
+  return (
+    <Button
+      type="submit"
+      disabled={isSubmitting}
+      className="mt-3 h-10 w-full rounded-full bg-white text-neutral-950 hover:bg-neutral-200"
+    >
+      Создать аккаунт
+    </Button>
+  );
+}
+
 function RegisterPanel({
   redirectTo,
   onSuccess,
@@ -170,7 +321,7 @@ function RegisterPanel({
 }) {
   const register = useAuthStore((s) => s.register);
 
-  const form = useForm<RegisterInput>({
+  const { control, handleSubmit } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
       name: "",
@@ -203,82 +354,18 @@ function RegisterPanel({
     }
   }
 
-  const { errors, isSubmitting } = form.formState;
-
   return (
     <>
       <h1 className="mb-10 text-center text-2xl font-medium tracking-tight text-white sm:text-3xl">
         Создать аккаунт
       </h1>
 
-      <form
-        className="grid gap-1"
-        onSubmit={form.handleSubmit(onValid)}
-      >
-        <AuthField label="Имя" htmlFor="reg-name" error={errors.name?.message}>
-          <Controller
-            name="name"
-            control={form.control}
-            render={({ field }) => (
-              <Input
-                id="reg-name"
-                maxLength={FIELD_LIMITS.userName}
-                className={authInputClassName}
-                aria-invalid={Boolean(errors.name)}
-                {...field}
-              />
-            )}
-          />
-        </AuthField>
-
-        <AuthField label="Email" htmlFor="reg-email" error={errors.email?.message}>
-          <Input
-            id="reg-email"
-            type="email"
-            autoComplete="email"
-            className={authInputClassName}
-            aria-invalid={Boolean(errors.email)}
-            {...form.register("email")}
-          />
-        </AuthField>
-
-        <AuthField
-          label="Пароль"
-          htmlFor="reg-password"
-          error={errors.password?.message}
-        >
-          <Input
-            id="reg-password"
-            type="password"
-            autoComplete="new-password"
-            className={authInputClassName}
-            aria-invalid={Boolean(errors.password)}
-            {...form.register("password")}
-          />
-        </AuthField>
-
-        <AuthField
-          label="Подтвердите пароль"
-          htmlFor="reg-confirm"
-          error={errors.confirmPassword?.message}
-        >
-          <Input
-            id="reg-confirm"
-            type="password"
-            autoComplete="new-password"
-            className={authInputClassName}
-            aria-invalid={Boolean(errors.confirmPassword)}
-            {...form.register("confirmPassword")}
-          />
-        </AuthField>
-
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="mt-3 h-10 w-full rounded-full bg-white text-neutral-950 hover:bg-neutral-200"
-        >
-          Создать аккаунт
-        </Button>
+      <form className="grid gap-1" onSubmit={handleSubmit(onValid)}>
+        <RegisterNameField control={control} />
+        <RegisterEmailField control={control} />
+        <RegisterPasswordField control={control} />
+        <RegisterConfirmPasswordField control={control} />
+        <RegisterSubmitButton control={control} />
       </form>
 
       <p className="text-center text-sm text-white/45">

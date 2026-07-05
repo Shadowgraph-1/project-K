@@ -9,14 +9,29 @@ import { queryKeys } from "@/shared/api/query-keys";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { notify } from "@/shared/lib/notify";
 
+const invitesQueryBase = {
+  queryKey: queryKeys.invites.incoming(),
+  queryFn: getIncomingInvitesOnApi,
+  refetchInterval: 30_000,
+  notifyOnChangeProps: ["data", "error"] as ("data" | "error")[],
+};
+
 export function useInvitesQuery() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
-    queryKey: queryKeys.invites.incoming(),
-    queryFn: getIncomingInvitesOnApi,
+    ...invitesQueryBase,
     enabled: isAuthenticated,
-    refetchInterval: 30000,
+  });
+}
+
+export function useInviteCountQuery() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  return useQuery({
+    ...invitesQueryBase,
+    enabled: isAuthenticated,
+    select: (invites: IncomingInviteDto[]) => invites.length,
   });
 }
 

@@ -4,21 +4,25 @@ import type { Workspace } from "@/entities/workspace/model/workspace";
 import { sessionSurface } from "@/pages/session/lib/session-styles";
 import { cn } from "@/shared/lib/utils";
 
-import WorkspaceCard from "./WorkspaceCard";
+import WorkspaceCard, { type WorkspaceTaskStats } from "./WorkspaceCard";
 import { WORKSPACE_LIST_GRID } from "./workspaceListLayout";
 
 type WorkspaceListSectionProps = {
   title: string;
   description?: string;
   items: Workspace[];
+  taskStatsByWorkspaceId: ReadonlyMap<string, WorkspaceTaskStats>;
   showColumnHeader?: boolean;
   headerAction?: ReactNode;
 };
+
+const EMPTY_TASK_STATS: WorkspaceTaskStats = { total: 0, completed: 0 };
 
 export function WorkspaceListSection({
   title,
   description,
   items,
+  taskStatsByWorkspaceId,
   showColumnHeader = false,
   headerAction,
 }: WorkspaceListSectionProps) {
@@ -55,7 +59,13 @@ export function WorkspaceListSection({
       {items.length > 0 ? (
         <ul className="flex list-none flex-col divide-y divide-border/25">
           {items.map((item) => (
-            <WorkspaceCard key={item.id} item={item} />
+            <WorkspaceCard
+              key={item.id}
+              item={item}
+              taskStats={
+                taskStatsByWorkspaceId.get(item.id) ?? EMPTY_TASK_STATS
+              }
+            />
           ))}
         </ul>
       ) : null}

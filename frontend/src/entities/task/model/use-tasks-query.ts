@@ -17,7 +17,19 @@ import { queryKeys } from "@/shared/api/query-keys";
 import { notify } from "@/shared/lib/notify";
 
 import { mapApiTask } from "./map-task";
-import type { Task, TaskStatus } from "./types";
+import { getTaskStatus, type Task, type TaskStatus } from "./types";
+
+export type WorkspaceTaskStats = {
+  total: number;
+  completed: number;
+};
+
+function selectWorkspaceTaskStats(tasks: Task[]): WorkspaceTaskStats {
+  return {
+    total: tasks.length,
+    completed: tasks.filter((task) => getTaskStatus(task) === "DONE").length,
+  };
+}
 
 type TaskFilters = {
   status?: TaskStatus;
@@ -49,6 +61,29 @@ export function useTasksQueries(workspaceIds: string[]) {
       queryFn: () => fetchTasksForWorkspace(workspaceId),
       enabled: Boolean(workspaceId),
     })),
+  });
+}
+
+export function useWorkspaceTaskStatsQueries(workspaceIds: string[]) {
+  return useQueries({
+    queries: workspaceIds.map((workspaceId) => ({
+      queryKey: queryKeys.tasks.byWorkspace(workspaceId),
+      queryFn: () => fetchTasksForWorkspace(workspaceId),
+      enabled: Boolean(workspaceId),
+      select: selectWorkspaceTaskStats,
+    })),
+  });
+}
+
+export function useTaskTitleQuery(
+  workspaceId: string | undefined,
+  taskId: string | undefined,
+) {
+  return useQuery({
+    queryKey: queryKeys.tasks.byWorkspace(workspaceId ?? ""),
+    queryFn: () => fetchTasksForWorkspace(workspaceId!),
+    enabled: Boolean(workspaceId && taskId),
+    select: (tasks) => tasks.find((task) => task.id === taskId)?.title,
   });
 }
 

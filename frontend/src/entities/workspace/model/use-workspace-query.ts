@@ -41,7 +41,9 @@ function mapApiWorkspace(
   }));
 }
 
-export function useWorkspaceQuery() {
+export function useWorkspaceQuery<TData = Workspace[]>(
+  select?: (workspaces: Workspace[]) => TData,
+) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
@@ -54,6 +56,8 @@ export function useWorkspaceQuery() {
     },
 
     enabled: isAuthenticated,
+    select,
+    notifyOnChangeProps: ["data", "error"],
   });
 }
 

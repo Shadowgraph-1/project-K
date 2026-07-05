@@ -15,9 +15,13 @@ import { queryKeys } from "@/shared/api/query-keys";
 import { getApiErrorMessage } from "@/shared/lib/api-error-message";
 import { notify } from "@/shared/lib/notify";
 
-export function useLlmKeysQuery(
+export function useLlmKeysQuery<TData = LlmKeysResponse>(
   params?: LlmKeyListParams,
-  options?: { enabled?: boolean }) {
+  options?: {
+    enabled?: boolean;
+    select?: (data: LlmKeysResponse) => TData;
+  },
+) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   return useQuery({
@@ -25,6 +29,8 @@ export function useLlmKeysQuery(
     queryFn: () => fetchLlmKeys(params),
     enabled: isAuthenticated && (options?.enabled ?? true),
     staleTime: 30_000,
+    select: options?.select,
+    notifyOnChangeProps: ["data", "error"],
   });
 }
 
