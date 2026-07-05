@@ -69,7 +69,7 @@ function MainSection() {
         </div>
 
         <div
-          className="home-features-home w-full"
+          className="grid w-full gap-5 sm:grid-cols-2 lg:grid-cols-4"
           data-aos="fade-up"
           data-aos-delay="200"
           data-aos-duration="800"
