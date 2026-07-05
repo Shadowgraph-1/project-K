@@ -69,14 +69,23 @@ function MainSection() {
         </div>
 
         <div
-          className="grid w-full gap-5 sm:grid-cols-2 lg:grid-cols-4"
+          className="w-full"
           data-aos="fade-up"
           data-aos-delay="200"
           data-aos-duration="800"
         >
-          {HOME_FEATURE_LINKS.map((item) => (
-            <HomeFeatureLinkCard key={item.id} item={item} />
-          ))}
+          <div className="mb-10">
+            <p className="text-sm font-medium text-white/40">Платформа</p>
+            <h2 className="mt-2 text-2xl font-medium tracking-tight text-white sm:text-3xl">
+              Инструменты
+            </h2>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {HOME_FEATURE_LINKS.map((item) => (
+              <HomeFeatureLinkCard key={item.id} item={item} />
+            ))}
+          </div>
         </div>
       </div>
     </section>

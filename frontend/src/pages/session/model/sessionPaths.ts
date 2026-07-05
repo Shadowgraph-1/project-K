@@ -1,5 +1,7 @@
 import { matchPath } from "react-router-dom";
 
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
+
 export const SESSION_PATHS = {
   root: "/",
   sessionRoot: "/projects",
@@ -26,12 +28,24 @@ export function isLlmKeysPath(pathname: string) {
   return pathname === SESSION_PATHS.llmKeys;
 }
 
+export function isLlmKeysDocsPath(pathname: string) {
+  return pathname === DOCS_PATHS.apiKeys;
+}
+
 export function isConnectorsPath(pathname: string) {
   return pathname === SESSION_PATHS.connectors;
 }
 
+export function isConnectorsDocsPath(pathname: string) {
+  return pathname === DOCS_PATHS.connectors;
+}
+
 export function isMcpPath(pathname: string) {
   return pathname === SESSION_PATHS.mcp;
+}
+
+export function isMcpDocsPath(pathname: string) {
+  return pathname === DOCS_PATHS.mcp;
 }
 
 export function isSettingsPath(pathname: string) {

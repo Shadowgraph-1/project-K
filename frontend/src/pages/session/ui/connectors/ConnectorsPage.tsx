@@ -11,7 +11,9 @@ import {
   useDeleteConnectorMutation,
   usePatchConnectorMutation,
 } from "@/hooks/use-connectors-query";
-import { useSessionPageSectionRegistry } from "@/pages/session/model/SessionPageSectionContext";
+import { useLegacyDocsViewRedirect } from "@/pages/session/lib/use-legacy-docs-view-redirect";
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
+import { SectionDocsLink } from "@/pages/session/ui/layout/SectionDocsLink";
 import { sessionField, sessionPillOutline } from "@/pages/session/lib/session-styles";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -19,11 +21,6 @@ import { Input } from "@/shared/ui/input";
 
 import { ConnectorCard } from "./ConnectorCard";
 import { ConnectedConnectorsEmptyState } from "./ConnectedConnectorsEmptyState";
-import { ConnectorsDocsView } from "./ConnectorsDocsView";
-import {
-  useConnectorsPageView,
-  type ConnectorsPageView,
-} from "./useConnectorsPageView";
 
 type ConnectorWithState = ConnectorDefinition & {
   installed: boolean;
@@ -32,11 +29,6 @@ type ConnectorWithState = ConnectorDefinition & {
 };
 
 const ALL_CATALOG = [...RECOMMENDED_CONNECTORS, ...MORE_RECOMMENDED_CONNECTORS];
-
-const CONNECTORS_SECTION_OPTIONS = [
-  { id: "catalog", label: "Каталог" },
-  { id: "docs", label: "Документация" },
-] as const;
 
 function filterConnectors(
   items: ConnectorWithState[],
@@ -70,24 +62,13 @@ function mergeConnectorState(
 }
 
 export function ConnectorsPage() {
+  useLegacyDocsViewRedirect(DOCS_PATHS.connectors);
+
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
-  const [view, setView] = useConnectorsPageView();
   const { data, isLoading } = useConnectorsQuery();
   const patchConnector = usePatchConnectorMutation();
   const deleteConnector = useDeleteConnectorMutation();
-
-  const sectionConfig = useMemo(
-    () => ({
-      ariaLabel: "Раздел коннекторов",
-      options: CONNECTORS_SECTION_OPTIONS,
-      value: view,
-      onChange: (id: string) => setView(id as ConnectorsPageView),
-    }),
-    [view, setView],
-  );
-
-  useSessionPageSectionRegistry(sectionConfig);
 
   const stateById = useMemo(() => {
     const map = new Map<
@@ -136,24 +117,19 @@ export function ConnectorsPage() {
     patchConnector.mutate({ connectorId, enabled });
   };
 
-  if (view === "docs") {
-    return (
-      <div className="mx-auto flex w-full max-w-7xl min-h-0 flex-1 flex-col">
-        <ConnectorsDocsView onCatalog={() => setView("catalog")} />
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto w-full max-w-3xl pb-4">
       <div className="mb-3 flex min-h-0 w-full items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Коннекторы
         </h1>
-        <Button type="button" size="sm" className="rounded-full" disabled>
-          <Plus />
-          Новый коннектор
-        </Button>
+        <div className="flex shrink-0 items-center gap-2">
+          <SectionDocsLink to={DOCS_PATHS.connectors} />
+          <Button type="button" size="sm" className="rounded-full" disabled>
+            <Plus />
+            Новый коннектор
+          </Button>
+        </div>
       </div>
 
       <div className="mb-4 flex justify-end">

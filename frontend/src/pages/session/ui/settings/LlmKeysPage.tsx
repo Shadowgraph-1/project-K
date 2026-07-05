@@ -10,8 +10,10 @@ import {
   useLlmKeysQuery,
 } from "@/hooks/use-llm-key-query";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
-import { useSessionPageSectionRegistry } from "@/pages/session/model/SessionPageSectionContext";
+import { useLegacyDocsViewRedirect } from "@/pages/session/lib/use-legacy-docs-view-redirect";
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
 import { SessionPageHeader } from "@/pages/session/ui/layout/SessionPageHeader";
+import { SectionDocsLink } from "@/pages/session/ui/layout/SectionDocsLink";
 import { sessionPillOutline } from "@/pages/session/lib/session-styles";
 import { LlmKeysTableSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
@@ -19,13 +21,12 @@ import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
 import { LlmCreateKeyDialog } from "./LlmCreateKeyDialog";
-import { LlmKeysDocsView } from "./LlmKeysDocsView";
 import { LlmKeysTable } from "./LlmKeysTable";
-import { LLM_KEYS_SECTION_OPTIONS } from "./page-section-options";
 import { keyTitle } from "./llm-keys-utils";
-import { useLlmKeysPageView, type LlmKeysPageView } from "./useLlmKeysPageView";
 
 export function LlmKeysPage() {
+  useLegacyDocsViewRedirect(DOCS_PATHS.apiKeys);
+
   const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -45,19 +46,6 @@ export function LlmKeysPage() {
   const deleteAllMutation = useDeleteAllLlmKeysMutation();
 
   const keys = useMemo(() => data?.keys ?? [], [data?.keys]);
-  const [view, setView] = useLlmKeysPageView(keys.length > 0);
-
-  const sectionConfig = useMemo(
-    () => ({
-      ariaLabel: "Раздел API ключей",
-      options: LLM_KEYS_SECTION_OPTIONS,
-      value: view,
-      onChange: (id: string) => setView(id as LlmKeysPageView),
-    }),
-    [view, setView],
-  );
-
-  useSessionPageSectionRegistry(sectionConfig);
 
   const filteredKeys = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -146,7 +134,8 @@ export function LlmKeysPage() {
 
   const toolbarActions = !isLoading ? (
     <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-      {view === "keys" && keys.length > 0 ? (
+      <SectionDocsLink to={DOCS_PATHS.apiKeys} />
+      {keys.length > 0 ? (
         <Button
           type="button"
           variant="outline"
@@ -172,14 +161,12 @@ export function LlmKeysPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl min-h-0 flex-1 flex-col gap-3 px-1 pb-2">
-      {!isLoading && view === "keys" ? (
+      {!isLoading ? (
         <SessionPageHeader title="API ключи" actions={toolbarActions} />
       ) : null}
 
       {isLoading ? (
         <LlmKeysTableSkeleton />
-      ) : view === "docs" ? (
-        <LlmKeysDocsView onCreate={openCreateDialog} />
       ) : (
         <LlmKeysTable
           userName={userName}
@@ -210,10 +197,7 @@ export function LlmKeysPage() {
               ...(label ? { label } : {}),
             },
             {
-              onSuccess: () => {
-                setCreateOpen(false);
-                setView("keys");
-              },
+              onSuccess: () => setCreateOpen(false),
             },
           );
         }}

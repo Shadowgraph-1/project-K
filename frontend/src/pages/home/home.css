@@ -5,25 +5,32 @@
 }
 
 html:has(.home-page),
+html:has(.docs-page),
 html:has(.home-page) body,
-html:has(.home-page) body > div {
+html:has(.docs-page) body,
+html:has(.home-page) body > div,
+html:has(.docs-page) body > div {
   background-color: #000;
   color-scheme: dark;
 }
 
-html:has(.home-page) {
+html:has(.home-page),
+html:has(.docs-page) {
   scrollbar-color: rgb(255 255 255 / 0.22) #000;
 }
 
-html:has(.home-page) ::-webkit-scrollbar-track {
+html:has(.home-page) ::-webkit-scrollbar-track,
+html:has(.docs-page) ::-webkit-scrollbar-track {
   background: #000;
 }
 
-html:has(.home-page) ::-webkit-scrollbar-thumb {
+html:has(.home-page) ::-webkit-scrollbar-thumb,
+html:has(.docs-page) ::-webkit-scrollbar-thumb {
   background: rgb(255 255 255 / 0.22);
 }
 
-html:has(.home-page) ::-webkit-scrollbar-thumb:hover {
+html:has(.home-page) ::-webkit-scrollbar-thumb:hover,
+html:has(.docs-page) ::-webkit-scrollbar-thumb:hover {
   background: rgb(255 255 255 / 0.35);
 }
 

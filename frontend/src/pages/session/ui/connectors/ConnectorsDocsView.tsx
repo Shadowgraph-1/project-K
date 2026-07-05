@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { ExternalLink } from "lucide-react";
+import { Link } from "react-router-dom";
 
+import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -86,11 +88,7 @@ function DocsHeading({
   );
 }
 
-type ConnectorsDocsViewProps = {
-  onCatalog: () => void;
-};
-
-export function ConnectorsDocsView({ onCatalog }: ConnectorsDocsViewProps) {
+export function ConnectorsDocsView() {
   return (
     <div className="flex min-w-0 gap-8 pb-12">
       <div className="min-w-0 flex-1 pt-2 sm:pt-4">
@@ -110,9 +108,9 @@ export function ConnectorsDocsView({ onCatalog }: ConnectorsDocsViewProps) {
               <Button
                 type="button"
                 className="h-auto shrink-0 gap-1 rounded-full px-4 py-2 shadow-sm"
-                onClick={onCatalog}
+                asChild
               >
-                Каталог коннекторов
+                <Link to={SESSION_PATHS.connectors}>Каталог коннекторов</Link>
               </Button>
               <Button
                 type="button"

@@ -1,4 +1,4 @@
-import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
 import { env } from "@/shared/config/env";
 
 export type HomeDocsLink = {
@@ -35,18 +35,18 @@ export const HOME_DOCS_LINKS: HomeDocsLink[] = [
     id: "mcp",
     label: "MCP",
     description: "Инструменты, JWT и внешний сервер",
-    href: `${SESSION_PATHS.mcp}?view=docs`,
+    href: DOCS_PATHS.mcp,
   },
   {
     id: "connectors",
     label: "Коннекторы",
     description: "Интеграции и подключения",
-    href: SESSION_PATHS.connectors,
+    href: DOCS_PATHS.connectors,
   },
   {
     id: "llm-keys",
     label: "API ключи LLM",
     description: "Провайдеры, env и Kono AI",
-    href: `${SESSION_PATHS.llmKeys}?view=docs`,
+    href: DOCS_PATHS.apiKeys,
   },
 ];

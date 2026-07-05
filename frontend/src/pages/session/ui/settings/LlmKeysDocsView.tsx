@@ -3,7 +3,7 @@ import { ChevronRight, ExternalLink, Plus, Plug2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { MCP_LLM_SOURCES } from "@/shared/config/mcp-llm-sources";
-import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -104,7 +104,7 @@ export function LlmKeysDocsView({ onCreate }: LlmKeysDocsViewProps) {
                 className="h-auto shrink-0 gap-1 rounded-full px-4 py-2"
                 asChild
               >
-                <Link to={SESSION_PATHS.mcp} className="no-underline">
+                <Link to={DOCS_PATHS.mcp} className="no-underline">
                   Документация MCP
                   <ChevronRight className="size-4" aria-hidden />
                 </Link>
@@ -201,7 +201,7 @@ export function LlmKeysDocsView({ onCreate }: LlmKeysDocsViewProps) {
             Откройте чат ассистента в workspace. Если ключ активен, запросы идут
             с вашим apiKey. Для вызова инструментов Kono включите MCP под полем
             ввода — см.{" "}
-            <Link to={SESSION_PATHS.mcp}>документацию MCP</Link>.
+            <Link to={DOCS_PATHS.mcp}>документацию MCP</Link>.
           </p>
 
           <p>
@@ -339,7 +339,7 @@ export function LlmKeysDocsView({ onCreate }: LlmKeysDocsViewProps) {
               className="h-auto gap-1 rounded-full px-4 py-2 text-primary-foreground hover:brightness-90 hover:text-primary-foreground"
               asChild
             >
-              <Link to={SESSION_PATHS.mcp} className="no-underline">
+              <Link to={DOCS_PATHS.mcp} className="no-underline">
                 Документация MCP
                 <ChevronRight className="size-4" aria-hidden />
               </Link>

@@ -2,6 +2,8 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 
 import { HomePage } from "@/pages/home/HomePage";
+import { DocsLayout } from "@/pages/docs/DocsLayout";
+import { LegacyDocsRedirect } from "@/pages/docs/LegacyDocsRedirect";
 import { Toaster } from "@/shared/ui/sonner";
 import { RequireAdmin } from "@/shared/lib/require-admin";
 import SubscribePage from "@/pages/subscribe/SubscribePage";
@@ -11,6 +13,21 @@ const AuthPage = lazy(() =>
 );
 const NotFoundPage = lazy(() => import("@/pages/not-found/NotFoundPage"));
 const SessionPage = lazy(() => import("@/pages/session/SessionPage"));
+const McpDocsPage = lazy(() =>
+  import("@/pages/session/ui/settings/McpDocsPage").then((m) => ({
+    default: m.McpDocsPage,
+  })),
+);
+const ConnectorsDocsPage = lazy(() =>
+  import("@/pages/session/ui/connectors/ConnectorsDocsPage").then((m) => ({
+    default: m.ConnectorsDocsPage,
+  })),
+);
+const LlmKeysDocsPage = lazy(() =>
+  import("@/pages/session/ui/settings/LlmKeysDocsPage").then((m) => ({
+    default: m.LlmKeysDocsPage,
+  })),
+);
 
 function RootLayout() {
   return (
@@ -40,6 +57,48 @@ const router = createBrowserRouter([
       { path: "/login", element: <AuthPage mode="login" /> },
       { path: "/register", element: <AuthPage mode="register" /> },
       { path: "/subscribe", element: <SubscribePage /> },
+      {
+        path: "/docs",
+        element: <DocsLayout />,
+        children: [
+          {
+            path: "mcp",
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <McpDocsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "connectors",
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <ConnectorsDocsPage />
+              </Suspense>
+            ),
+          },
+          {
+            path: "api-keys",
+            element: (
+              <Suspense fallback={<RouteFallback />}>
+                <LlmKeysDocsPage />
+              </Suspense>
+            ),
+          },
+        ],
+      },
+      {
+        path: "/projects/mcp/docs",
+        element: <LegacyDocsRedirect />,
+      },
+      {
+        path: "/projects/connectors/docs",
+        element: <LegacyDocsRedirect />,
+      },
+      {
+        path: "/projects/api-keys/docs",
+        element: <LegacyDocsRedirect />,
+      },
       {
         path: "/projects/admin",
         element: (

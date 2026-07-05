@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 
 import { HomeIntegrationCard } from "@/pages/home/ui/components/HomeIntegrationCard";
 import { LlmProviderIcon } from "@/pages/session/ui/settings/LlmProviderIcon";
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { MCP_SUPPORTED_CLIENTS } from "@/shared/config/mcp-clients";
 import { MCP_LLM_SOURCES } from "@/shared/config/mcp-llm-sources";
@@ -27,7 +28,7 @@ export default function McpHomeSection() {
           </h2>
           <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-white/45 sm:text-lg">
             Model Context Protocol подключает проекты, задачи и поиск к
-            AI-агентам — без ручного копирования в промпт.
+            AI-агентам.
           </p>
         </div>
 
@@ -100,7 +101,7 @@ export default function McpHomeSection() {
               size="sm"
               className="h-9 rounded-full border-white/15 bg-transparent px-4 text-white/80 shadow-none hover:bg-white/[0.05] hover:text-white"
             >
-              <Link to={`${SESSION_PATHS.mcp}?view=docs`}>
+              <Link to={DOCS_PATHS.mcp}>
                 Документация MCP
                 <ArrowRight className="size-3.5" />
               </Link>

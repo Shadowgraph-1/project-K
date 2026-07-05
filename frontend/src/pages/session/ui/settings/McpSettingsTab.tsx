@@ -1,30 +1,18 @@
-import { useMemo } from "react";
+import { DOCS_PATHS } from "@/shared/config/docs-paths";
+import { useLegacyDocsViewRedirect } from "@/pages/session/lib/use-legacy-docs-view-redirect";
+import { SectionDocsLink } from "@/pages/session/ui/layout/SectionDocsLink";
 
-import { useSessionPageSectionRegistry } from "@/pages/session/model/SessionPageSectionContext";
-
-import { McpSettingsDocsView } from "./mcp/McpSettingsDocsView";
 import { McpSettingsLandingView } from "./mcp/McpSettingsLandingView";
-import { MCP_SECTION_OPTIONS } from "./page-section-options";
-import { useMcpPageStyle, type McpPageStyle } from "./mcp/useMcpPageStyle";
 
 export function McpSettingsTab() {
-  const [style, setStyle] = useMcpPageStyle();
+  useLegacyDocsViewRedirect(DOCS_PATHS.mcp);
 
-  const sectionConfig = useMemo(
-    () => ({
-      ariaLabel: "Раздел MCP",
-      options: MCP_SECTION_OPTIONS,
-      value: style,
-      onChange: (id: string) => setStyle(id as McpPageStyle),
-    }),
-    [style, setStyle],
-  );
-
-  useSessionPageSectionRegistry(sectionConfig);
-
-  return style === "landing" ? (
-    <McpSettingsLandingView />
-  ) : (
-    <McpSettingsDocsView />
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex justify-end pb-3">
+        <SectionDocsLink to={DOCS_PATHS.mcp} />
+      </div>
+      <McpSettingsLandingView />
+    </div>
   );
 }
