@@ -3,19 +3,10 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { AUTH_PATHS } from "@/pages/auth/auth-paths";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
-import { SECTION_ID } from "@/shared/config/sectionIds";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { KonoLogo } from "@/shared/ui/kono-logo";
 import { HeaderDocsMenu } from "./HeaderDocsMenu";
-
-const NAV_ITEMS = [
-  { label: "О Kono", hash: SECTION_ID.ABOUT },
-  { label: "MCP", hash: SECTION_ID.MCP },
-  { label: "Коннекторы", hash: SECTION_ID.CONNECTORS },
-  { label: "Возможности", hash: SECTION_ID.FEATURES },
-  { label: "Начать", hash: SECTION_ID.START },
-] as const;
 
 export function Header() {
   const user = useAuthStore((s) => s.user);
@@ -26,7 +17,6 @@ export function Header() {
   const [elevated, setElevated] = useState(
     () => typeof window !== "undefined" && window.scrollY > 12,
   );
-  const activeHash = location.hash.replace("#", "");
 
   useEffect(() => {
     const onScroll = () => setElevated(window.scrollY > 12);
@@ -48,7 +38,7 @@ export function Header() {
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent transition-opacity duration-300",
+          "pointer-events-none absolute inset-x-0 bottom-0 h-px bg-linear-to-r from-transparent via-white/20 to-transparent transition-opacity duration-300",
           elevated ? "opacity-100" : "opacity-0",
         )}
       />
@@ -63,24 +53,20 @@ export function Header() {
         />
 
         <nav
-          aria-label="Разделы главной страницы"
+          aria-label="Основная навигация"
           className="ml-4 hidden grow items-center gap-1 lg:flex"
         >
-          {NAV_ITEMS.map(({ label, hash }) => {
-            const isActive = activeHash === hash;
-            return (
-              <Link
-                key={hash}
-                to={`/#${hash}`}
-                className={cn(
-                  "px-3 py-1.5 text-sm font-medium transition-colors",
-                  isActive ? "text-white" : "text-white/50 hover:text-white",
-                )}
-              >
-                {label}
-              </Link>
-            );
-          })}
+          <Link
+            to="/subscribe"
+            className={cn(
+              "px-3 py-1.5 text-sm font-medium transition-colors",
+              location.pathname === "/subscribe"
+                ? "text-white"
+                : "text-white/50 hover:text-white",
+            )}
+          >
+            Подписка
+          </Link>
           <HeaderDocsMenu />
         </nav>
 

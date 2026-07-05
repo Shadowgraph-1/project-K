@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider, Outlet } from "react-router-dom";
 import { HomePage } from "@/pages/home/HomePage";
 import { Toaster } from "@/shared/ui/sonner";
 import { RequireAdmin } from "@/shared/lib/require-admin";
+import SubscribePage from "@/pages/subscribe/SubscribePage";
 
 const AuthPage = lazy(() =>
   import("@/pages/auth/AuthPage").then((m) => ({ default: m.AuthPage })),
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
       { path: "/", element: <HomePage /> },
       { path: "/login", element: <AuthPage mode="login" /> },
       { path: "/register", element: <AuthPage mode="register" /> },
+      { path: "/subscribe", element: <SubscribePage /> },
       {
         path: "/projects/admin",
         element: (
