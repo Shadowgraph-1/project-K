@@ -16,10 +16,10 @@ const sectionScroll = (id: string) => {
 
 function MainSection() {
   return (
-    <section className="relative flex min-h-dvh flex-col justify-start overflow-hidden bg-black px-4 pb-16 pt-24 sm:pb-20 sm:pt-28 md:pt-32">
-      <div className="pointer-events-none absolute -top-32 left-1/2 h-[420px] w-[640px] -translate-x-1/2 rounded-full bg-neutral-600/15 blur-[120px]" />
+    <section className="relative flex min-h-dvh flex-col justify-center overflow-hidden bg-black px-4 py-20 sm:py-24">
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-[420px] w-[640px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-neutral-600/15 blur-[120px]" />
 
-      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-10 sm:gap-12 lg:max-w-7xl">
+      <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center gap-12 sm:gap-14">
         <div className="w-full max-w-3xl text-center">
           <h1
             className="text-balance text-4xl font-medium leading-[1.05] tracking-tight text-white sm:text-5xl lg:text-6xl"
