@@ -13,15 +13,15 @@ function FeatureLinkIcon({ item }: HomeFeatureLinkCardProps) {
 
   if (icon.type === "mcp") {
     return (
-      <McpLogo className="size-9 text-white drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)] sm:size-10" />
+      <McpLogo className="size-5 shrink-0 text-white drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)]" />
     );
   }
 
   if (icon.type === "lucide") {
     return (
       <icon.icon
-        className="size-9 text-white drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)] sm:size-10"
-        strokeWidth={1.5}
+        className="size-5 shrink-0 text-white drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)]"
+        strokeWidth={1.75}
       />
     );
   }
@@ -30,9 +30,9 @@ function FeatureLinkIcon({ item }: HomeFeatureLinkCardProps) {
     <img
       src={icon.src}
       alt={icon.alt}
-      width={40}
-      height={40}
-      className="size-9 object-contain drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)] sm:size-10"
+      width={20}
+      height={20}
+      className="size-5 shrink-0 object-contain drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)]"
       loading="lazy"
       decoding="async"
     />
@@ -66,11 +66,13 @@ export function HomeFeatureLinkCard({ item }: HomeFeatureLinkCardProps) {
             className="pointer-events-none absolute inset-0 bg-linear-to-b from-black/15 via-black/5 to-black/35"
             aria-hidden
           />
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-4 text-center">
-            <FeatureLinkIcon item={item} />
-            <span className="font-mono text-sm font-medium tracking-tight text-white/90 [text-shadow:0_2px_16px_rgb(0_0_0/0.55)]">
-              {item.path}
-            </span>
+          <div className="absolute inset-0 flex items-center justify-center px-4">
+            <div className="flex items-center gap-2">
+              <FeatureLinkIcon item={item} />
+              <span className="font-mono text-sm font-medium tracking-tight text-white/90 [text-shadow:0_2px_16px_rgb(0_0_0/0.55)]">
+                {item.path}
+              </span>
+            </div>
           </div>
         </div>
       </div>
