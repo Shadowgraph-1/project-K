@@ -2,39 +2,15 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 
 import { HomeIntegrationCard } from "@/pages/home/ui/components/HomeIntegrationCard";
-import { HomeInlineCode } from "@/pages/home/ui/components/HomeInlineCode";
 import { LlmProviderIcon } from "@/pages/session/ui/settings/LlmProviderIcon";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { MCP_SUPPORTED_CLIENTS } from "@/shared/config/mcp-clients";
 import { MCP_LLM_SOURCES } from "@/shared/config/mcp-llm-sources";
-import {
-  MCP_TOOL_CATEGORIES,
-  MCP_TOOLS,
-  type McpToolCategory,
-} from "@/shared/config/mcp-tools";
 import { SECTION_ID } from "@/shared/config/sectionIds";
 import { Button } from "@/shared/ui/button";
 import { McpLogo } from "@/shared/ui/icons/McpLogo";
 
-const MCP_CATEGORY_ORDER: McpToolCategory[] = [
-  "projects",
-  "tasks",
-  "subtasks",
-  "search",
-  "activity",
-];
-
-function groupToolsByCategory() {
-  return MCP_CATEGORY_ORDER.map((category) => ({
-    category,
-    label: MCP_TOOL_CATEGORIES[category],
-    tools: MCP_TOOLS.filter((tool) => tool.category === category),
-  }));
-}
-
 export default function McpHomeSection() {
-  const toolGroups = groupToolsByCategory();
-
   return (
     <section
       id={SECTION_ID.MCP}
@@ -61,108 +37,73 @@ export default function McpHomeSection() {
           data-aos-delay="80"
         >
           <div className="grid gap-8 lg:grid-cols-2 lg:gap-10 xl:gap-12">
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-base font-medium text-white/88">
-                  Поддерживаемые агенты
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/38">
-                  MCP-клиенты — в чате Kono AI или через внешний stdio-сервер с
-                  JWT.
-                </p>
-                <ul className="mt-4 space-y-2">
-                  {MCP_SUPPORTED_CLIENTS.map((client) => (
-                    <li key={client.id}>
-                      <HomeIntegrationCard
-                        title={client.title}
-                        description={client.description}
-                        href={client.href}
-                        external={client.external}
-                        icon={<LlmProviderIcon source={client} />}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div className="border-t border-white/8 pt-8 lg:border-t-0 lg:pt-0">
-                <h3 className="text-base font-medium text-white/88">
-                  Провайдеры LLM
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-white/38">
-                  Модели с вызовом функций. Ключ — в{" "}
-                  <Link
-                    to={SESSION_PATHS.llmKeys}
-                    className="text-white/55 underline-offset-2 hover:text-white/75 hover:underline"
-                  >
-                    API ключах
-                  </Link>
-                  .
-                </p>
-                <ul className="mt-4 space-y-2">
-                  {MCP_LLM_SOURCES.map((source) => (
-                    <li key={source.id}>
-                      <HomeIntegrationCard
-                        title={source.title}
-                        description={source.description}
-                        href={source.href}
-                        external
-                        icon={<LlmProviderIcon source={source} />}
-                      />
-                    </li>
-                  ))}
-                  <li>
+            <div>
+              <h3 className="text-base font-medium text-white/88">
+                Поддерживаемые агенты
+              </h3>
+              <p className="mt-2 text-sm leading-relaxed text-white/38">
+                MCP-клиенты — в чате Kono AI или через внешний stdio-сервер с
+                JWT.
+              </p>
+              <ul className="mt-4 space-y-2">
+                {MCP_SUPPORTED_CLIENTS.map((client) => (
+                  <li key={client.id}>
                     <HomeIntegrationCard
-                      title="API ключи Kono"
-                      description="Сохранить и активировать ключ провайдера"
-                      href={SESSION_PATHS.llmKeys}
-                      icon={
-                        <LlmProviderIcon
-                          source={{
-                            title: "API ключи Kono",
-                            logo: "/kono-icon.svg",
-                            brandColor: "#171717",
-                            logoOnBrand: false,
-                          }}
-                        />
-                      }
+                      title={client.title}
+                      description={client.description}
+                      href={client.href}
+                      external={client.external}
+                      icon={<LlmProviderIcon source={client} />}
                     />
                   </li>
-                </ul>
-              </div>
+                ))}
+              </ul>
             </div>
 
             <div className="border-t border-white/8 pt-8 lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0 xl:pl-12">
               <h3 className="text-base font-medium text-white/88">
-                Инструменты MCP
+                Провайдеры LLM
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-white/38">
-                {MCP_TOOLS.length} встроенных{" "}
-                <HomeInlineCode>tools</HomeInlineCode> — один набор для чата и
-                внешнего сервера.
+                Модели с вызовом функций. Ключ — в{" "}
+                <Link
+                  to={SESSION_PATHS.llmKeys}
+                  className="text-white/55 underline-offset-2 hover:text-white/75 hover:underline"
+                >
+                  API ключах
+                </Link>
+                .
               </p>
-
-              <div className="mt-4 space-y-5">
-                {toolGroups.map((group) => (
-                  <div key={group.category}>
-                    <p className="text-[11px] font-medium uppercase tracking-wide text-white/34">
-                      {group.label}
-                    </p>
-                    <ul className="mt-2 space-y-1.5">
-                      {group.tools.map((tool) => (
-                        <li
-                          key={tool.name}
-                          className="text-sm leading-relaxed text-white/42"
-                        >
-                          <HomeInlineCode>{tool.name}</HomeInlineCode>
-                          {" — "}
-                          {tool.description}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+              <ul className="mt-4 space-y-2">
+                {MCP_LLM_SOURCES.map((source) => (
+                  <li key={source.id}>
+                    <HomeIntegrationCard
+                      title={source.title}
+                      description={source.description}
+                      href={source.href}
+                      external
+                      icon={<LlmProviderIcon source={source} />}
+                    />
+                  </li>
                 ))}
-              </div>
+                <li>
+                  <HomeIntegrationCard
+                    title="API ключи Kono"
+                    description="Сохранить и активировать ключ провайдера"
+                    href={SESSION_PATHS.llmKeys}
+                    icon={
+                      <LlmProviderIcon
+                        source={{
+                          title: "API ключи Kono",
+                          logo: "/kono-icon.svg",
+                          brandColor: "#171717",
+                          logoOnBrand: false,
+                        }}
+                      />
+                    }
+                  />
+                </li>
+              </ul>
             </div>
           </div>
 
