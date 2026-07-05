@@ -17,6 +17,24 @@ function FeatureLinkIcon({ item }: HomeFeatureLinkCardProps) {
     );
   }
 
+  if (icon.type === "kono") {
+    return (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 64 64"
+        width={20}
+        height={20}
+        aria-hidden
+        className="size-5 shrink-0 text-white drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)]"
+      >
+        <path
+          fill="currentColor"
+          d="M20 18v28h7.5V38.5L40.5 46h9L35.5 36 49.5 18H40.5L27.5 32.5V18H20z"
+        />
+      </svg>
+    );
+  }
+
   if (icon.type === "lucide") {
     return (
       <icon.icon
@@ -26,17 +44,7 @@ function FeatureLinkIcon({ item }: HomeFeatureLinkCardProps) {
     );
   }
 
-  return (
-    <img
-      src={icon.src}
-      alt={icon.alt}
-      width={20}
-      height={20}
-      className="size-5 shrink-0 object-contain drop-shadow-[0_2px_12px_rgb(0_0_0/0.45)]"
-      loading="lazy"
-      decoding="async"
-    />
-  );
+  return null;
 }
 
 export function HomeFeatureLinkCard({ item }: HomeFeatureLinkCardProps) {

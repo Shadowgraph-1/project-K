@@ -1,12 +1,12 @@
 import type { LucideIcon } from "lucide-react";
-import { Key, PlugZap } from "lucide-react";
+import { KeyRound, PlugZap } from "lucide-react";
 
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 
 export type HomeFeatureLinkIcon =
   | { type: "mcp" }
-  | { type: "lucide"; icon: LucideIcon }
-  | { type: "image"; src: string; alt: string };
+  | { type: "kono" }
+  | { type: "lucide"; icon: LucideIcon };
 
 export type HomeFeatureLink = {
   id: string;
@@ -47,7 +47,7 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
       "Боковой чат рядом с задачами: вопросы по проекту, не уходя со страницы.",
     href: SESSION_PATHS.sessionRoot,
     image: "/features-home/fea-3.jpg",
-    icon: { type: "image", src: "/kono-icon.svg", alt: "" },
+    icon: { type: "kono" },
   },
   {
     id: "api",
@@ -57,6 +57,6 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
       "OpenRouter, Groq, LM Studio и другие LLM с вызовом функций в одном месте.",
     href: SESSION_PATHS.llmKeys,
     image: "/features-home/fea-4.jpg",
-    icon: { type: "lucide", icon: Key },
+    icon: { type: "lucide", icon: KeyRound },
   },
 ] as const;
