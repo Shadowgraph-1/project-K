@@ -10,7 +10,7 @@ import {
   updateProfile,
 } from "../services/user.service.js";
 import { parseBody } from "../utils/parse-body.js";
-import { signUserToken } from "../utils/auth-token.js";
+import { signAccessToken } from "../utils/auth-token.js";
 import { routeSchema } from "../openapi/route-schema.js";
 import {
   errorResponse,
@@ -47,7 +47,7 @@ const usersRoutes: FastifyPluginAsync = async (app) => {
       );
 
       if (emailChanged) {
-        return { user, token: signUserToken(app, user) };
+        return { user, token: signAccessToken(app, user) };
       }
 
       return { user };

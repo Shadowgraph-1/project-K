@@ -71,3 +71,11 @@ export async function deleteAccountOnApi(password: string): Promise<void> {
     data: { password },
   });
 }
+
+export async function logoutOnApi(): Promise<void> {
+  try {
+    await api.post("/auth/logout");
+  } catch {
+    // ignore network/auth errors during local logout
+  }
+}

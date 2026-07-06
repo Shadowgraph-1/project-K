@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useMatch, useNavigate } from "react-router-dom";
 import { Box, ChevronDown, LayoutGrid, Trash2, Users } from "lucide-react";
 
 import { getTaskStatus, type Task } from "@/entities/task/model/types";
@@ -32,10 +32,9 @@ import {
 } from "./sidebar-context-menus";
 import { queryKeys } from "@/shared/api/query-keys";
 
-import {
-  isSessionProjectsListPath,
-  SESSION_PATHS,
-} from "../../model/sessionPaths";
+import { isUnderWorkspacePath } from "../../lib/workspace-route";
+import { useRouteActive } from "../../lib/use-session-nav-active";
+import { SESSION_PATHS } from "../../model/sessionPaths";
 
 function WorkspaceSidebarIcon({ workspace }: { workspace: Workspace }) {
   if (workspace.kind === "owned") {
@@ -228,14 +227,13 @@ function WorkspaceTreeItem({
   const navigate = useNavigate();
   const deleteWorkspace = useDeleteWorkspaceMutation();
   const workspacePath = SESSION_PATHS.workspace(workspace.publicKey);
+  const workspaceTaskMatch = useMatch({
+    path: "/workspaces/:publicKey/:taskId",
+    end: true,
+  });
   const isWorkspaceActive =
-    pathname === workspacePath ||
-    Boolean(
-      matchPath(
-        { path: "/workspaces/:publicKey/:taskId", end: true },
-        pathname,
-      )?.params.publicKey === workspace.publicKey,
-    );
+    useRouteActive(workspacePath) ||
+    workspaceTaskMatch?.params.publicKey === workspace.publicKey;
   const canDeleteWorkspace =
     workspace.kind === "owned" && workspace.myRole === "OWNER";
 
@@ -268,10 +266,7 @@ function WorkspaceTreeItem({
       return;
     }
 
-    if (
-      pathname === workspacePath ||
-      pathname.startsWith(`${workspacePath}/`)
-    ) {
+    if (isUnderWorkspacePath(pathname, workspace.publicKey)) {
       navigate(SESSION_PATHS.sessionRoot);
     }
   }
@@ -342,19 +337,24 @@ function WorkspaceTreeItem({
 
 export function AppSidebarProjectsTree() {
   const queryClient = useQueryClient();
-  const { pathname } = useLocation();
   const { data: workspaces = [], isLoading } = useWorkspaceQuery();
   const [projectsOpen, setProjectsOpen] = useState(true);
   const [collapsedWorkspaceIds, setCollapsedWorkspaceIds] = useState<
     Set<string>
   >(() => new Set());
 
-  const routeMatch = matchPath(
-    { path: "/workspaces/:publicKey/:taskId?", end: true },
-    pathname,
-  );
-  const routePublicKey = routeMatch?.params.publicKey;
-  const routeTaskId = routeMatch?.params.taskId;
+  const workspaceRouteMatch = useMatch({
+    path: "/workspaces/:publicKey",
+    end: true,
+  });
+  const workspaceTaskRouteMatch = useMatch({
+    path: "/workspaces/:publicKey/:taskId",
+    end: true,
+  });
+  const routePublicKey =
+    workspaceTaskRouteMatch?.params.publicKey ??
+    workspaceRouteMatch?.params.publicKey;
+  const routeTaskId = workspaceTaskRouteMatch?.params.taskId;
 
   const activeWorkspaces = useMemo(() => {
     const { owned, shared } = partitionWorkspaces(workspaces);
@@ -404,7 +404,7 @@ export function AppSidebarProjectsTree() {
     queryClient,
   ]);
 
-  const isProjectsHubActive = isSessionProjectsListPath(pathname);
+  const isProjectsHubActive = useRouteActive(SESSION_PATHS.sessionRoot);
 
   function toggleWorkspace(workspaceId: string) {
     setCollapsedWorkspaceIds((prev) => {

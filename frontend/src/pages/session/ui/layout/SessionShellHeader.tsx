@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { Bell } from "lucide-react";
 
 import { useNotifys } from "@/entities/notification/model/useNotifys";
@@ -21,17 +20,8 @@ import NotifysCenter from "../widgets/NotifysCenter";
 import { SearchBar } from "../widgets/SearchBar";
 import { WorkspaceCollaborationDialog } from "../workspace/WorkspaceCollaborationDialog";
 import { SessionBreadcrumbs } from "./SessionBreadcrumbs";
-import { SessionHeaderSectionSelect } from "./SessionHeaderSectionSelect";
-import { useSessionPageSectionConfig } from "../../model/SessionPageSectionContext";
-
-function isAuthenticatedSessionPath(pathname: string) {
-  return (
-    pathname.startsWith("/projects") || pathname.startsWith("/workspaces")
-  );
-}
 
 export function SessionShellHeader() {
-  const { pathname } = useLocation();
   const { state: sidebarState } = useSidebar();
   const sidebarExpanded = sidebarState === "expanded";
   const { focus, setFocus } = useSearchBar();
@@ -50,12 +40,6 @@ export function SessionShellHeader() {
     (taskHistoryEnabled ? toastCount : 0) + effectiveInviteCount;
 
   const [openCenter, setOpenCenter] = useState(false);
-  const sectionConfig = useSessionPageSectionConfig();
-  const showSectionNav = sectionConfig !== null;
-
-  if (!isAuthenticatedSessionPath(pathname)) {
-    return null;
-  }
 
   return (
     <>
@@ -76,14 +60,9 @@ export function SessionShellHeader() {
           <div className="hidden min-w-0 md:block">
             <SessionBreadcrumbs />
           </div>
-          {showSectionNav ? (
-            <SessionHeaderSectionSelect className="md:hidden" />
-          ) : null}
         </div>
 
-        <div className="hidden min-w-0 items-center justify-center gap-1 md:flex">
-          {showSectionNav ? <SessionHeaderSectionSelect /> : null}
-        </div>
+        <div className="hidden min-w-0 md:block" />
 
         <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:justify-self-end">
           <SearchBar focused={focus} onFocusChange={setFocus} />

@@ -1,5 +1,7 @@
 import Fastify from "fastify";
+import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
+import helmet from "@fastify/helmet";
 import jwt from "@fastify/jwt";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
@@ -27,13 +29,22 @@ import { prisma } from "./db/prisma.js";
 
 const app = Fastify({ logger: true });
 
+await app.register(helmet, {
+  contentSecurityPolicy: env.NODE_ENV === "production",
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+});
+
+await app.register(cookie, {
+  secret: env.COOKIE_SECRET,
+});
+
 await app.register(cors, {
-  origin: [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "http://localhost:4173",
-    "http://127.0.0.1:4173",
-  ],
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (env.CORS_ORIGINS.includes(origin)) return cb(null, true);
+    cb(new Error("CORS blocked"), false);
+  },
+  credentials: true,
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
 });
 

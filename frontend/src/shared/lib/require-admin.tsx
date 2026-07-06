@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 import { useAdminAccessQuery } from "@/hooks/use-admin-query";
+import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { RequireAdminSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 
 type RequireAdminProps = {
@@ -19,7 +20,7 @@ export function RequireAdmin({ children }: RequireAdminProps) {
   if (isError || !data?.isAdmin) {
     return (
       <Navigate
-        to="/projects"
+        to={SESSION_PATHS.sessionRoot}
         replace
         state={{ from: location.pathname }}
       />

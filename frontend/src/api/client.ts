@@ -1,18 +1,29 @@
 import axios from "axios";
-import { getAuthToken, clearAuthToken } from "@/shared/lib/auth-token";
+
+import { AUTH_PATHS } from "@/pages/auth/auth-paths";
+import {
+  clearAuthToken,
+  getAuthToken,
+  setAuthToken,
+} from "@/shared/lib/auth-token";
 import { env } from "@/shared/config/env";
+import { redirectToLogin } from "@/shared/lib/router-navigation";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 
-/** Относительный /api — Vite proxy в dev и nginx в Docker. Явный VITE_API_URL — для кастомного хоста. */
 const API_BASE = env.apiUrl || "/api";
 
-function isPublicAuthRequest(url: string | undefined): boolean {
+function isPublicAuthRequest(url: string | undefined) {
   if (!url) return false;
-  return url.includes("/auth/login") || url.includes("/auth/register");
+  return (
+    url.includes("/auth/login") ||
+    url.includes("/auth/register") ||
+    url.includes("/auth/refresh")
+  );
 }
 
 export const api = axios.create({
   baseURL: API_BASE,
+  withCredentials: true,
   headers: { "Content-Type": "application/json" },
 });
 
@@ -24,24 +35,54 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise: Promise<string | null> | null = null;
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const original = error.config as typeof error.config & { _retry?: boolean };
     const status = error.response?.status;
-    const requestUrl = error.config?.url as string | undefined;
+    const requestUrl = original?.url as string | undefined;
 
-    if (status === 401 && !isPublicAuthRequest(requestUrl)) {
-      clearAuthToken();
-      useAuthStore.getState().logout();
+    if (
+      status === 401 &&
+      original &&
+      !original._retry &&
+      !isPublicAuthRequest(requestUrl)
+    ) {
+      original._retry = true;
 
-      if (typeof window !== "undefined") {
-        const path = window.location.pathname;
-        if (path !== "/login" && path !== "/register") {
-          const current = path + window.location.search;
-          window.location.href = `/login?redirect=${encodeURIComponent(current)}`;
-        }
-      }
+      refreshPromise ??= api
+        .post<{ token: string }>("/auth/refresh")
+        .then((res) => {
+          const token = res.data.token;
+          setAuthToken(token);
+          return token;
+        })
+        .catch(() => {
+          clearAuthToken();
+          useAuthStore.getState().logout();
+
+          if (typeof window !== "undefined") {
+            const path = window.location.pathname;
+            if (path !== AUTH_PATHS.login && path !== AUTH_PATHS.register) {
+              redirectToLogin(path + window.location.search);
+            }
+          }
+
+          return null;
+        })
+        .finally(() => {
+          refreshPromise = null;
+        });
+
+      const newToken = await refreshPromise;
+      if (!newToken) return Promise.reject(error);
+
+      original.headers.Authorization = `Bearer ${newToken}`;
+      return api(original);
     }
+
     return Promise.reject(error);
   },
 );

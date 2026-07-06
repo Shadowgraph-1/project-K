@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useReducer, useRef } from "react";
-import axios from "axios";
 import { UserPlus } from "lucide-react";
 
 import {
@@ -7,6 +6,7 @@ import {
   sendWorkspaceInviteOnApi,
   type UserSearchDto,
 } from "@/api/workspaces/members";
+import { getApiErrorMessage } from "@/shared/lib/api-error-message";
 import { notify } from "@/shared/lib/notify";
 import { InviteUserListSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import { Button } from "@/shared/ui/button";
@@ -25,10 +25,7 @@ const PAGE_SIZE = 30;
 const SEARCH_DEBOUNCE_MS = 300;
 
 function apiErrorMessage(error: unknown, fallback: string): string {
-  if (axios.isAxiosError(error) && typeof error.response?.data?.error === "string") {
-    return error.response.data.error;
-  }
-  return fallback;
+  return getApiErrorMessage(error, fallback);
 }
 
 type InviteDialogState = {

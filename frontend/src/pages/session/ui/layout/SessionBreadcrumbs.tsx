@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useMatches, useParams } from "react-router-dom";
 
 import { useTaskTitleQuery } from "@/entities/task/model/use-tasks-query";
 import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
@@ -10,24 +10,29 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/shared/ui/breadcrumb";
-import {
-  isWorkspaceMembersPath,
-  isWorkspaceTaskDetailsPath,
-  isWorkspaceDetailPath,
-  isLlmKeysPath,
-  isConnectorsPath,
-  isMcpPath,
-  isSettingsPath,
-  isAdminPath,
-  SESSION_PATHS,
-} from "../../model/sessionPaths";
+
+import type { SessionRouteHandle } from "../../model/session-route-handle";
+import { SESSION_PATHS } from "../../model/sessionPaths";
+
+function getActiveBreadcrumbHandle(matches: ReturnType<typeof useMatches>) {
+  for (let index = matches.length - 1; index >= 0; index -= 1) {
+    const handle = matches[index]?.handle as SessionRouteHandle | undefined;
+    if (handle?.breadcrumb) {
+      return handle.breadcrumb;
+    }
+  }
+
+  return null;
+}
 
 export function SessionBreadcrumbs() {
-  const { pathname } = useLocation();
+  const matches = useMatches();
+  const breadcrumb = getActiveBreadcrumbHandle(matches);
   const { publicKey, taskId } = useParams<{
     publicKey?: string;
     taskId?: string;
   }>();
+
   const { data: activeWorkspace } = useWorkspaceQuery((workspaces) => {
     if (!publicKey) return null;
     const workspace = workspaces.find((item) => item.publicKey === publicKey);
@@ -36,70 +41,25 @@ export function SessionBreadcrumbs() {
       : null;
   });
   const workspaceTitle = activeWorkspace?.title ?? "Проект";
-
   const { data: taskTitle } = useTaskTitleQuery(activeWorkspace?.id, taskId);
 
-  if (isAdminPath(pathname)) {
+  if (!breadcrumb) {
+    return null;
+  }
+
+  if (breadcrumb.type === "single") {
     return (
       <Breadcrumb className="min-w-0 flex-1">
         <BreadcrumbList className="text-xs sm:text-sm">
           <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="truncate">Админка</BreadcrumbPage>
+            <BreadcrumbPage className="truncate">{breadcrumb.label}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
     );
   }
 
-  if (isSettingsPath(pathname)) {
-    return (
-      <Breadcrumb className="min-w-0 flex-1">
-        <BreadcrumbList className="text-xs sm:text-sm">
-          <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="truncate">Настройки</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  if (isLlmKeysPath(pathname)) {
-    return (
-      <Breadcrumb className="min-w-0 flex-1">
-        <BreadcrumbList className="text-xs sm:text-sm">
-          <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="truncate">API ключи</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  if (isConnectorsPath(pathname)) {
-    return (
-      <Breadcrumb className="min-w-0 flex-1">
-        <BreadcrumbList className="text-xs sm:text-sm">
-          <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="truncate">Коннекторы</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  if (isMcpPath(pathname)) {
-    return (
-      <Breadcrumb className="min-w-0 flex-1">
-        <BreadcrumbList className="text-xs sm:text-sm">
-          <BreadcrumbItem className="min-w-0">
-            <BreadcrumbPage className="truncate">MCP</BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-    );
-  }
-
-  if (isWorkspaceTaskDetailsPath(pathname) && publicKey) {
+  if (breadcrumb.type === "workspace-task" && publicKey) {
     const resolvedTaskTitle = taskTitle ?? "Задача";
 
     return (
@@ -129,7 +89,7 @@ export function SessionBreadcrumbs() {
     );
   }
 
-  if (isWorkspaceMembersPath(pathname) && publicKey) {
+  if (breadcrumb.type === "workspace-members" && publicKey) {
     return (
       <Breadcrumb className="min-w-0 flex-1">
         <BreadcrumbList className="text-xs sm:text-sm">
@@ -149,7 +109,7 @@ export function SessionBreadcrumbs() {
     );
   }
 
-  if (isWorkspaceDetailPath(pathname) && publicKey) {
+  if (breadcrumb.type === "workspace" && publicKey) {
     return (
       <Breadcrumb className="min-w-0 flex-1">
         <BreadcrumbList className="text-xs sm:text-sm">

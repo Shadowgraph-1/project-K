@@ -66,7 +66,8 @@ export default fp(async (app) => {
     }
 
     return reply.status(status).send({
-      error:
+      code: "internal_server_error",
+      message:
         error instanceof Error ? error.message : "Внутренняя ошибка сервера",
     });
   });

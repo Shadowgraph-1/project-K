@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useMatch, useNavigate, useParams } from "react-router-dom";
 
 import { SESSION_CREATE_TASK_EVENT } from "@/shared/config/session-shortcuts";
 import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
@@ -18,20 +18,18 @@ import { resolveCreatorField } from "../../lib/sessionWorkspaceUtils";
 import type { CreateTaskPayload as ModalCreateTaskPayload } from "./CreateTaskModal";
 import type { TasksView, TaskSort, TaskSortDirection } from "../tasks/sessionWorkspaceTypes";
 import { sortTasks } from "../../lib/sort-tasks";
-import {
-  parseWorkspaceParams,
-  SESSION_PATHS,
-} from "../../model/sessionPaths";
+import { SESSION_PATHS } from "../../model/sessionPaths";
 import { notifyWithCenter } from "@/shared/lib/notifyWithCenter";
 import { canPerformWorkspaceAction } from "@/shared/lib/workspace-permissions";
 import type { TaskStatus } from "@/shared/constants/task-statuses";
 
 export function useSessionTasksPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const isWorkspaceHub = location.pathname === SESSION_PATHS.tasks;
-  const { publicKey: routePublicKey, taskId: routeTaskId } =
-    parseWorkspaceParams(location.pathname);
+  const { publicKey: routePublicKey, taskId: routeTaskId } = useParams<{
+    publicKey?: string;
+    taskId?: string;
+  }>();
+  const isWorkspaceHub = useMatch({ path: SESSION_PATHS.tasks, end: true }) !== null;
 
   const { data: workspaces = [], isLoading: workspacesLoading } =
     useWorkspaceQuery();

@@ -1,34 +1,26 @@
 import { type CSSProperties } from "react";
+import { Outlet } from "react-router-dom";
 
 import { TooltipProvider } from "@/shared/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/shared/ui/sidebar";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 import { ConnectionEmptyState } from "@/pages/offline/ConnectionEmptyState";
 
-import AppSidebar from "./ui/layout/AppSidebar";
-import { AuthGate } from "./ui/layout/AuthGate";
-import { SessionMainArea } from "./ui/layout/SessionMainArea";
-import { SessionShellHeader } from "./ui/layout/SessionShellHeader";
-import { AgentModeFab } from "./ui/widgets/AgentModeFab";
+import AppSidebar from "../ui/layout/AppSidebar";
+import { AuthGate } from "../ui/layout/AuthGate";
+import { SessionShellHeader } from "../ui/layout/SessionShellHeader";
+import { AgentModeFab } from "../ui/widgets/AgentModeFab";
 import {
   AgentModeProvider,
   useAgentMode,
   useCloseAgentModeOnNavigate,
-} from "./model/AgentModeContext";
-import { AssistantChatProvider } from "./model/AssistantChatContext";
-import { SessionShortcutsHost } from "./ui/widgets/SessionShortcutsHost";
-import { useSessionRouteState } from "./model/use-session-route-state";
-import { SessionPageSectionProvider } from "./model/SessionPageSectionContext";
-import { useSessionThemeSync } from "./lib/use-session-theme-sync";
-import "./ui/session-shell.css";
+} from "../model/AgentModeContext";
+import { AssistantChatProvider } from "../model/AssistantChatContext";
+import { SessionShortcutsHost } from "../ui/widgets/SessionShortcutsHost";
+import { useSessionThemeSync } from "../lib/use-session-theme-sync";
+import "../ui/session-shell.css";
 
-function SessionMainContent({
-  inWorkspaceFlow,
-  isNewWorkspace,
-}: {
-  inWorkspaceFlow: boolean;
-  isNewWorkspace: boolean;
-}) {
+function SessionMainContent() {
   const { anyDown, online, retryConnection } = useConnectionStatus();
   const { open: agentInlineOpen } = useAgentMode();
 
@@ -41,30 +33,22 @@ function SessionMainContent({
   }
 
   return (
-    <SessionMainArea
-      inWorkspaceFlow={inWorkspaceFlow}
-      isNewWorkspace={isNewWorkspace}
-    />
+    <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <Outlet />
+    </div>
   );
 }
 
-function SessionPageContent() {
+function SessionLayoutContent() {
   useSessionThemeSync();
   useCloseAgentModeOnNavigate();
 
-  const route = useSessionRouteState();
-
   const sessionMain = (
     <AuthGate>
-      <SessionPageSectionProvider>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <SessionShellHeader />
-          <SessionMainContent
-            inWorkspaceFlow={route.inWorkspaceFlow}
-            isNewWorkspace={route.isNewWorkspace}
-          />
-        </div>
-      </SessionPageSectionProvider>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <SessionShellHeader />
+        <SessionMainContent />
+      </div>
     </AuthGate>
   );
 
@@ -92,12 +76,12 @@ function SessionPageContent() {
   );
 }
 
-function SessionPage() {
+export function SessionLayout() {
   return (
     <AgentModeProvider>
-      <SessionPageContent />
+      <SessionLayoutContent />
     </AgentModeProvider>
   );
 }
 
-export default SessionPage;
+export default SessionLayout;

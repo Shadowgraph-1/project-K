@@ -36,6 +36,11 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-kono}:${POSTGRES_PASSWORD:-kono}@db:5432/${POSTGRES_DB:-kono}
       JWT_SECRET: ${JWT_SECRET}
+      COOKIE_SECRET: ${COOKIE_SECRET}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_DAYS: ${JWT_REFRESH_EXPIRES_DAYS:-7}
+      NODE_ENV: ${NODE_ENV:-development}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173}
       PORT: 3000
       VERSION: 1.0.0
       LM_BASE_URL: ${LM_BASE_URL:-http://host.docker.internal:1234/v1}

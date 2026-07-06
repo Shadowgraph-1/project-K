@@ -2,6 +2,7 @@ import * as React from "react";
 import { ChevronRight, KeyRound } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
+import { logoutOnApi } from "@/api/auth";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import {
@@ -39,7 +40,8 @@ export function SettingsPanel({
   const [changePasswordOpen, setChangePasswordOpen] = React.useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = React.useState(false);
 
-  function handleLogout() {
+  async function handleLogout() {
+    await logoutOnApi();
     logout();
     navigate(SESSION_PATHS.root, { replace: true });
   }

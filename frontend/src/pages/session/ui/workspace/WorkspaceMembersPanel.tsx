@@ -1,5 +1,4 @@
 import { useState } from "react";
-import axios from "axios";
 import { ChevronDown, LogOut, Plus, UserMinus } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -16,6 +15,7 @@ import {
   type WorkspaceRole,
 } from "@/shared/lib/workspace-permissions";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
+import { getApiErrorMessage } from "@/shared/lib/api-error-message";
 import { notify } from "@/shared/lib/notify";
 import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
 import { Button } from "@/shared/ui/button";
@@ -47,10 +47,7 @@ const ASSIGNABLE_ROLES: WorkspaceRole[] = [
 ];
 
 function apiErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error) && typeof error.response?.data?.error === "string") {
-    return error.response.data.error;
-  }
-  return fallback;
+  return getApiErrorMessage(error, fallback);
 }
 
 function MemberRoleBadge({

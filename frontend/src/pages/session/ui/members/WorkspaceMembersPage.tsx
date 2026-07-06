@@ -1,14 +1,14 @@
-import { useState } from "react";
-import axios from "axios";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { LogOut } from "lucide-react";
 
 import {
   canPerformWorkspaceAction,
 } from "@/shared/lib/workspace-permissions";
+import { getApiErrorMessage } from "@/shared/lib/api-error-message";
 import { notify } from "@/shared/lib/notify";
 import { Button } from "@/shared/ui/button";
-import { SESSION_PATHS, parseWorkspaceParams } from "../../model/sessionPaths";
+import { SESSION_PATHS } from "../../model/sessionPaths";
 import { InviteMemberDialog } from "../workspace/InviteMemberDialog";
 import EmptySession from "../placeholders/EmptySession";
 import { useWorkspaceQuery } from "@/entities/workspace/model/use-workspace-query";
@@ -32,18 +32,12 @@ import { WorkspaceMembersListSection } from "./WorkspaceMembersListSection";
 import { WorkspacePendingInvitesSection } from "./WorkspacePendingInvitesSection";
 
 function apiErrorMessage(error: unknown, fallback: string) {
-  if (
-    axios.isAxiosError(error) &&
-    typeof error.response?.data?.error === "string"
-  ) {
-    return error.response.data.error;
-  }
-  return fallback;
+  return getApiErrorMessage(error, fallback);
 }
 
 export function WorkspaceMembersPage() {
-  const { pathname } = useLocation();
-  const { publicKey } = parseWorkspaceParams(pathname);
+  const { publicKey } = useParams<{ publicKey: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [inviteOpen, setInviteOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -66,6 +60,25 @@ export function WorkspaceMembersPage() {
   const myRole = currentWorkspace?.myRole;
   const canManage = canPerformWorkspaceAction(myRole, "manage_members");
   const canLeave = currentWorkspace?.kind === "shared";
+
+  useEffect(() => {
+    if (searchParams.get("invite") !== "1" || !canManage) return;
+
+    const id = window.setTimeout(() => {
+      setInviteOpen(true);
+    }, 0);
+
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("invite");
+        return next;
+      },
+      { replace: true },
+    );
+
+    return () => window.clearTimeout(id);
+  }, [searchParams, setSearchParams, canManage]);
 
   async function handleRemoveMember(userId: number, userName: string) {
     const confirmed = await notifyConfirm({

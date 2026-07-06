@@ -2,6 +2,8 @@ import { useMemo } from "react";
 
 import { useWorkspaceTaskStatsQueries } from "@/entities/task/model/use-tasks-query";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import { isUnderWorkspacePath } from "../../lib/workspace-route";
 import { FolderKanban, Plus } from "lucide-react";
 import { partitionWorkspaces } from "@/entities/workspace/lib/partition-workspaces";
 import {
@@ -71,12 +73,8 @@ function Session() {
     }
 
     if (
-      ownedPublicKeys.some(
-        (publicKey) =>
-          location.pathname === SESSION_PATHS.workspace(publicKey) ||
-          location.pathname.startsWith(
-            `${SESSION_PATHS.workspace(publicKey)}/`,
-          ),
+      ownedPublicKeys.some((publicKey) =>
+        isUnderWorkspacePath(location.pathname, publicKey),
       )
     ) {
       navigate(SESSION_PATHS.sessionRoot);

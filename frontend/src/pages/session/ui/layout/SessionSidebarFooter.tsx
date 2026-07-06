@@ -3,7 +3,8 @@ import { Bot, Moon, Settings, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { sessionSidebarNavButton } from "../../lib/session-styles";
-import { isSettingsPath, SESSION_PATHS } from "../../model/sessionPaths";
+import { SESSION_PATHS } from "../../model/sessionPaths";
+import { useRouteActive } from "../../lib/use-session-nav-active";
 import { SessionTooltip } from "./SessionTooltip";
 import { cn } from "@/shared/lib/utils";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
@@ -14,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/ui/sidebar";
+
 type FooterIconButtonProps = {
   active?: boolean;
   label: string;
@@ -45,7 +47,8 @@ function FooterIconButton({
   );
 }
 
-export function SessionSidebarFooter({ pathname }: { pathname: string }) {
+export function SessionSidebarFooter() {
+  const settingsActive = useRouteActive(SESSION_PATHS.settings);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const assistantOpen = useSessionSecondarySidebarStore((s) => s.open);
   const assistantPanel = useSessionSecondarySidebarStore((s) => s.panel);
@@ -72,7 +75,7 @@ export function SessionSidebarFooter({ pathname }: { pathname: string }) {
         <SidebarMenuItem>
           <SidebarMenuButton
             asChild
-            isActive={isSettingsPath(pathname)}
+            isActive={settingsActive}
             className={sessionSidebarNavButton}
           >
             <Link to={SESSION_PATHS.settings}>

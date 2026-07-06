@@ -287,7 +287,11 @@ export const errorResponse = {
   type: "object",
   description: "Ошибка API",
   properties: {
-    error: {
+    code: {
+      type: "string",
+      description: "Стабильный код ошибки для клиента",
+    },
+    message: {
       type: "string",
       description: "Человекочитаемое сообщение об ошибке",
     },
@@ -300,7 +304,7 @@ export const errorResponse = {
       description: "Ошибки валидации по полям",
     },
   },
-  required: ["error"],
+  required: ["code", "message"],
 } as const;
 
 export const okMessageResponse = {

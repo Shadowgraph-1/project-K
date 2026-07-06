@@ -122,6 +122,7 @@ model users {
   subtasks      subtasks[]
   task_activity task_activity[]
   task_status_history task_status_history[]
+  refresh_tokens refresh_tokens[]
 
   workspace_members workspace_members[] @relation("WorkspaceMemberUser")
   invited_workspace_members workspace_members[] @relation("WorkspaceMemberInviter")
@@ -130,6 +131,7 @@ model users {
   sent_member_invites workspace_member_invites[] @relation("MemberInviteInviter")
   user_llm_keys user_llm_keys[]
   user_connectors user_connectors[]
+
 }
 
 model user_connectors {
@@ -227,6 +229,17 @@ model user_llm_keys {
   updated_at DateTime @updatedAt
 
   user users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model refresh_tokens {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    Int
+  token_hash String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }

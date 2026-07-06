@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
 
 import {
   useAdminAccessQuery,
@@ -12,7 +11,6 @@ import {
   useUpdateFeatureFlagMutation,
 } from "@/hooks/use-admin-query";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
-import { AdminAccessSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
@@ -25,7 +23,7 @@ import { adminOutlineBtn } from "./admin-page-shared";
 
 export function AdminPage() {
   const user = useAuthStore((s) => s.user);
-  const { data: access, isLoading: accessLoading } = useAdminAccessQuery();
+  const { data: access } = useAdminAccessQuery();
   const isAdmin = access?.isAdmin === true;
 
   const {
@@ -68,14 +66,6 @@ export function AdminPage() {
       setRefreshing(false);
     }
   };
-
-  if (accessLoading) {
-    return <AdminAccessSkeleton />;
-  }
-
-  if (!isAdmin) {
-    return <Navigate to="/projects" replace />;
-  }
 
   const firstName = user?.name?.split(" ")[0] ?? "админ";
 

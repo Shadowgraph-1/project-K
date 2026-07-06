@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 
+import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
+
 import notFoundImage from "@/assets/404page/404.jpg";
 import "./not-found.css";
 
@@ -36,10 +38,10 @@ function NotFoundPage() {
           </p>
 
           <div className="nf-actions">
-            <Link to="/" className="nf-btn nf-btn--primary">
+            <Link to={SESSION_PATHS.root} className="nf-btn nf-btn--primary">
               Вернуться домой
             </Link>
-            <Link to="/projects" className="nf-btn nf-btn--ghost">
+            <Link to={SESSION_PATHS.sessionRoot} className="nf-btn nf-btn--ghost">
               К проектам
             </Link>
           </div>

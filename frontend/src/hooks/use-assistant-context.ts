@@ -7,7 +7,7 @@ import type { Subtask } from "@/api/subtasks";
 import { queryKeys } from "@/shared/api/query-keys";
 import type { Workspace } from "@/entities/workspace/model/workspace";
 
-import { useSessionRouteState } from "@/pages/session/model/use-session-route-state";
+import { useParams } from "react-router-dom";
 
 export type AssistantChatContextPayload = {
   context?: {
@@ -36,7 +36,10 @@ export type AssistantChatContextPayload = {
 
 export function useAssistantContext(): AssistantChatContextPayload {
   const queryClient = useQueryClient();
-  const { publicKey, taskId } = useSessionRouteState();
+  const { publicKey, taskId } = useParams<{
+    publicKey?: string;
+    taskId?: string;
+  }>();
 
   return useMemo(() => {
     const workspaces =

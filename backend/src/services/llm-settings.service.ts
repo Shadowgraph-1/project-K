@@ -57,7 +57,6 @@ function resolveOrderBy({
 function mapKeyRow(row: {
   id: string;
   label: string | null;
-  api_key: string;
   key_hint: string | null;
   is_active: boolean;
   created_at: Date;
@@ -67,7 +66,7 @@ function mapKeyRow(row: {
   return {
     id: row.id,
     label: row.label,
-    hint: maskApiKey(row.api_key),
+    hint: row.key_hint ?? "apiKey-...",
     isActive: row.is_active,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
@@ -85,7 +84,6 @@ async function buildListResponse(
     select: {
       id: true,
       label: true,
-      api_key: true,
       key_hint: true,
       is_active: true,
       created_at: true,

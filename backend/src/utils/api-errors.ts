@@ -47,8 +47,9 @@ export type ApiError = {
 };
 
 export type ApiErrorBody = {
-  error: string;
-  fields?: Record<string, string[] | undefined>;
+  code: ApiErrorCode;
+  message: string;
+  fields?: Record<string, string[]>;
 };
 
 const API_ERROR_STATUS: Record<ApiErrorCode, number> = {
@@ -164,10 +165,15 @@ export function replyApiError(
   code: ApiErrorCode,
   extra?: Pick<ApiErrorBody, "fields">,
 ) {
-  const body: ApiErrorBody = { error: getApiErrorMessage(code) };
+  const body: ApiErrorBody = {
+    code,
+    message: getApiErrorMessage(code),
+  };
+
   if (extra?.fields) {
     body.fields = extra.fields;
   }
+
   return reply.status(getApiErrorStatus(code)).send(body);
 }
 

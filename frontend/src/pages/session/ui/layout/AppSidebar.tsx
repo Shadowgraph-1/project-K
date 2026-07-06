@@ -1,4 +1,5 @@
-import { Link, matchPath, useLocation, useNavigate } from "react-router-dom";
+import type { ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Activity, KeyRound, Plug2, Shield, Users } from "lucide-react";
 
 import {
@@ -20,21 +21,17 @@ import {
 import { useAdminAccessQuery } from "@/hooks/use-admin-query";
 import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { McpLogo } from "@/shared/ui/icons/McpLogo";
-import {
-  isMembersHubPath,
-  isAdminPath,
-  isConnectorsPath,
-  isLlmKeysPath,
-  isMcpPath,
-  isWorkspaceMembersPath,
-  isSystemStatusPath,
-  SESSION_PATHS,
-} from "../../model/sessionPaths";
+import { SESSION_PATHS } from "../../model/sessionPaths";
 import {
   sessionSidebarGroupLabel,
   sessionSidebarLogoButton,
   sessionSidebarNavButton,
 } from "../../lib/session-styles";
+import {
+  useMembersNavActive,
+  useRouteActive,
+  useWorkspaceMembersRoutePublicKey,
+} from "../../lib/use-session-nav-active";
 import { KonoIcon } from "@/shared/ui/kono-logo";
 import { SessionSidebarFooter } from "./SessionSidebarFooter";
 import { AppSidebarProjectsTree } from "./AppSidebarProjectsTree";
@@ -44,11 +41,37 @@ import {
   SidebarMembersNavContextMenuItems,
 } from "./sidebar-context-menus";
 
+function SidebarNavLink({
+  to,
+  icon,
+  label,
+}: {
+  to: string;
+  icon: ReactNode;
+  label: string;
+}) {
+  const isActive = useRouteActive(to);
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={isActive}
+        className={sessionSidebarNavButton}
+      >
+        <Link to={to}>
+          {icon}
+          <span>{label}</span>
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
 
 function AppSidebar() {
-  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const membersHref = SESSION_PATHS.membersHub;
+  const membersActive = useMembersNavActive();
+  const membersPublicKey = useWorkspaceMembersRoutePublicKey();
   const { data: isAdmin = false } = useAdminAccessQuery(
     (access) => access.isAdmin === true,
   );
@@ -57,12 +80,6 @@ function AppSidebar() {
     select: (data) => data.keys.length,
   });
   const deleteAllLlmKeys = useDeleteAllLlmKeysMutation();
-
-  const membersRouteMatch = matchPath(
-    { path: "/workspaces/:publicKey/members", end: true },
-    pathname,
-  );
-  const membersPublicKey = membersRouteMatch?.params.publicKey;
 
   async function handleDeleteAllLlmKeys() {
     if (llmKeysCount === 0) return;
@@ -102,7 +119,6 @@ function AppSidebar() {
             <SidebarMenu className="gap-0.5">
               <AppSidebarNavItem
                 to={SESSION_PATHS.llmKeys}
-                isActive={isLlmKeysPath(pathname)}
                 icon={<KeyRound />}
                 label="API ключи"
                 menu={
@@ -116,30 +132,16 @@ function AppSidebar() {
                   />
                 }
               />
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isConnectorsPath(pathname)}
-                  className={sessionSidebarNavButton}
-                >
-                  <Link to={SESSION_PATHS.connectors}>
-                    <Plug2 />
-                    <span>Коннекторы</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isMcpPath(pathname)}
-                  className={sessionSidebarNavButton}
-                >
-                  <Link to={SESSION_PATHS.mcp}>
-                    <McpLogo className="size-4" />
-                    <span>MCP</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <SidebarNavLink
+                to={SESSION_PATHS.connectors}
+                icon={<Plug2 />}
+                label="Коннекторы"
+              />
+              <SidebarNavLink
+                to={SESSION_PATHS.mcp}
+                icon={<McpLogo className="size-4" />}
+                label="MCP"
+              />
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -151,15 +153,13 @@ function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
               <AppSidebarNavItem
-                to={membersHref}
-                isActive={
-                  isMembersHubPath(pathname) || isWorkspaceMembersPath(pathname)
-                }
+                to={SESSION_PATHS.membersHub}
+                active={membersActive}
                 icon={<Users />}
                 label="Участники"
                 menu={
                   <SidebarMembersNavContextMenuItems
-                    onOpen={() => navigate(membersHref)}
+                    onOpen={() => navigate(SESSION_PATHS.membersHub)}
                     onOpenProjects={() => navigate(SESSION_PATHS.sessionRoot)}
                     onInvite={
                       membersPublicKey
@@ -182,31 +182,17 @@ function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-0.5">
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={isSystemStatusPath(pathname)}
-                  className={sessionSidebarNavButton}
-                >
-                  <Link to={SESSION_PATHS.systemStatus}>
-                    <Activity />
-                    <span>Статус</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <SidebarNavLink
+                to={SESSION_PATHS.systemStatus}
+                icon={<Activity />}
+                label="Статус"
+              />
               {isAdmin ? (
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isAdminPath(pathname)}
-                    className={sessionSidebarNavButton}
-                  >
-                    <Link to={SESSION_PATHS.admin}>
-                      <Shield />
-                      <span>Админка</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <SidebarNavLink
+                  to={SESSION_PATHS.admin}
+                  icon={<Shield />}
+                  label="Админка"
+                />
               ) : null}
             </SidebarMenu>
           </SidebarGroupContent>
@@ -214,7 +200,7 @@ function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="px-2 py-2">
-        <SessionSidebarFooter pathname={pathname} />
+        <SessionSidebarFooter />
       </SidebarFooter>
     </Sidebar>
   );

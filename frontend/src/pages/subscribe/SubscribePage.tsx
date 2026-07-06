@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 
+import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { Header } from "@/widgets/header/ui/Header";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
@@ -97,14 +98,14 @@ function SubscribePage() {
               asChild
               className="rounded-full bg-white px-5 text-neutral-950 hover:bg-neutral-200"
             >
-              <Link to="/">Вернуться на главную</Link>
+              <Link to={SESSION_PATHS.root}>Вернуться на главную</Link>
             </Button>
             <Button
               asChild
               variant="outline"
               className="rounded-full border-white/15 bg-transparent px-5 text-white/80 hover:bg-white/5 hover:text-white"
             >
-              <Link to="/projects">Открыть Kono</Link>
+              <Link to={SESSION_PATHS.sessionRoot}>Открыть Kono</Link>
             </Button>
           </div>
         </section>

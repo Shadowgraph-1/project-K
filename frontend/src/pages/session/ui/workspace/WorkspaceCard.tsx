@@ -2,6 +2,8 @@ import { memo, type KeyboardEvent } from "react";
 import { Box, MoreVertical, Trash2, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+import { isUnderWorkspacePath } from "../../lib/workspace-route";
+
 import { buttonVariants } from "@/shared/ui/button";
 import {
   DropdownMenu,
@@ -81,10 +83,7 @@ function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
       return;
     }
 
-    if (
-      location.pathname === SESSION_PATHS.workspace(item.publicKey) ||
-      location.pathname.startsWith(`${SESSION_PATHS.workspace(item.publicKey)}/`)
-    ) {
+    if (isUnderWorkspacePath(location.pathname, item.publicKey)) {
       navigate(SESSION_PATHS.sessionRoot);
     }
   }

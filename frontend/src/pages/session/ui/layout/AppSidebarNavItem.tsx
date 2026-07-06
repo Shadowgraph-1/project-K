@@ -9,22 +9,28 @@ import {
 } from "@/shared/ui/context-menu";
 import { SidebarMenuButton, SidebarMenuItem } from "@/shared/ui/sidebar";
 import { sessionSidebarNavButton } from "../../lib/session-styles";
+import { useRouteActive } from "../../lib/use-session-nav-active";
 
 type AppSidebarNavItemProps = {
   to: string;
-  isActive: boolean;
   icon: ReactNode;
   label: string;
   menu: ReactNode;
+  end?: boolean;
+  active?: boolean;
 };
 
 export function AppSidebarNavItem({
   to,
-  isActive,
   icon,
   label,
   menu,
+  end = true,
+  active,
 }: AppSidebarNavItemProps) {
+  const routeActive = useRouteActive(to, end);
+  const isActive = active ?? routeActive;
+
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>
