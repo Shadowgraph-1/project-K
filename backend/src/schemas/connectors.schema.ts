@@ -9,6 +9,13 @@ export const connectorIdParamSchema = z
 export const patchConnectorSchema = z
   .object({
     enabled: z.boolean().describe("Включить или выключить коннектор"),
+    telegramChatId: z
+      .string()
+      .trim()
+      .regex(/^-?\d+$/, "Chat ID должен быть числом из Telegram")
+      .optional()
+      .nullable()
+      .describe("Telegram chat_id пользователя"),
   })
   .describe("Изменение состояния коннектора");
 

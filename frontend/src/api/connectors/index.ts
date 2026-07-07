@@ -5,10 +5,16 @@ export type ConnectorState = {
   installed: boolean;
   enabled: boolean;
   configured: boolean;
+  telegramChatId: string | null;
 };
 
 export type ConnectorsResponse = {
   connectors: ConnectorState[];
+};
+
+export type PatchConnectorPayload = {
+  enabled: boolean;
+  telegramChatId?: string | null;
 };
 
 export async function fetchConnectors(): Promise<ConnectorsResponse> {
@@ -18,11 +24,12 @@ export async function fetchConnectors(): Promise<ConnectorsResponse> {
 
 export async function patchConnectorOnApi(
   connectorId: string,
-  enabled: boolean,
+  payload: PatchConnectorPayload,
 ): Promise<ConnectorState> {
-  const { data } = await api.patch<ConnectorState>(`/connectors/${connectorId}`, {
-    enabled,
-  });
+  const { data } = await api.patch<ConnectorState>(
+    `/connectors/${connectorId}`,
+    payload,
+  );
   return data;
 }
 

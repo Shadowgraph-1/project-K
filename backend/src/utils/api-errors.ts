@@ -122,7 +122,7 @@ const API_ERROR_MESSAGE: Record<ApiErrorCode, string> = {
   record_not_found: "Не найдено",
   connector_not_found: "Коннектор не найден",
   connector_not_configured:
-    "Коннектор не настроен на сервере. Проверьте TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID.",
+    "Коннектор не настроен. Нужен TELEGRAM_BOT_TOKEN на сервере и Chat ID в настройках Telegram.",
   ai_unavailable:
     "AI-сервис недоступен. Проверь LM Studio и переменные окружения.",
   internal_server_error: "Внутренняя ошибка сервера",

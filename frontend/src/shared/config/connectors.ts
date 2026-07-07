@@ -32,7 +32,7 @@ export const RECOMMENDED_CONNECTORS: ConnectorDefinition[] = [
   {
     id: "telegram",
     name: "Telegram",
-    description: "Уведомления о задачах и инвайтах в личку бота",
+    description: "Уведомления о задачах в ваш Telegram",
     logo: CONNECTOR_LOGOS.telegram,
     brandColor: "#26A5E4",
     available: true,

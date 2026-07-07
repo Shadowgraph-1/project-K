@@ -6,6 +6,7 @@ import {
   RECOMMENDED_CONNECTORS,
   type ConnectorDefinition,
 } from "@/shared/config/connectors";
+import { usesDefaultTelegramChatId } from "@/shared/config/telegram-connector";
 import {
   useConnectorsQuery,
   useDeleteConnectorMutation,
@@ -15,17 +16,20 @@ import { useLegacyDocsViewRedirect } from "@/pages/session/lib/use-legacy-docs-v
 import { DOCS_PATHS } from "@/shared/config/docs-paths";
 import { SectionDocsLink } from "@/pages/session/ui/layout/SectionDocsLink";
 import { sessionField, sessionPillOutline } from "@/pages/session/lib/session-styles";
+import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { cn } from "@/shared/lib/utils";
 import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 
 import { ConnectorCard } from "./ConnectorCard";
 import { ConnectedConnectorsEmptyState } from "./ConnectedConnectorsEmptyState";
+import { TelegramConnectDialog } from "./TelegramConnectDialog";
 
 type ConnectorWithState = ConnectorDefinition & {
   installed: boolean;
   enabled: boolean;
   configured: boolean;
+  telegramChatId: string | null;
 };
 
 const ALL_CATALOG = [...RECOMMENDED_CONNECTORS, ...MORE_RECOMMENDED_CONNECTORS];
@@ -47,7 +51,12 @@ function mergeConnectorState(
   catalog: ConnectorDefinition[],
   apiState: Map<
     string,
-    { installed: boolean; enabled: boolean; configured: boolean }
+    {
+      installed: boolean;
+      enabled: boolean;
+      configured: boolean;
+      telegramChatId: string | null;
+    }
   >,
 ): ConnectorWithState[] {
   return catalog.map((item) => {
@@ -57,6 +66,7 @@ function mergeConnectorState(
       installed: state?.installed ?? false,
       enabled: state?.enabled ?? false,
       configured: state?.configured ?? false,
+      telegramChatId: state?.telegramChatId ?? null,
     };
   });
 }
@@ -65,18 +75,29 @@ type ConnectorsCatalogProps = {
   catalog: ConnectorWithState[];
   stateById: Map<
     string,
-    { installed: boolean; enabled: boolean; configured: boolean }
+    {
+      installed: boolean;
+      enabled: boolean;
+      configured: boolean;
+      telegramChatId: string | null;
+    }
   >;
   isLoading: boolean;
+  usesDefaultChatId: boolean;
 };
 
 const ConnectorsCatalog = memo(function ConnectorsCatalog({
   catalog,
   stateById,
   isLoading,
+  usesDefaultChatId,
 }: ConnectorsCatalogProps) {
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState(false);
+  const [telegramDialogOpen, setTelegramDialogOpen] = useState(false);
+  const [telegramChatIdDraft, setTelegramChatIdDraft] = useState<string | null>(
+    null,
+  );
   const patchConnector = usePatchConnectorMutation();
   const deleteConnector = useDeleteConnectorMutation();
 
@@ -95,9 +116,47 @@ const ConnectorsCatalog = memo(function ConnectorsCatalog({
 
   const handleConnect = useCallback(
     (connectorId: string) => {
+      if (connectorId === "telegram" && !usesDefaultChatId) {
+        setTelegramChatIdDraft(null);
+        setTelegramDialogOpen(true);
+        return;
+      }
+
       patchConnector.mutate({ connectorId, enabled: true });
     },
-    [patchConnector],
+    [patchConnector, usesDefaultChatId],
+  );
+
+  const handleEditTelegram = useCallback(
+    (connectorId: string) => {
+      const current = stateById.get(connectorId)?.telegramChatId ?? null;
+      setTelegramChatIdDraft(current);
+      setTelegramDialogOpen(true);
+    },
+    [stateById],
+  );
+
+  const handleTelegramSubmit = useCallback(
+    (chatId: string) => {
+      const installed = stateById.get("telegram")?.installed ?? false;
+
+      patchConnector.mutate(
+        {
+          connectorId: "telegram",
+          enabled: true,
+          telegramChatId: chatId,
+        },
+        {
+          onSuccess: () => {
+            setTelegramDialogOpen(false);
+            if (!installed) {
+              setTelegramChatIdDraft(null);
+            }
+          },
+        },
+      );
+    },
+    [patchConnector, stateById],
   );
 
   const handleRemove = useCallback(
@@ -162,6 +221,7 @@ const ConnectorsCatalog = memo(function ConnectorsCatalog({
                 configured={connector.configured}
                 busy={busyConnectorId === connector.id}
                 onToggle={handleToggle}
+                onEditTelegram={handleEditTelegram}
                 onRemove={handleRemove}
               />
             ))}
@@ -211,6 +271,14 @@ const ConnectorsCatalog = memo(function ConnectorsCatalog({
           </Button>
         </div>
       ) : null}
+
+      <TelegramConnectDialog
+        open={telegramDialogOpen}
+        onOpenChange={setTelegramDialogOpen}
+        initialChatId={telegramChatIdDraft}
+        busy={patchConnector.isPending}
+        onSubmit={handleTelegramSubmit}
+      />
     </>
   );
 });
@@ -218,18 +286,27 @@ const ConnectorsCatalog = memo(function ConnectorsCatalog({
 export function ConnectorsPage() {
   useLegacyDocsViewRedirect(DOCS_PATHS.connectors);
 
+  const userEmail = useAuthStore((s) => s.user?.email);
+  const usesDefaultChatId = usesDefaultTelegramChatId(userEmail);
+
   const { data, isLoading } = useConnectorsQuery();
 
   const stateById = useMemo(() => {
     const map = new Map<
       string,
-      { installed: boolean; enabled: boolean; configured: boolean }
+      {
+        installed: boolean;
+        enabled: boolean;
+        configured: boolean;
+        telegramChatId: string | null;
+      }
     >();
     for (const item of data?.connectors ?? []) {
       map.set(item.id, {
         installed: item.installed,
         enabled: item.enabled,
         configured: item.configured,
+        telegramChatId: item.telegramChatId,
       });
     }
     return map;
@@ -259,6 +336,7 @@ export function ConnectorsPage() {
         catalog={catalog}
         stateById={stateById}
         isLoading={isLoading}
+        usesDefaultChatId={usesDefaultChatId}
       />
     </div>
   );

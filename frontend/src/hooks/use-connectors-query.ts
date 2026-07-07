@@ -5,6 +5,7 @@ import {
   fetchConnectors,
   patchConnectorOnApi,
   type ConnectorState,
+  type PatchConnectorPayload,
 } from "@/api/connectors";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -28,12 +29,10 @@ export function usePatchConnectorMutation() {
   return useMutation({
     mutationFn: ({
       connectorId,
-      enabled,
-    }: {
-      connectorId: string;
-      enabled: boolean;
-    }) => patchConnectorOnApi(connectorId, enabled),
-    onMutate: async ({ connectorId, enabled }) => {
+      ...payload
+    }: PatchConnectorPayload & { connectorId: string }) =>
+      patchConnectorOnApi(connectorId, payload),
+    onMutate: async ({ connectorId, enabled, telegramChatId }) => {
       await queryClient.cancelQueries({ queryKey: queryKeys.connectors });
       const previous = queryClient.getQueryData<{ connectors: ConnectorState[] }>(
         queryKeys.connectors,
@@ -42,7 +41,17 @@ export function usePatchConnectorMutation() {
       if (previous) {
         queryClient.setQueryData(queryKeys.connectors, {
           connectors: previous.connectors.map((item) =>
-            item.id === connectorId ? { ...item, enabled } : item,
+            item.id === connectorId
+              ? {
+                  ...item,
+                  enabled,
+                  installed: enabled ? true : item.installed,
+                  telegramChatId:
+                    telegramChatId !== undefined
+                      ? telegramChatId
+                      : item.telegramChatId,
+                }
+              : item,
           ),
         });
       }
@@ -50,6 +59,11 @@ export function usePatchConnectorMutation() {
       return { previous };
     },
     onSuccess: (_data, variables) => {
+      if (variables.telegramChatId !== undefined) {
+        notify({ title: "Telegram ID сохранён", variant: "success" });
+        return;
+      }
+
       notify({
         title: variables.enabled ? "Коннектор включён" : "Коннектор выключен",
         variant: "success",
@@ -85,7 +99,12 @@ export function useDeleteConnectorMutation() {
         queryClient.setQueryData(queryKeys.connectors, {
           connectors: previous.connectors.map((item) =>
             item.id === connectorId
-              ? { ...item, installed: false, enabled: false }
+              ? {
+                  ...item,
+                  installed: false,
+                  enabled: false,
+                  telegramChatId: null,
+                }
               : item,
           ),
         });

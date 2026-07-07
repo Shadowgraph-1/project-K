@@ -411,8 +411,12 @@ export const connectorDto = {
       type: "boolean",
       description: "true — сервер настроен (env, токены)",
     },
+    telegramChatId: {
+      type: ["string", "null"],
+      description: "Сохранённый Telegram chat_id пользователя",
+    },
   },
-  required: ["id", "installed", "enabled", "configured"],
+  required: ["id", "installed", "enabled", "configured", "telegramChatId"],
 } as const;
 
 export const connectorsListResponse = {

@@ -25,7 +25,8 @@ const PROSE =
 
 const TELEGRAM_ENV = `# backend/.env
 TELEGRAM_BOT_TOKEN=<token из BotFather>
-TELEGRAM_CHAT_ID=<ваш chat_id>
+TELEGRAM_CHAT_ID=<fallback chat_id для TELEGRAM_DEFAULT_CHAT_EMAIL>
+TELEGRAM_DEFAULT_CHAT_EMAIL=litvin4chuk@mail.ru
 
 # опционально, если Node не ходит в api.telegram.org напрямую
 TELEGRAM_PROXY=http://127.0.0.1:10809`;
@@ -50,7 +51,8 @@ Content-Type: application/json
 Authorization: Bearer <JWT>
 
 {
-  "enabled": true
+  "enabled": true,
+  "telegramChatId": "123456789"
 }`;
 
 const DELETE_CONNECTOR = `DELETE /api/connectors/telegram
@@ -141,12 +143,10 @@ export function ConnectorsDocsView() {
           <p>
             Состояние хранится в таблице{" "}
             <DocsInlineCode>user_connectors</DocsInlineCode>: пользователь,
-            ID коннектора и флаг <DocsInlineCode>enabled</DocsInlineCode>.
-            Наличие строки означает, что коннектор установлен;{" "}
-            <DocsInlineCode>enabled</DocsInlineCode> отвечает только за
-            включение уведомлений. Серверная готовность проверяется по{" "}
-            <DocsInlineCode>TELEGRAM_BOT_TOKEN</DocsInlineCode> и{" "}
-            <DocsInlineCode>TELEGRAM_CHAT_ID</DocsInlineCode>.
+            ID коннектора, флаг <DocsInlineCode>enabled</DocsInlineCode> и
+            личный <DocsInlineCode>telegram_chat_id</DocsInlineCode>.
+            Серверная готовность проверяется по{" "}
+            <DocsInlineCode>TELEGRAM_BOT_TOKEN</DocsInlineCode>.
           </p>
 
           <hr />
@@ -200,8 +200,11 @@ export function ConnectorsDocsView() {
           </DocsHeading>
 
           <p>
-            Для локального режима достаточно токена и одного chat id. Это не
-            полноценная OAuth-привязка: бот пишет в один указанный чат.
+            На сервере нужен только токен бота. Chat ID каждый пользователь
+            указывает в UI при подключении Telegram. Для email из{" "}
+            <DocsInlineCode>TELEGRAM_DEFAULT_CHAT_EMAIL</DocsInlineCode> можно
+            использовать <DocsInlineCode>TELEGRAM_CHAT_ID</DocsInlineCode> из
+            env как fallback.
           </p>
 
           <McpDocsCodeBlock label="env" code={TELEGRAM_ENV} />
@@ -223,7 +226,8 @@ export function ConnectorsDocsView() {
               Откройте <DocsInlineCode>/projects/connectors</DocsInlineCode>.
             </li>
             <li>
-              В карточке Telegram нажмите <strong>Подключить</strong>.
+              В карточке Telegram нажмите <strong>Подключить</strong> и укажите
+              свой <DocsInlineCode>chat_id</DocsInlineCode>.
             </li>
             <li>
               После подключения карточка переедет в блок{" "}
@@ -261,8 +265,9 @@ export function ConnectorsDocsView() {
             <li>
               <DocsInlineCode>GET /api/connectors</DocsInlineCode> — список
               коннекторов: <DocsInlineCode>installed</DocsInlineCode>,{" "}
-              <DocsInlineCode>enabled</DocsInlineCode> и{" "}
-              <DocsInlineCode>configured</DocsInlineCode>.
+              <DocsInlineCode>enabled</DocsInlineCode>,{" "}
+              <DocsInlineCode>configured</DocsInlineCode> и{" "}
+              <DocsInlineCode>telegramChatId</DocsInlineCode>.
             </li>
             <li>
               <DocsInlineCode>PATCH /api/connectors/telegram</DocsInlineCode>{" "}
@@ -279,8 +284,9 @@ export function ConnectorsDocsView() {
 
           <p>
             <DocsInlineCode>configured: false</DocsInlineCode> означает, что в
-            backend env нет токена или chat id. В этом случае UI покажет
-            «Не настроен», а API не даст включить коннектор.
+            backend env нет <DocsInlineCode>TELEGRAM_BOT_TOKEN</DocsInlineCode>.
+            В этом случае UI покажет «Не настроен», а API не даст включить
+            коннектор.
           </p>
 
           <hr />
@@ -304,9 +310,8 @@ export function ConnectorsDocsView() {
             </li>
             <li>
               <strong>connector_not_configured:</strong> заполните{" "}
-              <DocsInlineCode>TELEGRAM_BOT_TOKEN</DocsInlineCode> и{" "}
-              <DocsInlineCode>TELEGRAM_CHAT_ID</DocsInlineCode>, затем
-              перезапустите backend.
+              <DocsInlineCode>TELEGRAM_BOT_TOKEN</DocsInlineCode> и укажите
+              Chat ID в UI, затем перезапустите backend.
             </li>
           </ul>
         </main>

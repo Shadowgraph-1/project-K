@@ -22,6 +22,7 @@ type ConnectorCardProps = {
   busy?: boolean;
   onConnect?: (connectorId: string) => void;
   onToggle?: (connectorId: string, enabled: boolean) => void;
+  onEditTelegram?: (connectorId: string) => void;
   onRemove?: (connectorId: string) => void;
   className?: string;
 };
@@ -34,12 +35,13 @@ export const ConnectorCard = memo(function ConnectorCard({
   busy = false,
   onConnect,
   onToggle,
+  onEditTelegram,
   onRemove,
   className,
 }: ConnectorCardProps) {
   const available = connector.available === true;
   const inactive = !connected && !available;
-  const canConnect = available && configured && !enabled;
+  const canConnect = available && configured && !connected;
   const needsServerSetup = available && !configured && !connected;
 
   return (
@@ -68,7 +70,7 @@ export const ConnectorCard = memo(function ConnectorCard({
           {connector.description && !connected ? (
             <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
               {needsServerSetup
-                ? "Нужны TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID в backend/.env"
+                ? "Подключение временно недоступно"
                 : connector.description}
             </p>
           ) : connected ? (
@@ -114,6 +116,14 @@ export const ConnectorCard = memo(function ConnectorCard({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-40">
+              {connector.id === "telegram" ? (
+                <DropdownMenuItem
+                  disabled={busy}
+                  onClick={() => onEditTelegram?.(connector.id)}
+                >
+                  Изменить ID
+                </DropdownMenuItem>
+              ) : null}
               <DropdownMenuItem
                 disabled={busy}
                 onClick={() => onRemove?.(connector.id)}
@@ -139,7 +149,7 @@ export const ConnectorCard = memo(function ConnectorCard({
         </span>
       ) : needsServerSetup ? (
         <span className="shrink-0 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-          Не настроен
+          Недоступен
         </span>
       ) : null}
     </div>

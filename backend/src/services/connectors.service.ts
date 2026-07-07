@@ -7,6 +7,7 @@ export type ConnectorState = {
   installed: boolean;
   enabled: boolean;
   configured: boolean;
+  telegramChatId: string | null;
 };
 
 const SUPPORTED_CONNECTORS = ["telegram"] as const;
@@ -18,9 +19,40 @@ function isSupportedConnector(id: string): id is SupportedConnectorId {
 
 function isConnectorConfigured(id: SupportedConnectorId): boolean {
   if (id === "telegram") {
-    return Boolean(env.TELEGRAM_BOT_TOKEN && env.TELEGRAM_CHAT_ID);
+    return Boolean(env.TELEGRAM_BOT_TOKEN);
   }
   return false;
+}
+
+export async function resolveTelegramChatId(
+  userId: number,
+): Promise<string | null> {
+  const user = await prisma.users.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  if (!user) return null;
+
+  const row = await prisma.user_connectors.findUnique({
+    where: {
+      user_id_connector_id: {
+        user_id: userId,
+        connector_id: "telegram",
+      },
+    },
+    select: { telegram_chat_id: true },
+  });
+
+  if (row?.telegram_chat_id?.trim()) {
+    return row.telegram_chat_id.trim();
+  }
+
+  const fallbackEmail = env.TELEGRAM_DEFAULT_CHAT_EMAIL ?? "litvin4chuk@mail.ru";
+  if (user.email.toLowerCase() === fallbackEmail.toLowerCase()) {
+    return env.TELEGRAM_CHAT_ID?.trim() ?? null;
+  }
+
+  return null;
 }
 
 export async function listUserConnectors(
@@ -28,7 +60,7 @@ export async function listUserConnectors(
 ): Promise<ConnectorState[]> {
   const rows = await prisma.user_connectors.findMany({
     where: { user_id: userId },
-    select: { connector_id: true, enabled: true },
+    select: { connector_id: true, enabled: true, telegram_chat_id: true },
   });
 
   const rowsById = new Map(rows.map((row) => [row.connector_id, row]));
@@ -38,6 +70,8 @@ export async function listUserConnectors(
     installed: rowsById.has(id),
     enabled: rowsById.get(id)?.enabled ?? false,
     configured: isConnectorConfigured(id),
+    telegramChatId:
+      id === "telegram" ? (rowsById.get(id)?.telegram_chat_id ?? null) : null,
   }));
 }
 
@@ -45,6 +79,7 @@ export async function setConnectorEnabled(
   userId: number,
   connectorId: string,
   enabled: boolean,
+  telegramChatId?: string | null,
 ): Promise<ConnectorState> {
   if (!isSupportedConnector(connectorId)) {
     throw new ApiHttpError("connector_not_found");
@@ -54,7 +89,15 @@ export async function setConnectorEnabled(
     throw new ApiHttpError("connector_not_configured");
   }
 
-  await prisma.user_connectors.upsert({
+  if (enabled && connectorId === "telegram") {
+    const resolved =
+      telegramChatId?.trim() || (await resolveTelegramChatId(userId));
+    if (!resolved) {
+      throw new ApiHttpError("connector_not_configured");
+    }
+  }
+
+  const row = await prisma.user_connectors.upsert({
     where: {
       user_id_connector_id: {
         user_id: userId,
@@ -65,15 +108,25 @@ export async function setConnectorEnabled(
       user_id: userId,
       connector_id: connectorId,
       enabled,
+      telegram_chat_id:
+        connectorId === "telegram" ? (telegramChatId?.trim() ?? null) : null,
     },
-    update: { enabled },
+    update: {
+      enabled,
+      ...(connectorId === "telegram" && telegramChatId !== undefined
+        ? { telegram_chat_id: telegramChatId?.trim() ?? null }
+        : {}),
+    },
+    select: { enabled: true, telegram_chat_id: true },
   });
 
   return {
     id: connectorId,
     installed: true,
-    enabled,
+    enabled: row.enabled,
     configured: isConnectorConfigured(connectorId),
+    telegramChatId:
+      connectorId === "telegram" ? row.telegram_chat_id : null,
   };
 }
 
@@ -97,6 +150,7 @@ export async function removeConnector(
     installed: false,
     enabled: false,
     configured: isConnectorConfigured(connectorId),
+    telegramChatId: null,
   };
 }
 
@@ -118,5 +172,13 @@ export async function isConnectorEnabledForUser(
     select: { enabled: true },
   });
 
-  return row?.enabled === true;
+  if (row?.enabled !== true) {
+    return false;
+  }
+
+  if (connectorId === "telegram") {
+    return (await resolveTelegramChatId(userId)) !== null;
+  }
+
+  return true;
 }

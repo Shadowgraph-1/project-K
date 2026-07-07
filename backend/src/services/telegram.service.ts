@@ -1,13 +1,19 @@
 import { fetch, ProxyAgent } from "undici";
 import { env } from "../config/env.js";
-import { isConnectorEnabledForUser } from "./connectors.service.js";
+import {
+  isConnectorEnabledForUser,
+  resolveTelegramChatId,
+} from "./connectors.service.js";
+import { createModuleLogger } from "../utils/logger.js";
+
+const log = createModuleLogger("telegram");
 
 const agent = env.TELEGRAM_PROXY
   ? new ProxyAgent(env.TELEGRAM_PROXY)
   : undefined;
 
-export async function sendTelegramMessage(text: string) {
-  if (!env.TELEGRAM_BOT_TOKEN || !env.TELEGRAM_CHAT_ID) {
+async function sendTelegramMessage(chatId: string, text: string) {
+  if (!env.TELEGRAM_BOT_TOKEN) {
     return;
   }
 
@@ -17,7 +23,7 @@ export async function sendTelegramMessage(text: string) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        chat_id: env.TELEGRAM_CHAT_ID,
+        chat_id: chatId,
         text,
       }),
       dispatcher: agent,
@@ -25,18 +31,25 @@ export async function sendTelegramMessage(text: string) {
   );
 
   if (!response.ok) {
-    console.error("Telegram send failed:", await response.text());
+    const body = await response.text();
+    log.error({ status: response.status, body, chatId }, "Telegram send failed");
   }
 }
 
-export function notifyTelegramForUser(userId: number, lines: string | string[]) {
-  void (async () => {
+export async function notifyTelegramForUser(
+  userId: number,
+  lines: string | string[],
+) {
+  try {
     const enabled = await isConnectorEnabledForUser(userId, "telegram");
     if (!enabled) return;
 
+    const chatId = await resolveTelegramChatId(userId);
+    if (!chatId) return;
+
     const text = Array.isArray(lines) ? lines.join("\n") : lines;
-    await sendTelegramMessage(text);
-  })().catch((error) => {
-    console.error("Telegram notify failed:", error);
-  });
+    await sendTelegramMessage(chatId, text);
+  } catch (error) {
+    log.error({ err: error, userId }, "Telegram notify failed");
+  }
 }

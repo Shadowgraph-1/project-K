@@ -50,11 +50,15 @@ const connectorsRoutes: FastifyPluginAsync = async (app) => {
     },
     async (request) => {
       const { id } = parseBody(connectorIdParamSchema, request.params);
-      const { enabled } = parseBody(patchConnectorSchema, request.body);
+      const { enabled, telegramChatId } = parseBody(
+        patchConnectorSchema,
+        request.body,
+      );
       return connectorsService.setConnectorEnabled(
         request.user.id,
         id,
         enabled,
+        telegramChatId,
       );
     },
   );

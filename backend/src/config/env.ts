@@ -43,6 +43,7 @@ const envSchema = z.object({
   TELEGRAM_BOT_TOKEN: z.string().optional(),
   TELEGRAM_CHAT_ID: z.string().optional(),
   TELEGRAM_PROXY: z.string().optional(),
+  TELEGRAM_DEFAULT_CHAT_EMAIL: z.string().email().optional().default("litvin4chuk@mail.ru")
 });
 
 export const env = envSchema.parse(process.env);
