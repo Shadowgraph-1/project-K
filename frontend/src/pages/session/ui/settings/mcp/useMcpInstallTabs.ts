@@ -2,6 +2,8 @@ import { useMemo } from "react";
 
 import { env } from "@/shared/config/env";
 
+const MCP_PACKAGE = "@kono/mcp-server";
+
 export function buildJwtLoginExamples(apiUrl: string) {
   const loginUrl = `${apiUrl}/auth/login`;
 
@@ -34,7 +36,7 @@ export function useMcpInstallTabs() {
       },
       {
         id: "env",
-        label: ".env",
+        label: "env",
         code: [`KONO_API_URL=${apiUrl}`, "KONO_API_KEY=<token из ответа login>"].join(
           "\n",
         ),
@@ -42,7 +44,7 @@ export function useMcpInstallTabs() {
       {
         id: "run",
         label: "Запуск",
-        code: "cd backend && npm run mcp",
+        code: `npx -y ${MCP_PACKAGE}@latest`,
       },
       {
         id: "config",
@@ -51,9 +53,8 @@ export function useMcpInstallTabs() {
           {
             mcpServers: {
               kono: {
-                command: "npm",
-                args: ["run", "mcp"],
-                cwd: "<путь-к-проекту>/backend",
+                command: "npx",
+                args: ["-y", `${MCP_PACKAGE}@latest`],
                 env: {
                   KONO_API_URL: apiUrl,
                   KONO_API_KEY: "<token из POST /auth/login>",

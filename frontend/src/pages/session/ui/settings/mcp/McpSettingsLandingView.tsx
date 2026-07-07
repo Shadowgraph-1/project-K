@@ -68,8 +68,8 @@ const MCP_FEATURES = [
       "Локальный stdio-сервер Kono для любого MCP-хоста с вашим JWT.",
     bullets: [
       "POST /auth/login — email и password, в ответе поле token",
-      "Токен кладётся в KONO_API_KEY в backend/.env",
-      "npm run mcp в папке backend",
+      "Токен передаётся в KONO_API_KEY в конфиге MCP-клиента",
+      "npx -y @kono/mcp-server@latest",
       "Подключение через конфиг MCP-клиента (Cursor, Claude Desktop и др.)",
     ],
   },

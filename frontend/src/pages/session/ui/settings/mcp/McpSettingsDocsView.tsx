@@ -121,7 +121,7 @@ export function McpSettingsDocsView() {
         "",
         "## Подключение",
         "",
-        "Локальный stdio-сервер (не HTTP). Запуск: `cd backend && npm run mcp`",
+        "Локальный stdio-сервер (не HTTP). Запуск: `npx -y @kono/mcp-server@latest`",
         "",
         `API URL: ${apiUrl}`,
         "",
@@ -148,7 +148,7 @@ export function McpSettingsDocsView() {
         jwtExamples.powershell,
         "```",
         "",
-        "### backend/.env",
+        "### Переменные окружения",
         "",
         "```",
         envExample,
@@ -270,7 +270,7 @@ export function McpSettingsDocsView() {
             <strong>Транспорт внешнего сервера:</strong>
           </p>
 
-          <McpDocsCodeBlock label="текст" code="stdio (npm run mcp в backend/)" />
+          <McpDocsCodeBlock label="текст" code="stdio (npx -y @kono/mcp-server@latest)" />
 
           <p>
             Сервер ходит в Kono REST API с JWT пользователя. Сессии MCP не
@@ -371,19 +371,19 @@ export function McpSettingsDocsView() {
           <McpDocsCodeBlock label="json" code={mcpClientConfig} />
 
           <DocsHeading id="env-config" level={3}>
-            backend/.env
+            Переменные окружения
           </DocsHeading>
 
           <p>
-            Перед запуском заполните переменные в{" "}
-            <DocsInlineCode>backend/.env</DocsInlineCode>:
+            Передайте переменные в блоке <DocsInlineCode>env</DocsInlineCode>{" "}
+            конфига MCP-клиента:
           </p>
 
           <McpDocsCodeBlock label="env" code={envExample} />
 
           <p>Запуск сервера:</p>
 
-          <McpDocsCodeBlock label="команда" code="cd backend && npm run mcp" />
+          <McpDocsCodeBlock label="команда" code="npx -y @kono/mcp-server@latest" />
 
           <DocsHeading id="tools" level={2}>
             Инструменты

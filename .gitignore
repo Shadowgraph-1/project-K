@@ -15,3 +15,9 @@ react-problems/
 
 # Prisma generated client
 backend/src/generated/prisma
+
+# Logs
+logs/
+
+# Ai logs
+terminals/
