@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../db/prisma.js", () => ({
@@ -17,6 +16,19 @@ import {
   deleteAccount,
   updateProfile,
 } from "./user.service.js";
+import { hashPassword } from "../utils/passwordHash.js";
+
+function mockUser<T>(value: T) {
+  return value as Awaited<ReturnType<typeof prisma.users.findUnique>>;
+}
+
+function mockUpdatedUser<T>(value: T) {
+  return value as Awaited<ReturnType<typeof prisma.users.update>>;
+}
+
+function mockDeletedUser<T>(value: T) {
+  return value as Awaited<ReturnType<typeof prisma.users.delete>>;
+}
 
 describe("user.service", () => {
   beforeEach(() => {
@@ -24,15 +36,16 @@ describe("user.service", () => {
   });
 
   it("updateProfile обновляет имя без смены email", async () => {
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 1,
-      email: "user@example.com",
-    });
-    vi.mocked(prisma.users.update).mockResolvedValue({
-      id: 1,
-      name: "Новое имя",
-      email: "user@example.com",
-    });
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({ id: 1, email: "user@example.com" }),
+    );
+    vi.mocked(prisma.users.update).mockResolvedValue(
+      mockUpdatedUser({
+        id: 1,
+        name: "Новое имя",
+        email: "user@example.com",
+      }),
+    );
 
     const result = await updateProfile(1, "Новое имя", "user@example.com");
 
@@ -44,13 +57,15 @@ describe("user.service", () => {
 
   it("updateProfile помечает emailChanged при смене email", async () => {
     vi.mocked(prisma.users.findUnique)
-      .mockResolvedValueOnce({ id: 1, email: "old@example.com" })
+      .mockResolvedValueOnce(mockUser({ id: 1, email: "old@example.com" }))
       .mockResolvedValueOnce(null);
-    vi.mocked(prisma.users.update).mockResolvedValue({
-      id: 1,
-      name: "Олег",
-      email: "new@example.com",
-    });
+    vi.mocked(prisma.users.update).mockResolvedValue(
+      mockUpdatedUser({
+        id: 1,
+        name: "Олег",
+        email: "new@example.com",
+      }),
+    );
 
     const result = await updateProfile(1, "Олег", "new@example.com");
 
@@ -60,8 +75,8 @@ describe("user.service", () => {
 
   it("updateProfile возвращает email_taken", async () => {
     vi.mocked(prisma.users.findUnique)
-      .mockResolvedValueOnce({ id: 1, email: "old@example.com" })
-      .mockResolvedValueOnce({ id: 2 });
+      .mockResolvedValueOnce(mockUser({ id: 1, email: "old@example.com" }))
+      .mockResolvedValueOnce(mockUser({ id: 2 }));
 
     await expect(
       updateProfile(1, "Олег", "busy@example.com"),
@@ -77,15 +92,13 @@ describe("user.service", () => {
   });
 
   it("changePassword обновляет хэш при верном текущем пароле", async () => {
-    const passwordHash = await bcrypt.hash("old-pass", 10);
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 1,
-      password_hash: passwordHash,
-    });
-    vi.mocked(prisma.users.update).mockResolvedValue({
-      id: 1,
-      password_hash: "new-hash",
-    });
+    const passwordHash = await hashPassword("old-pass");
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({ id: 1, password_hash: passwordHash }),
+    );
+    vi.mocked(prisma.users.update).mockResolvedValue(
+      mockUpdatedUser({ id: 1, password_hash: "new-hash" }),
+    );
 
     await changePassword(1, "old-pass", "new-pass-12");
 
@@ -96,11 +109,10 @@ describe("user.service", () => {
   });
 
   it("changePassword возвращает invalid_password", async () => {
-    const passwordHash = await bcrypt.hash("old-pass", 10);
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 1,
-      password_hash: passwordHash,
-    });
+    const passwordHash = await hashPassword("old-pass");
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({ id: 1, password_hash: passwordHash }),
+    );
 
     await expect(
       changePassword(1, "wrong-pass", "new-pass-12"),
@@ -108,18 +120,19 @@ describe("user.service", () => {
   });
 
   it("deleteAccount удаляет пользователя при верном пароле", async () => {
-    const passwordHash = await bcrypt.hash("secret12", 10);
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 1,
-      password_hash: passwordHash,
-    });
-    vi.mocked(prisma.users.delete).mockResolvedValue({
-      id: 1,
-      name: "Олег",
-      email: "user@example.com",
-      password_hash: passwordHash,
-      created_at: new Date(),
-    });
+    const passwordHash = await hashPassword("secret12");
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({ id: 1, password_hash: passwordHash }),
+    );
+    vi.mocked(prisma.users.delete).mockResolvedValue(
+      mockDeletedUser({
+        id: 1,
+        name: "Олег",
+        email: "user@example.com",
+        password_hash: passwordHash,
+        created_at: new Date(),
+      }),
+    );
 
     const result = await deleteAccount(1, "secret12");
 
@@ -128,11 +141,10 @@ describe("user.service", () => {
   });
 
   it("deleteAccount возвращает invalid_password", async () => {
-    const passwordHash = await bcrypt.hash("secret12", 10);
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 1,
-      password_hash: passwordHash,
-    });
+    const passwordHash = await hashPassword("secret12");
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({ id: 1, password_hash: passwordHash }),
+    );
 
     await expect(deleteAccount(1, "wrong-pass")).rejects.toMatchObject({
       code: "invalid_password",

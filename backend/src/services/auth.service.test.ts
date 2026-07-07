@@ -1,4 +1,3 @@
-import bcrypt from "bcrypt";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../db/prisma.js", () => ({
@@ -17,6 +16,15 @@ vi.mock("./feature-flags.service.js", () => ({
 import { prisma } from "../db/prisma.js";
 import { isFeatureEnabled } from "./feature-flags.service.js";
 import { loginUser, registerUser } from "./auth.service.js";
+import { hashPassword } from "../utils/passwordHash.js";
+
+function mockUser<T>(value: T) {
+  return value as Awaited<ReturnType<typeof prisma.users.findUnique>>;
+}
+
+function mockCreatedUser<T>(value: T) {
+  return value as Awaited<ReturnType<typeof prisma.users.create>>;
+}
 
 describe("auth.service", () => {
   beforeEach(() => {
@@ -26,11 +34,13 @@ describe("auth.service", () => {
 
   it("registerUser создаёт пользователя при свободном email", async () => {
     vi.mocked(prisma.users.findUnique).mockResolvedValue(null);
-    vi.mocked(prisma.users.create).mockResolvedValue({
-      id: 1,
-      name: "Олег",
-      email: "user@example.com",
-    });
+    vi.mocked(prisma.users.create).mockResolvedValue(
+      mockCreatedUser({
+        id: 1,
+        name: "Олег",
+        email: "user@example.com",
+      }),
+    );
 
     const user = await registerUser("Олег", "user@example.com", "secret12");
 
@@ -43,7 +53,7 @@ describe("auth.service", () => {
   });
 
   it("registerUser возвращает email_taken", async () => {
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({ id: 2 });
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(mockUser({ id: 2 }));
 
     await expect(
       registerUser("Олег", "user@example.com", "secret12"),
@@ -59,13 +69,15 @@ describe("auth.service", () => {
   });
 
   it("loginUser возвращает пользователя при верном пароле", async () => {
-    const passwordHash = await bcrypt.hash("secret12", 10);
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 3,
-      name: "Олег",
-      email: "user@example.com",
-      password_hash: passwordHash,
-    });
+    const passwordHash = await hashPassword("secret12");
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({
+        id: 3,
+        name: "Олег",
+        email: "user@example.com",
+        password_hash: passwordHash,
+      }),
+    );
 
     const user = await loginUser("user@example.com", "secret12");
 
@@ -77,13 +89,15 @@ describe("auth.service", () => {
   });
 
   it("loginUser возвращает invalid_credentials при неверном пароле", async () => {
-    const passwordHash = await bcrypt.hash("secret12", 10);
-    vi.mocked(prisma.users.findUnique).mockResolvedValue({
-      id: 3,
-      name: "Олег",
-      email: "user@example.com",
-      password_hash: passwordHash,
-    });
+    const passwordHash = await hashPassword("secret12");
+    vi.mocked(prisma.users.findUnique).mockResolvedValue(
+      mockUser({
+        id: 3,
+        name: "Олег",
+        email: "user@example.com",
+        password_hash: passwordHash,
+      }),
+    );
 
     await expect(loginUser("user@example.com", "wrong-pass")).rejects.toMatchObject(
       { code: "invalid_credentials" },

@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma.js";
 import { ApiHttpError } from "../utils/api-errors.js";
+import { hashPassword, verifyPassword } from "../utils/passwordHash.js";
 import type { AuthUser } from "./auth.service.js";
 
 export async function updateProfile(
@@ -54,12 +54,12 @@ export async function changePassword(
     throw new ApiHttpError("user_not_found");
   }
 
-  const valid = await bcrypt.compare(currentPassword, user.password_hash);
+  const valid = await verifyPassword(currentPassword, user.password_hash);
   if (!valid) {
     throw new ApiHttpError("invalid_password");
   }
 
-  const passwordHash = await bcrypt.hash(newPassword, 10);
+  const passwordHash = await hashPassword(newPassword);
 
   await prisma.users.update({
     where: { id: userId },
@@ -80,7 +80,7 @@ export async function deleteAccount(
     throw new ApiHttpError("user_not_found");
   }
 
-  const valid = await bcrypt.compare(password, user.password_hash);
+  const valid = await verifyPassword(password, user.password_hash);
   if (!valid) {
     throw new ApiHttpError("invalid_password");
   }

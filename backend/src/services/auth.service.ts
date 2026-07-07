@@ -1,7 +1,7 @@
-import bcrypt from "bcrypt";
 import { prisma } from "../db/prisma.js";
 import { ApiHttpError } from "../utils/api-errors.js";
 import { isFeatureEnabled } from "./feature-flags.service.js";
+import { hashPassword, verifyPassword } from "../utils/passwordHash.js";
 
 export type AuthUser = {
   id: number;
@@ -27,7 +27,7 @@ export async function registerUser(
     throw new ApiHttpError("email_taken");
   }
 
-  const passwordHash = await bcrypt.hash(password, 10);
+  const passwordHash = await hashPassword(password);
 
   return prisma.users.create({
     data: {
@@ -61,7 +61,8 @@ export async function loginUser(
     throw new ApiHttpError("invalid_credentials");
   }
 
-  const valid = await bcrypt.compare(password, user.password_hash);
+  const valid = await verifyPassword(password, user.password_hash);
+  
   if (!valid) {
     throw new ApiHttpError("invalid_credentials");
   }
