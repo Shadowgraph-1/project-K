@@ -1,6 +1,5 @@
 import { prisma } from "../db/prisma.js";
-import { env } from "../config/env.js";
-import { checkDatabase, checkLlm } from "./health.service.js";
+import { getHealth } from "./health.service.js";
 import { listErrorLogs, clearErrorLogs } from "../utils/error-log-store.js";
 import {
   listFeatureFlags,
@@ -28,8 +27,6 @@ export async function getAdminOverview() {
     subtasks,
     llmKeys,
     recentUsers,
-    database,
-    ai,
   ] = await Promise.all([
     prisma.users.count(),
     prisma.workspaces.count(),
@@ -37,14 +34,9 @@ export async function getAdminOverview() {
     prisma.subtasks.count(),
     countLlmKeys(),
     prisma.users.count({ where: { created_at: { gte: weekAgo } } }),
-    checkDatabase(),
-    checkLlm(),
   ]);
 
-  const checks = { database, ai };
-  const allOk = Object.values(checks).every((c) => c.status === "ok");
-  const anyDown = Object.values(checks).some((c) => c.status === "down");
-  const healthStatus = allOk ? "healthy" : anyDown ? "degraded" : "unhealthy";
+  const health = await getHealth();
 
   return {
     stats: {
@@ -56,10 +48,10 @@ export async function getAdminOverview() {
       recentUsers,
     },
     health: {
-      status: healthStatus as "healthy" | "degraded" | "unhealthy",
-      timestamp: new Date().toISOString(),
-      version: env.VERSION,
-      checks,
+      status: health.status,
+      timestamp: health.timestamp,
+      version: health.version,
+      checks: health.checks,
     },
   };
 }
@@ -114,7 +106,10 @@ export function getAdminFeatureFlags() {
   return listFeatureFlags();
 }
 
-export function updateAdminFeatureFlag(key: FeatureFlagKey, enabled: boolean) {
+export async function updateAdminFeatureFlag(
+  key: FeatureFlagKey,
+  enabled: boolean,
+) {
   return setFeatureFlag(key, enabled);
 }
 

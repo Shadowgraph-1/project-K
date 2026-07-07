@@ -1,3 +1,5 @@
+import { prisma } from "../db/prisma.js";
+
 export const FEATURE_FLAG_KEYS = [
   "assistant_enabled",
   "registration_open",
@@ -43,11 +45,33 @@ const DEFAULTS: Record<FeatureFlagKey, boolean> = {
   llm_user_keys: true,
 };
 
-const overrides = new Map<FeatureFlagKey, boolean>();
+let cache: Map<FeatureFlagKey, boolean> | null = null;
 
 function resolveFlag(key: FeatureFlagKey): boolean {
-  if (overrides.has(key)) return overrides.get(key)!;
+  if (cache?.has(key)) return cache.get(key)!;
   return DEFAULTS[key];
+}
+
+export async function initFeatureFlagsCache(): Promise<void> {
+  const rows = await prisma.feature_flags.findMany({
+    select: { key: true, enabled: true },
+  });
+  const byKey = new Map(rows.map((row) => [row.key, row.enabled]));
+  const next = new Map<FeatureFlagKey, boolean>();
+
+  for (const key of FEATURE_FLAG_KEYS) {
+    if (!byKey.has(key)) {
+      await prisma.feature_flags.create({
+        data: { key, enabled: DEFAULTS[key] },
+      });
+      next.set(key, DEFAULTS[key]);
+      continue;
+    }
+
+    next.set(key, byKey.get(key)!);
+  }
+
+  cache = next;
 }
 
 export function isFeatureEnabled(key: FeatureFlagKey): boolean {
@@ -62,11 +86,21 @@ export function listFeatureFlags(): FeatureFlag[] {
   }));
 }
 
-export function setFeatureFlag(
+export async function setFeatureFlag(
   key: FeatureFlagKey,
   enabled: boolean,
-): FeatureFlag {
-  overrides.set(key, enabled);
+): Promise<FeatureFlag> {
+  await prisma.feature_flags.upsert({
+    where: { key },
+    create: { key, enabled },
+    update: { enabled },
+  });
+
+  if (!cache) {
+    cache = new Map<FeatureFlagKey, boolean>();
+  }
+  cache.set(key, enabled);
+
   return {
     key,
     ...FLAG_META[key],

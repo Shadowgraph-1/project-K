@@ -26,8 +26,12 @@ import searchRoutes from "./routes/search.routes.js";
 import { API_DESCRIPTION, OPENAPI_TAGS } from "./openapi/description.js";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
+import { loggerOptions } from "./utils/logger.js";
+import { initFeatureFlagsCache } from "./services/feature-flags.service.js";
 
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: loggerOptions });
+
+await initFeatureFlagsCache();
 
 await app.register(helmet, {
   contentSecurityPolicy: env.NODE_ENV === "production",

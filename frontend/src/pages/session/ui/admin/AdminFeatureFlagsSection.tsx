@@ -92,7 +92,7 @@ export function AdminFeatureFlagsSection({
         </div>
       )}
       <p className="mt-2 px-3 text-xs text-muted-foreground">
-        Флаги хранятся в памяти сервера и сбрасываются при перезапуске.
+        Изменения сохраняются в базе и действуют для всех пользователей.
       </p>
     </div>
   );

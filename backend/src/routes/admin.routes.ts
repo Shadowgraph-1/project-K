@@ -158,7 +158,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
     async (request) => {
       const { key } = parseBody(featureFlagKeyParamSchema, request.params);
       const { enabled } = parseBody(updateFeatureFlagSchema, request.body);
-      return adminService.updateAdminFeatureFlag(key, enabled);
+      return await adminService.updateAdminFeatureFlag(key, enabled);
     },
   );
 };
