@@ -1,7 +1,7 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
-import { TASK_PRIORITIES } from "../../../src/constants/task-priorities.js";
+import { TASK_PRIORITIES } from "../constants/task-priorities.js";
 import { formatToolError } from "../errors.js";
 import type { KonoApiClient } from "../kono-api.js";
 import { toolText } from "../result.js";

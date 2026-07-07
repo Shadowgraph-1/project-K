@@ -6,7 +6,6 @@ const configSchema = z.object({
     .url()
     .default("http://localhost:3000/api")
     .transform((url) => url.replace(/\/$/, "")),
-  /** JWT после POST /auth/login — тот же token, что Bearer в Swagger */
   KONO_API_KEY: z.string().min(1, "KONO_API_KEY обязателен"),
 });
 
