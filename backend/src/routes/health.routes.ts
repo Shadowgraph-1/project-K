@@ -1,8 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
-import { checkDatabase, checkLlm } from "../services/health.service.js";
-import { env } from "../config/env.js";
 import { routeSchema } from "../openapi/route-schema.js";
 import { healthResponse } from "../openapi/responses.js";
+import { getHealth } from "../services/health.service.js";
 
 const healthRoutes: FastifyPluginAsync = async (app) => {
   app.get(
@@ -22,31 +21,14 @@ const healthRoutes: FastifyPluginAsync = async (app) => {
       }),
     },
     async (_req, reply) => {
-      const startedAt = Date.now();
-
-      const [database, ai] = await Promise.all([checkDatabase(), checkLlm()]);
-
-      const checks = {
-        api: {
-          status: "ok" as const,
-          latencyMs: Date.now() - startedAt,
-        },
-        database,
-        ai,
-      };
-
-      const allOk = Object.values(checks).every((c) => c.status === "ok");
-      const anyDown = Object.values(checks).some((c) => c.status === "down");
-
-      const status = allOk ? "healthy" : anyDown ? "degraded" : "unhealthy";
-
-      return reply.status(database.status === "down" ? 503 : 200).send({
-        status,
-        timestamp: new Date().toISOString(),
-        version: env.VERSION,
-        checks,
-      });
-    },
+      const health = await getHealth();
+      return reply.status(health.httpStatus).send({
+        status: health.status,
+        timestamp: health.timestamp,
+        version: health.version,
+        checks: health.checks,
+      })
+    }
   );
 };
 

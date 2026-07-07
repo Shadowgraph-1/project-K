@@ -1,3 +1,4 @@
+import { env } from "../config/env.js";
 import { prisma } from "../db/prisma.js";
 import { llm } from "../llm/client.js";
 
@@ -6,6 +7,36 @@ type CheckResult = {
   latencyMs: number;
   message?: string;
 };
+
+export async function getHealth() {
+  const startedAt = Date.now();
+
+  const [database, ai] = await Promise.all([
+    checkDatabase(),
+    checkLlm(),
+  ]);
+
+  const checks = {
+    api: {
+      status: "ok" as const,
+      latencyMs: Date.now() - startedAt,
+    },
+    database,
+    ai
+  };
+
+  const allOk = Object.values(checks).every((c) => c.status === 'ok');
+  const anyDown = Object.values(checks).some((c) => c.status === 'down');
+  const status = allOk ? "healthy" : anyDown ? "degraded" : "unhealthy";
+
+  return { 
+    status,
+    timestamp: new Date().toISOString(),
+    version: env.VERSION,
+    checks,
+    httpStatus: database.status === "down" ? 503 : 200,
+  };
+}
 
 async function timed<T>(
   fn: () => Promise<T>,

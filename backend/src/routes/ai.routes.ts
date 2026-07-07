@@ -1,14 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
-import { runAssistantChatWithTools } from "../ai/assistant-chat.js";
 import { aiChatSchema } from "../schemas/ai.schema.js";
-import { createLlmClient, createLlmSettings, llm } from "../llm/client.js";
-import { buildSystemPrompt } from "../llm/prompt.js";
-import { parseBody } from "../utils/parse-body.js";
-import { replyApiError } from "../utils/api-errors.js";
-import { resolveUserApiKey } from "../services/llm-settings.service.js";
-import { isFeatureEnabled } from "../services/feature-flags.service.js";
 import { routeSchema } from "../openapi/route-schema.js";
 import { aiChatResponse, errorResponse } from "../openapi/responses.js";
+import * as aiService from "../services/ai.service.js"
+import { parseBody } from "../utils/parse-body.js";
+import { ApiHttpError, replyApiError } from "../utils/api-errors.js";
 
 const aiRoutes: FastifyPluginAsync = async (app) => {
   app.post(
@@ -34,62 +30,14 @@ const aiRoutes: FastifyPluginAsync = async (app) => {
       config: { rateLimit: { max: 20, timeWindow: "1 minute" } },
     },
     async (request, reply) => {
-      if (!isFeatureEnabled("assistant_enabled")) {
-        return replyApiError(reply, "forbidden");
-      }
-
-      const userKey = await resolveUserApiKey(request.user.id);
-      const activeLlm = userKey
-        ? createLlmClient({ ...createLlmSettings(), apiKey: userKey })
-        : llm;
-
-      const {
-        message,
-        context,
-        workspaces,
-        tasks,
-        subtasks,
-        history,
-        toolsEnabled,
-        enabledTools,
-      } = parseBody(aiChatSchema, request.body);
-
-      const systemPrompt = buildSystemPrompt(
-        tasks,
-        subtasks,
-        context,
-        workspaces,
-      );
-
-      const historyMessages = (history ?? [])
-        .filter((m) => m.content?.trim())
-        .map((m) => ({ role: m.role, content: m.content }));
+      const body = parseBody(aiChatSchema, request.body);
 
       try {
-        const { reply: replyText, dataChanged, toolsFallback } =
-          await runAssistantChatWithTools({
-          client: activeLlm.client,
-          model: activeLlm.model,
-          systemPrompt,
-          history: historyMessages,
-          message,
-          userId: request.user.id,
-          toolsEnabled,
-          enabledTools,
-        });
-
-        const hasDataChanged =
-          dataChanged.workspaces ||
-          dataChanged.tasks ||
-          dataChanged.subtasks ||
-          dataChanged.activity;
-
-        return {
-          reply: replyText,
-          dataChanged: hasDataChanged ? dataChanged : undefined,
-          toolsFallback: toolsFallback || undefined,
-        };
+        return await aiService.chat(request.user.id, body);
       } catch (err) {
+        if (err instanceof ApiHttpError) {
+          return replyApiError(reply, err.code);
+        }
         request.log.error(err);
         return replyApiError(reply, "ai_unavailable");
       }
