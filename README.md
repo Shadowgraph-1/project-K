@@ -44,7 +44,6 @@
 - [17. Настройка MCP](#17-настройка-mcp)
   - [MCP в чате Kono AI](#mcp-в-чате-kono-ai)
   - [Внешний stdio-сервер](#внешний-stdio-сервер)
-  - [Инструменты (tools)](#инструменты-tools)
   - [Документация в приложении](#документация-в-приложении)
 - [18. Настройка коннекторов](#18-настройка-коннекторов)
   - [Telegram-коннектор](#telegram-коннектор)
@@ -130,7 +129,7 @@
 
 | Экран / модуль   | Назначение                                                   |
 | ---------------- | ------------------------------------------------------------ |
-| **Админ-панель** | Сводка платформы, список пользователей с удалением (`DELETE /admin/users/:userId`, confirm в UI; нельзя удалить себя или другого админа), журнал ошибок [API](#glossary-api) (in-memory), [feature flags](#glossary-feature-flags) |
+| **Админ-панель** | Сводка платформы, список пользователей с удалением (`DELETE /admin/users/:userId`, confirm в UI; нельзя удалить себя или другого админа), журнал ошибок [API](#glossary-api) (in-memory), [feature flags](#glossary-feature-flags) в PostgreSQL (`feature_flags`) |
 | **Статистика**   | Агрегированные метрики по пользователям, проектам, задачам, health БД/AI |
 
 ---
@@ -138,7 +137,7 @@
 ## 5. Ключевые особенности
 
 1. **AI-компаньон с контекстом проекта** — чат в сессии; контекст задач ([`withTask`](#glossary-withtask)). LLM через ключи провайдеров или OpenAI-compatible API. **[MCP tools](#glossary-mcp)** в чате: 12 инструментов (проекты, задачи, подзадачи, комментарии, поиск).
-2. **MCP для внешних клиентов** — stdio-сервер Kono (`npm run mcp`), JWT пользователя, те же tools для Cursor / Claude Desktop / Windsurf.
+2. **MCP для внешних клиентов** — npm-пакет `@kono/mcp-server` (stdio), JWT пользователя, те же tools для Cursor / Claude Desktop / Windsurf.
 3. **Совместные проекты** — владелец, роли участников, инвайты, общий список задач.
 3. **Лента активностей** — в карточке задачи одна секция «Комментарии»: системные события (статусы, подзадачи) и пользовательские сообщения в общем потоке; вложенные ответы, сворачиваемые ветки.
 4. **Виды задач в сессии** — список (строки с контекстным меню), [канбан](#glossary-kanban) по статусам, вид «Даты» с группировкой (просрочено → сегодня → завтра → неделя → позже → без даты).
@@ -148,7 +147,7 @@
 8. **[Горячие клавиши](#glossary-keyboard-shortcuts)** — Ctrl+K поиск, Ctrl+B сайдбар, Ctrl+N новая задача, Ctrl+J Kono AI.
 9. **Фильтр и сортировка задач** — фильтр по статусу на сервере (все 4 статуса + «Все задачи»); сортировка на клиенте по дате создания и названию (asc/desc). Отдельные кнопки в toolbar: **Фильтр** · **Сортировка** · **Настройки** (вид, добавить / удалить все).
 10. **История статуса задачи** — `task_status_history`, timeline в карточке (`TaskStatusHistoryTimeline`).
-11. **[Коннекторы](#glossary-connectors)** — каталог интеграций в `/projects/connectors` и на лендинге; Telegram уже подключается локально через `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID`, управляется через API и UI.
+11. **[Коннекторы](#glossary-connectors)** — каталог интеграций в `/projects/connectors` и на лендинге; Telegram: один бот (`TELEGRAM_BOT_TOKEN`), у каждого пользователя свой `telegram_chat_id`, управление через API и UI.
 12. **Лендинг** — секции MCP и коннекторов, двухколоночный справочник tools, карусель «Собрано».
 
 ---
@@ -164,9 +163,9 @@
 | Сервис                 | Назначение                                     | Статус      |
 | ---------------------- | ---------------------------------------------- | ----------- |
 | **LM Studio / [OpenAI-compatible](#glossary-openai-compatible)** | Чат Kono AI (`POST /api/ai/chat`), MCP tools | **Внедрено** |
-| **[MCP](#glossary-mcp) (stdio-сервер Kono)** | 12 tools для внешних AI-клиентов | **Внедрено** (`backend/mcp-server`, `npm run mcp`) |
+| **[MCP](#glossary-mcp) (stdio-сервер Kono)** | 12 tools для внешних AI-клиентов | **Внедрено** (`mcp-server`, `@kono/mcp-server`) |
 | **OpenRouter / Groq / Together AI** | LLM с tool calling через личные ключи в `/projects/api-keys` | **Внедрено** (UI + docs) |
-| **Telegram Bot API** | Локальные уведомления о создании задач через Telegram-бота | **Внедрено** (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `GET/PATCH/DELETE /api/connectors`) |
+| **Telegram Bot API** | Локальные уведомления о создании задач через Telegram-бота | **Внедрено** (`TELEGRAM_BOT_TOKEN`, персональный `telegram_chat_id`, `GET/PATCH/DELETE /api/connectors`) |
 | **Slack, Notion, GitHub, Discord…** | [Коннекторы](#glossary-connectors) — будущие уведомления и синхронизация | **Запланировано** (каталог UI готов, OAuth позже) |
 
 ---
@@ -190,7 +189,8 @@
 | `task_activity`           | `id`, `task_id`, `type`, заголовок, `body`, `metadata` (ветки через `parentActivityId`)          |
 | `task_status_history`     | `id`, `task_id`, `from_status`, `to_status`, `user_id`, `changed_at` — хронология смен статуса задачи |
 | `user_llm_keys`           | пользовательские ключи LLM: `label`, `api_key`, `key_hint`, `is_active`                          |
-| `user_connectors`         | подключения внешних сервисов: `user_id`, `connector_id`, `enabled`, `created_at`, `updated_at`   |
+| `user_connectors`         | подключения внешних сервисов: `user_id`, `connector_id`, `enabled`, `telegram_chat_id`, `created_at`, `updated_at` |
+| `feature_flags`           | флаги функций платформы: `key`, `enabled`, `updated_at` — источник правды для админских переключателей |
 
 ---
 
@@ -211,6 +211,10 @@ erDiagram
   users ||--o{ task_status_history : "changed by"
   users ||--o{ user_llm_keys : stores
   users ||--o{ user_connectors : configures
+  feature_flags {
+    string key PK
+    boolean enabled
+  }
 ```
 
 ---
@@ -243,7 +247,7 @@ flowchart TB
 
   DB[(PostgreSQL)]
   LLM["OpenAI-compatible LLM — AI-компаньон"]
-  MCP["stdio MCP server — npm run mcp"]
+  MCP["stdio MCP server — @kono/mcp-server"]
   TG["Telegram Bot API"]
 
   FE -->|"HTTP REST JSON"| BE
@@ -290,7 +294,7 @@ stateDiagram-v2
 
 **3. Работа с компаньоном.** В сайдбаре или плавающей панели открывает чат. При необходимости включает **MCP** под полем ввода — модель вызывает tools Kono (создать задачу, сменить статус, подзадачи, комментарий, поиск). Ключ LLM с поддержкой tools — в **API ключах**.
 
-**4. Коннекторы.** В разделе `/projects/connectors` пользователь открывает каталог, подключает Telegram, включает или выключает уведомления switch-переключателем, удаляет подключение через меню карточки. Вкладка **«Документация»** описывает локальную настройку BotFather, `chat_id`, env и API.
+**4. Коннекторы.** В разделе `/projects/connectors` пользователь открывает каталог, подключает Telegram (указывает свой Telegram ID), включает или выключает уведомления switch-переключателем, удаляет подключение через меню карточки. Вкладка **«Документация»** описывает настройку BotFather, получение ID и API.
 
 **5. Личный кабинет.** В `/projects/settings` пользователь редактирует имя и email (сохранение на сервер), меняет пароль, настраивает in-app уведомления, выходит из сессии или удаляет аккаунт. API ключи LLM — на отдельной странице `/projects/api-keys`.
 
@@ -298,7 +302,7 @@ stateDiagram-v2
 
 **7. Командная работа.** Приглашает коллег по ссылке, работает с участниками проекта, обсуждает задачи в комментариях и следит за активностью через уведомления. *([Спринты](#glossary-sprint) — в планах, пока не реализованы.)*
 
-**8. Администратор.** Раздел `/projects/admin`: сводка платформы, список пользователей с удалением, [feature flags](#glossary-feature-flags), журнал ошибок. *(Браузер всех проектов — не реализован.)*
+**8. Администратор.** Раздел `/projects/admin`: сводка платформы, список пользователей с удалением, [feature flags](#glossary-feature-flags) (хранятся в PostgreSQL, действуют для всех пользователей), журнал ошибок. *(Браузер всех проектов — не реализован.)*
 
 **Побочный путь.** Пользователь вводит несуществующий URL — видит страницу 404 с иллюстрацией и кнопками возврата на главную или в проекты.
 
@@ -360,7 +364,7 @@ Toolbar задач в шапке страницы (`SessionTasksPageHeader` → 
 | **Could**          | [Command palette](#glossary-command-palette) / глобальный поиск, [keyboard shortcuts](#glossary-keyboard-shortcuts) — **реализовано**                                                                                     |
 | **Фактически в проекте** | [JWT](#glossary-jwt), [CRUD](#glossary-crud) ядра, [kanban](#glossary-kanban), три вида задач, история статусов, поиск, горячие клавиши, in-app уведомления, **личный кабинет** (профиль, смена пароля, удаление аккаунта), LLM-ключи, админка, Swagger, Docker Compose, unit-тесты критичных сервисов, лендинг с демо; **[MCP](#glossary-mcp) tool calling** (12 tools), **stdio MCP-сервер**, docs-view API ключей / MCP / коннекторов, **каталог коннекторов**, **Telegram-коннектор** с включением/выключением/удалением, обновлённый лендинг |
 
-**Ограничения текущей версии:** спринты, назначение исполнителя из команды, OAuth-коннекторы и индивидуальная привязка Telegram через `/start token`, email-уведомления, [push](#glossary-push) от действий других участников, [pagination](#glossary-pagination) списка задач, браузер всех проектов в админке, e2e-тесты UI.
+**Ограничения текущей версии:** спринты, назначение исполнителя из команды, OAuth-коннекторы, привязка Telegram через `/start token` у бота (сейчас ID вводится вручную), email-уведомления, [push](#glossary-push) от действий других участников, [pagination](#glossary-pagination) списка задач, браузер всех проектов в админке, скрытие UI по feature flags на фронте, e2e-тесты UI.
 
 ---
 
@@ -463,12 +467,12 @@ AI + инт│    │    │    │    │    │░░░░│████│ 
 - [x] Локальная [LLM](#glossary-llm) ([LM Studio](#glossary-lm-studio) и др.), эндпоинт `/api/ai/chat`
 - [x] Панель Kono AI (`AssistantFloatingPanel`, [`withTask`](#glossary-withtask), меню MCP tools)
 - [x] **[MCP tool calling](#glossary-mcp)** в чате: 12 tools (`kono-tools.ts`)
-- [x] **Внешний MCP stdio-сервер** (`backend/mcp-server`, `npm run mcp`, JWT в `KONO_API_KEY`)
+- [x] **Внешний MCP stdio-сервер** (`mcp-server`, `@kono/mcp-server`, JWT в `KONO_API_KEY`)
 - [x] Страницы **API ключей** и **MCP** в сессии: обзор + docs-view, TOC
 - [x] **Коннекторы** — каталог `/projects/connectors`, вкладка документации, секция на лендинге
-- [x] **Telegram-коннектор** — локальные уведомления о создании задач, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `TELEGRAM_PROXY`, управление подключением через UI/API
+- [x] **Telegram-коннектор** — уведомления о задачах, `TELEGRAM_BOT_TOKEN`, персональный `telegram_chat_id`, `TELEGRAM_PROXY`, управление через UI/API
 - [x] **Лендинг** — секции MCP / коннекторы, двухколоночный блок, карусель «Собрано»
-- [x] Админ-панель (`/admin`): overview, users, **удаление пользователей** (`DELETE /admin/users/:userId`), error logs, [feature flags](#glossary-feature-flags)
+- [x] Админ-панель (`/admin`): overview, users, **удаление пользователей** (`DELETE /admin/users/:userId`), error logs, [feature flags](#glossary-feature-flags) в таблице `feature_flags`
 
 </details>
 
@@ -613,6 +617,7 @@ KONO_API_KEY=
 # Telegram-коннектор — см. [§18 Настройка коннекторов](#18-настройка-коннекторов)
 TELEGRAM_BOT_TOKEN=
 TELEGRAM_CHAT_ID=
+TELEGRAM_DEFAULT_CHAT_EMAIL=
 TELEGRAM_PROXY=
 ```
 
@@ -649,63 +654,15 @@ ADMIN_EMAILS=
 
 ### Внешний stdio-сервер
 
-Для Cursor / Claude Desktop / других MCP-хостов — локальный процесс в `backend/mcp-server`:
+Для Cursor / Claude Desktop / Windsurf и других MCP-хостов — отдельный npm-пакет **`@kono/mcp-server`** в папке [`mcp-server/`](mcp-server/). Транспорт stdio, авторизация JWT пользователя, те же 12 tools, что в чате.
 
-**1. JWT пользователя**
+| Что нужно | Где |
+| --------- | --- |
+| Установка через `npx`, JWT, конфиг клиента, env, локальная разработка, публикация в npm | [`mcp-server/README.md`](mcp-server/README.md) |
+| Список tools и структура пакета | [`mcp-server/README.md`](mcp-server/README.md#инструменты-tools) |
+| Описания tools для UI | [mcp-tools.ts](frontend/src/shared/config/mcp-tools.ts) |
 
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"you@example.com","password":"your-password"}'
-```
-
-Из ответа возьмите поле `token`.
-
-**2. Переменные в `backend/.env`**
-
-```env
-KONO_API_URL=http://localhost:3000/api
-KONO_API_KEY=<token из login>
-```
-
-**3. Запуск сервера**
-
-```bash
-cd backend
-npm run mcp
-```
-
-**4. Конфиг MCP-клиента** (пример для Cursor / Claude Desktop):
-
-```json
-{
-  "mcpServers": {
-    "kono": {
-      "command": "npm",
-      "args": ["run", "mcp"],
-      "cwd": "<абсолютный-путь>/project-K/backend",
-      "env": {
-        "KONO_API_URL": "http://localhost:3000/api",
-        "KONO_API_KEY": "<token из POST /auth/login>"
-      }
-    }
-  }
-}
-```
-
-Backend API при этом должен быть запущен (`npm run dev` в `backend/`).
-
-### Инструменты (tools)
-
-| Категория | Tools |
-| --------- | ----- |
-| Проекты | `list_projects`, `create_project` |
-| Задачи | `list_tasks`, `create_task`, `update_task`, `delete_task` |
-| Подзадачи | `list_subtasks`, `create_subtask`, `update_subtask`, `delete_subtask` |
-| Комментарии | `add_task_comment` |
-| Поиск | `search_kono` |
-
-Полные описания — в [mcp-tools.ts](frontend/src/shared/config/mcp-tools.ts). Удаление (`delete_task`, `delete_subtask`) помечено как destructive — только по явной просьбе пользователя.
+Кратко: backend должен быть запущен (`npm run dev` в `backend/`), JWT — из `POST /api/auth/login`, в конфиге MCP-клиента — `npx -y @kono/mcp-server@latest` и `KONO_API_URL` / `KONO_API_KEY` в `env`.
 
 ### Документация в приложении
 
@@ -730,17 +687,23 @@ Backend API при этом должен быть запущен (`npm run dev` 
 1. Backend получает событие создания задачи.
 2. `tasks.service.ts` вызывает `notifyTelegramForUser(userId, ...)`.
 3. `telegram.service.ts` проверяет, включён ли коннектор у пользователя через `user_connectors`.
-4. Если подключение установлено и включено, backend отправляет сообщение в Telegram Bot API методом `sendMessage`.
+4. Берётся `telegram_chat_id` пользователя из БД (или fallback из `TELEGRAM_CHAT_ID` для email из `TELEGRAM_DEFAULT_CHAT_EMAIL`).
+5. Если подключение включено и chat_id известен, backend отправляет сообщение в Telegram Bot API методом `sendMessage`.
 
 Требуемые переменные в `backend/.env`:
 
 ```env
 TELEGRAM_BOT_TOKEN=<token из BotFather>
-TELEGRAM_CHAT_ID=<chat_id личного чата с ботом>
+
+# опционально: fallback chat_id для TELEGRAM_DEFAULT_CHAT_EMAIL
+TELEGRAM_CHAT_ID=
+TELEGRAM_DEFAULT_CHAT_EMAIL=litvin4chuk@mail.ru
 
 # опционально, если Node.js не может подключиться к api.telegram.org напрямую
 TELEGRAM_PROXY=http://127.0.0.1:10809
 ```
+
+Остальные пользователи указывают свой Telegram ID в UI при подключении коннектора (`/projects/connectors`).
 
 Быстрая проверка Telegram API:
 
@@ -748,8 +711,6 @@ TELEGRAM_PROXY=http://127.0.0.1:10809
 Invoke-RestMethod "https://api.telegram.org/bot<TOKEN>/getMe"
 Invoke-RestMethod "https://api.telegram.org/bot<TOKEN>/getUpdates"
 ```
-
-Для получения `chat_id` пользователь должен открыть бота в Telegram и отправить `/start`. После этого в ответе `getUpdates` используется поле `message.chat.id`.
 
 ### Управление подключением
 
@@ -764,15 +725,16 @@ Invoke-RestMethod "https://api.telegram.org/bot<TOKEN>/getUpdates"
 
 | Поле | Значение |
 | ---- | -------- |
-| `configured` | сервер настроен: есть `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` |
+| `configured` | сервер настроен: есть `TELEGRAM_BOT_TOKEN` |
 | `installed` | пользователь подключил коннектор; запись есть в `user_connectors` |
 | `enabled` | уведомления включены; switch на карточке активен |
+| `telegramChatId` | сохранённый Telegram ID пользователя (может быть `null` при fallback) |
 
 Поведение UI:
 
-- **Подключить** — создаёт запись в `user_connectors` и включает Telegram.
+- **Подключить** — диалог с полем «Ваш Telegram ID» и краткой инструкцией; создаёт запись в `user_connectors`.
 - **Switch** — включает или выключает уведомления, не удаляя подключение.
-- **⋮ → Удалить** — удаляет подключение; карточка возвращается в доступные.
+- **⋮ → Изменить ID / Удалить** — смена chat_id или удаление подключения.
 
 ### API коннекторов
 
@@ -781,7 +743,7 @@ Invoke-RestMethod "https://api.telegram.org/bot<TOKEN>/getUpdates"
 | Метод | Назначение |
 | ----- | ---------- |
 | `GET /api/connectors` | список поддерживаемых коннекторов и их состояния |
-| `PATCH /api/connectors/:id` | включение / выключение уведомлений (`{ "enabled": true/false }`) |
+| `PATCH /api/connectors/:id` | включение / выключение (`{ "enabled": true, "telegramChatId": "123456789" }`) |
 | `DELETE /api/connectors/:id` | удаление подключения коннектора |
 
 Пример включения Telegram:
@@ -792,7 +754,8 @@ Authorization: Bearer <JWT>
 Content-Type: application/json
 
 {
-  "enabled": true
+  "enabled": true,
+  "telegramChatId": "123456789"
 }
 ```
 
@@ -810,7 +773,27 @@ Authorization: Bearer <JWT>
 | Каталог коннекторов | `/projects/connectors` |
 | Документация коннекторов | `/projects/connectors?view=docs` |
 
-Ограничение текущей версии: Telegram работает как локальная интеграция на один `TELEGRAM_CHAT_ID`. Полноценная пользовательская привязка через `/start token`, хранение индивидуальных `chat_id` и OAuth-потоки для других сервисов запланированы как следующий этап.
+Ограничение текущей версии: OAuth-потоки для Slack, Notion и других сервисов из каталога; автоматическая выдача chat_id ботом Kono через `/start` (сейчас ID вводится вручную или через @userinfobot).
+
+### Feature flags
+
+Переключатели в `/projects/admin` → **Feature flags**. Значения хранятся в PostgreSQL (`feature_flags`), при старте backend загружаются в кэш (`initFeatureFlagsCache`).
+
+| Ключ | Что блокирует при `enabled: false` |
+| ---- | ---------------------------------- |
+| `assistant_enabled` | `POST /api/ai/chat`, Kono AI |
+| `registration_open` | `POST /api/auth/register` |
+| `workspace_creation` | `POST /api/workspaces`, tool `create_project` в AI |
+| `llm_user_keys` | все `/api/llm-keys/*` |
+
+API (только админ):
+
+| Метод | URL |
+| ----- | --- |
+| `GET` | `/api/admin/feature-flags` |
+| `PATCH` | `/api/admin/feature-flags/:key` — body `{ "enabled": true/false }` |
+
+Проверка на backend через `isFeatureEnabled()`; обычный UI кнопки не скрывает — блокировка по **403** на API.
 
 ---
 
@@ -892,8 +875,12 @@ project-K/
 │   │   ├── permissions.ts
 │   │   ├── db/prisma.ts
 │   │   └── index.ts
-│   ├── mcp-server/                 # stdio MCP (npm run mcp)
 │   └── package.json
+│
+├── mcp-server/                     # stdio MCP (@kono/mcp-server)
+│   ├── src/
+│   ├── package.json
+│   └── README.md                   # установка, JWT, конфиг, npm
 │
 ├── .gitignore
 └── README.md
@@ -921,9 +908,11 @@ project-K/
 | `backend/src/services/*.test.ts` | Unit-тесты auth и user (профиль, пароль, удаление) |
 | `backend/src/schemas/user.schema.test.ts` | Тесты Zod-схем личного кабинета |
 | `backend/src/routes/connectors.routes.ts` | API коннекторов (`GET/PATCH/DELETE /api/connectors`) |
-| `backend/src/services/connectors.service.ts` | Состояние `installed/enabled/configured` для коннекторов |
-| `backend/src/services/telegram.service.ts` | Отправка Telegram-уведомлений через Bot API |
-| `backend/mcp-server/` | Внешний stdio MCP-сервер |
+| `backend/src/services/connectors.service.ts` | Состояние коннекторов, `resolveTelegramChatId` |
+| `backend/src/services/feature-flags.service.ts` | Флаги: кэш + PostgreSQL `feature_flags` |
+| `backend/src/services/telegram.service.ts` | Отправка Telegram-уведомлений в chat_id пользователя |
+| `backend/src/utils/passwordHash.ts` | Хэширование паролей (argon2) |
+| `mcp-server/` | Внешний stdio MCP-сервер (`@kono/mcp-server`), см. [`mcp-server/README.md`](mcp-server/README.md) |
 | `frontend/src/pages/home/ui/components/DemoScrollShowcase.tsx` | Блок демо-видео на лендинге |
 | `frontend/src/pages/home/ui/components/HomeBentoCard.tsx` | [Bento](#glossary-bento)-карточки в секции фич |
 | `frontend/src/pages/offline/ConnectionEmptyState.tsx` | UI при потере связи с API |
@@ -1017,7 +1006,7 @@ backend/
         └── user.schema.test.ts
 ```
 
-**Как устроены тесты сервисов:** `vi.mock` подменяет `../db/prisma.js`, поэтому тесты не пишут в БД. Для проверки паролей используется реальный `bcrypt` (как в production-коде).
+**Как устроены тесты сервисов:** `vi.mock` подменяет `../db/prisma.js`, поэтому тесты не пишут в БД. Для проверки паролей используется реальный **argon2** (как в production-коде, `passwordHash.ts`).
 
 **Как добавить тест:** создай файл `*.test.ts` рядом с модулем или в `src/schemas/`, запусти `npm test`. Vitest подхватит файл автоматически.
 
@@ -1038,10 +1027,10 @@ backend/
 | <a id="glossary-bulk"></a> <ins>`bulk`</ins> | массово | Действия над несколькими выделенными задачами (удаление, статус) |
 | <a id="glossary-botfather"></a> <ins>`BotFather`</ins> | официальный бот Telegram | Создаёт Telegram-бота и выдаёт `TELEGRAM_BOT_TOKEN` |
 | <a id="glossary-connectors"></a> <ins>`connectors`</ins> | коннекторы, интеграции | Каталог сервисов: `/projects/connectors`, вкладка docs, Telegram-коннектор |
-| <a id="glossary-mcp"></a> <ins>`MCP`</ins> | Model Context Protocol | 12 tools в чате Kono AI + stdio-сервер `npm run mcp` |
+| <a id="glossary-mcp"></a> <ins>`MCP`</ins> | Model Context Protocol | 12 tools в чате Kono AI + npm-пакет `@kono/mcp-server` |
 | <a id="glossary-drag-and-drop"></a> <ins>`drag-and-drop`</ins> | перетаскивание (DnD) | В канбане — перенос карточки между колонками, смена статуса |
 | <a id="glossary-empty-state"></a> <ins>`empty state`</ins> | пустое состояние | Экран «нет данных» — `EmptySession`, `ConnectionEmptyState` |
-| <a id="glossary-feature-flags"></a> <ins>`feature flags`</ins> | флаги функций | Переключатели в админке без отдельного деплоя |
+| <a id="glossary-feature-flags"></a> <ins>`feature flags`</ins> | флаги функций | Таблица `feature_flags` в PostgreSQL; админка `/projects/admin`; кэш при старте backend |
 | <a id="glossary-hub"></a> <ins>`hub`</ins> | центральный экран | Точка входа в раздел: hub проектов, hub участников |
 | <a id="glossary-in-app"></a> <ins>`in-app`</ins> | внутри приложения | Колокольчик и toast; без email и push |
 | <a id="glossary-kanban"></a> <ins>`kanban`</ins> | канбан-доска | Колонки по статусам; DnD меняет `TaskStatus` |
@@ -1052,7 +1041,7 @@ backend/
 | <a id="glossary-timeline"></a> <ins>`timeline`</ins> | временная лента | Вид «Даты», история статуса в карточке |
 | <a id="glossary-toast"></a> <ins>`toast`</ins> | всплывающий тост | Короткое уведомление в углу (Sonner) |
 | <a id="glossary-tool-calling"></a> <ins>`tool calling`</ins> | вызов инструментов | LLM вызывает MCP tools Kono из чата (**реализовано**); нужна модель с tools |
-| <a id="glossary-telegram-bot-api"></a> <ins>`Telegram Bot API`</ins> | API Telegram-ботов | Отправка уведомлений через `sendMessage`; локальная настройка через `TELEGRAM_CHAT_ID` |
+| <a id="glossary-telegram-bot-api"></a> <ins>`Telegram Bot API`</ins> | API Telegram-ботов | `sendMessage` в персональный `telegram_chat_id`; бот — `TELEGRAM_BOT_TOKEN` |
 | <a id="glossary-user"></a> <ins>`user`</ins> | пользователь | Обычная роль (не admin) |
 | <a id="glossary-withtask"></a> <ins>`withTask`</ins> | with task context | Флаг AI-чата: модель видит задачи текущего проекта |
 | <a id="glossary-workspace"></a> <ins>`workspace`</ins> | рабочее пространство | **Проект** в БД; ключ `K-XXXXXX` |
@@ -1113,4 +1102,4 @@ backend/
 | <a id="glossary-zod"></a> <ins>`Zod`</ins> | валидация схем | Входные данные routes + OpenAPI |
 
 > [!NOTE]
-> **Окончательная версия документа.** Актуальность: 04.07.2026. README соответствует финальной версии проекта Kono: личный кабинет, MCP, API-ключи, Telegram-коннектор, Docker Compose, unit-тесты критичных сервисов backend и обновлённый лендинг.
+> **Окончательная версия документа.** Актуальность: 07.07.2026. README соответствует финальной версии проекта Kono: личный кабинет, MCP, API-ключи, Telegram-коннектор (персональный chat_id), feature flags в PostgreSQL, argon2, Docker Compose, unit-тесты критичных сервисов backend и обновлённый лендинг.
