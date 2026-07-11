@@ -111,7 +111,7 @@ export function SearchBar({ className, focused, onFocusChange }: Props) {
       <button
         type="button"
         className={cn(
-          "flex h-8 w-auto min-w-[13rem] max-w-88 shrink-0 items-center gap-2 rounded-lg bg-muted/50 px-2.5 text-left ring-1 ring-border/35 transition-colors hover:bg-muted/70",
+          "flex h-8 w-full min-w-0 max-w-40 shrink items-center gap-2 rounded-lg bg-muted/50 px-2.5 text-left ring-1 ring-border/35 transition-colors hover:bg-muted/70 sm:w-auto sm:min-w-[13rem] sm:max-w-88 sm:shrink-0",
           className,
         )}
         onClick={() => onFocusChange(true)}

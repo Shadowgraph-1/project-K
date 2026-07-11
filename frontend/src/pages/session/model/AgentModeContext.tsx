@@ -9,6 +9,8 @@ import {
 } from "react";
 import { useLocation } from "react-router-dom";
 
+import { useSessionSecondarySidebarStore } from "@/shared/model/useSessionSecondarySidebarStore";
+
 type AgentModeContextValue = {
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -18,10 +20,23 @@ type AgentModeContextValue = {
 const AgentModeContext = createContext<AgentModeContextValue | null>(null);
 
 export function AgentModeProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpenState] = useState(false);
+
+  const setOpen = useCallback((next: boolean) => {
+    if (next) {
+      useSessionSecondarySidebarStore.getState().setOpen(false);
+    }
+    setOpenState(next);
+  }, []);
 
   const toggle = useCallback(() => {
-    setOpen((current) => !current);
+    setOpenState((current) => {
+      const next = !current;
+      if (next) {
+        useSessionSecondarySidebarStore.getState().setOpen(false);
+      }
+      return next;
+    });
   }, []);
 
   const value = useMemo(
@@ -30,7 +45,7 @@ export function AgentModeProvider({ children }: { children: ReactNode }) {
       setOpen,
       toggle,
     }),
-    [open, toggle],
+    [open, setOpen, toggle],
   );
 
   return (

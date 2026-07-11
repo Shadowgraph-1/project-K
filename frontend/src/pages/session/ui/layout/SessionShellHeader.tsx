@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Bell } from "lucide-react";
+import { Bell, SquareMousePointer } from "lucide-react";
 
 import { useNotifys } from "@/entities/notification/model/useNotifys";
+import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { useInviteCountQuery } from "@/hooks/use-invites-query";
+import { useAgentMode } from "@/pages/session/model/AgentModeContext";
 import { useNotificationPrefsStore } from "@/shared/model/useNotificationPrefsStore";
 import { useSearchBar } from "@/hooks/use-searchBar";
 import { Button } from "@/shared/ui/button";
@@ -20,11 +22,14 @@ import NotifysCenter from "../widgets/NotifysCenter";
 import { SearchBar } from "../widgets/SearchBar";
 import { WorkspaceCollaborationDialog } from "../workspace/WorkspaceCollaborationDialog";
 import { SessionBreadcrumbs } from "./SessionBreadcrumbs";
+import { SessionTooltip } from "./SessionTooltip";
 
 export function SessionShellHeader() {
   const { state: sidebarState } = useSidebar();
   const sidebarExpanded = sidebarState === "expanded";
   const { focus, setFocus } = useSearchBar();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { open: agentOpen, toggle: toggleAgent } = useAgentMode();
 
   const taskHistoryEnabled = useNotificationPrefsStore(
     (s) => s.taskHistoryEnabled,
@@ -64,8 +69,45 @@ export function SessionShellHeader() {
 
         <div className="hidden min-w-0 md:block" />
 
-        <div className="relative z-10 ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:justify-self-end">
-          <SearchBar focused={focus} onFocusChange={setFocus} />
+        <div className="relative z-10 ml-auto flex min-w-0 flex-1 items-center justify-end gap-1 sm:gap-2 md:flex-none md:justify-self-end">
+          <SearchBar
+            className="min-w-0 flex-1 sm:flex-none"
+            focused={focus}
+            onFocusChange={setFocus}
+          />
+          {isAuthenticated ? (
+            <SessionTooltip
+              label={agentOpen ? "Закрыть агента · Ctrl+J" : "Агент · Ctrl+J"}
+            >
+              <button
+                type="button"
+                aria-label={agentOpen ? "Закрыть агента" : "Открыть агента"}
+                aria-pressed={agentOpen}
+                onClick={toggleAgent}
+                className={cn(
+                  "group relative flex h-8 shrink-0 items-center gap-1.5 overflow-hidden rounded-lg px-2 text-[13px] font-medium outline-none transition-colors",
+                  "focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  "bg-muted/50 text-foreground ring-1 ring-border/35",
+                  "hover:bg-muted/70 hover:ring-border/50",
+                  agentOpen && "bg-muted/80 ring-border/60",
+                )}
+              >
+                <span
+                  aria-hidden
+                  className={cn(
+                    "pointer-events-none absolute inset-0 rounded-lg bg-linear-to-r from-violet-500/10 via-sky-500/10 to-emerald-500/10 transition-opacity duration-300",
+                    agentOpen
+                      ? "opacity-100"
+                      : "opacity-0 group-hover:opacity-100",
+                  )}
+                />
+                <span className="relative flex items-center gap-1.5">
+                  <SquareMousePointer className="size-3.5 shrink-0" aria-hidden />
+                  <span className="hidden sm:inline">Агент</span>
+                </span>
+              </button>
+            </SessionTooltip>
+          ) : null}
           <Button
             type="button"
             size="icon-sm"

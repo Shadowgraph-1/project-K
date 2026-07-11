@@ -2,7 +2,13 @@ import { AdminMetricsSkeleton } from "@/pages/session/ui/skeletons/session-skele
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
 
-import { adminOutlineBtn, adminSurface, MetricCard } from "./admin-page-shared";
+import {
+  adminOutlineBtn,
+  adminSectionHeader,
+  adminSectionTitle,
+  adminSurface,
+  MetricCard,
+} from "./admin-page-shared";
 
 type AdminMetricsSectionProps = {
   pending: boolean;
@@ -25,42 +31,55 @@ export function AdminMetricsSection({
   onRetry,
 }: AdminMetricsSectionProps) {
   return (
-    <div>
-      <h4 className="px-3 pb-3 pt-4 text-base font-medium text-foreground/75">
-        Метрики
-      </h4>
+    <section className={adminSurface}>
+      <div className={adminSectionHeader}>
+        <h2 className={adminSectionTitle}>Метрики</h2>
+      </div>
 
       {pending ? (
-        <AdminMetricsSkeleton />
+        <div className="p-1">
+          <AdminMetricsSkeleton />
+        </div>
       ) : isError ? (
-        <div className={cn(adminSurface, "space-y-3 p-4")}>
-          <p className="text-sm text-muted-foreground">
-            Не удалось загрузить обзор. Проверь, что backend запущен и миграции
-            применены.
+        <div className="space-y-3 px-4 py-5">
+          <p className="text-[13px] text-muted-foreground">
+            Не удалось загрузить обзор. Проверь backend и миграции.
           </p>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className={cn(adminOutlineBtn, "h-7 px-3 text-xs")}
+            className={cn(adminOutlineBtn)}
             onClick={onRetry}
           >
             Повторить
           </Button>
         </div>
       ) : stats ? (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="grid sm:grid-cols-2">
           <MetricCard
             label="Пользователи"
             value={stats.users}
-            subLabel="Новых за 7 дней"
-            subValue={`+${stats.recentUsers.toLocaleString()}`}
+            subLabel="за 7 дней"
+            subValue={`+${stats.recentUsers.toLocaleString("ru-RU")}`}
+            className="border-b border-border/40 sm:border-r"
           />
-          <MetricCard label="Проекты" value={stats.workspaces} />
-          <MetricCard label="Задачи" value={stats.tasks} />
-          <MetricCard label="Ошибки в журнале" value={errorLogCount} />
+          <MetricCard
+            label="Задачи"
+            value={stats.tasks}
+            className="border-b border-border/40"
+          />
+          <MetricCard
+            label="Проекты"
+            value={stats.workspaces}
+            className="border-b border-border/40 sm:border-b-0 sm:border-r"
+          />
+          <MetricCard
+            label="Ошибки в журнале"
+            value={errorLogCount}
+          />
         </div>
       ) : null}
-    </div>
+    </section>
   );
 }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { RefreshCw } from "lucide-react";
 
 import {
   useAdminAccessQuery,
@@ -10,9 +11,11 @@ import {
   useDeleteAdminUserMutation,
   useUpdateFeatureFlagMutation,
 } from "@/hooks/use-admin-query";
+import type { FeatureFlagKey } from "@/api/admin";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { SessionPageHeader } from "@/pages/session/ui/layout/SessionPageHeader";
 
 import { AdminErrorLogsSection } from "./AdminErrorLogsSection";
 import { AdminFeatureFlagsSection } from "./AdminFeatureFlagsSection";
@@ -53,6 +56,13 @@ export function AdminPage() {
   const deleteUser = useDeleteAdminUserMutation();
   const [refreshing, setRefreshing] = useState(false);
 
+  const handleToggleFlag = useCallback(
+    (key: FeatureFlagKey, enabled: boolean) => {
+      updateFlag.mutate({ key, enabled });
+    },
+    [updateFlag],
+  );
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
@@ -67,62 +77,70 @@ export function AdminPage() {
     }
   };
 
-  const firstName = user?.name?.split(" ")[0] ?? "админ";
-
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-6 pb-6">
-      <div className="flex items-center justify-between pb-4">
-        <h1 className="px-3 text-2xl font-medium tracking-tight">
-          Добро пожаловать, {firstName}
-        </h1>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={refreshing}
-          className={cn(adminOutlineBtn, "h-9 px-4")}
-          onClick={handleRefresh}
-        >
-          {refreshing ? "Обновление…" : "Обновить"}
-        </Button>
-      </div>
-
-      <AdminHealthSection
-        pending={overviewPending}
-        health={overview?.health}
-      />
-
-      <AdminMetricsSection
-        pending={overviewPending}
-        isError={overviewError}
-        stats={overview?.stats}
-        errorLogCount={errorLogs.length}
-        onRetry={() => void refetchOverview()}
-      />
-
-      <AdminFeatureFlagsSection
-        flags={flags}
-        loading={flagsLoading}
-        isUpdating={updateFlag.isPending}
-        onToggle={(key, enabled) => updateFlag.mutate({ key, enabled })}
-      />
-
-      <AdminUsersSection
-        loading={usersLoading}
-        total={usersData?.total}
-        items={usersData?.items}
-        currentUserId={user?.id}
-        deletingUserId={
-          deleteUser.isPending ? (deleteUser.variables ?? null) : null
+    <div className="mx-auto flex w-full max-w-3xl flex-col pb-8">
+      <SessionPageHeader
+        title="Админка"
+        className="flex-col gap-3 pb-4 sm:flex-row sm:items-end"
+        actions={
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={refreshing}
+            className={cn(adminOutlineBtn)}
+            onClick={() => void handleRefresh()}
+          >
+            <RefreshCw
+              className={cn("size-3.5", refreshing && "animate-spin")}
+              aria-hidden
+            />
+            {refreshing ? "Обновление…" : "Обновить"}
+          </Button>
         }
-        onDeleteUser={(row) => deleteUser.mutateAsync(row.id)}
       />
 
-      <AdminErrorLogsSection
-        logs={errorLogs}
-        loading={logsLoading}
-        isClearing={clearLogs.isPending}
-        onClear={() => clearLogs.mutate()}
-      />
+      <div className="space-y-3">
+        <AdminHealthSection
+          pending={overviewPending}
+          health={overview?.health}
+        />
+
+        <AdminMetricsSection
+          pending={overviewPending}
+          isError={overviewError}
+          stats={overview?.stats}
+          errorLogCount={errorLogs.length}
+          onRetry={() => void refetchOverview()}
+        />
+
+        <AdminFeatureFlagsSection
+          flags={flags}
+          loading={flagsLoading}
+          updatingKey={
+            updateFlag.isPending ? (updateFlag.variables?.key ?? null) : null
+          }
+          onToggle={handleToggleFlag}
+        />
+
+        <AdminUsersSection
+          loading={usersLoading}
+          total={usersData?.total}
+          items={usersData?.items}
+          currentUserId={user?.id}
+          deletingUserId={
+            deleteUser.isPending ? (deleteUser.variables ?? null) : null
+          }
+          onDeleteUser={(row) => deleteUser.mutateAsync(row.id)}
+        />
+
+        <AdminErrorLogsSection
+          logs={errorLogs}
+          loading={logsLoading}
+          isClearing={clearLogs.isPending}
+          onClear={() => clearLogs.mutate()}
+        />
+      </div>
     </div>
   );
 }

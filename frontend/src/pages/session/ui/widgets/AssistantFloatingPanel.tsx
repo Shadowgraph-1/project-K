@@ -2,6 +2,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Bot, KeyRound, Settings, X } from "lucide-react";
 
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useAssistantChatProps } from "@/pages/session/model/AssistantChatContext";
 import { SESSION_PATHS } from "@/pages/session/model/sessionPaths";
 import { Button, buttonVariants } from "@/shared/ui/button";
@@ -21,6 +22,7 @@ import { SessionTooltip } from "@/pages/session/ui/layout/SessionTooltip";
 import { AssistantChatInput, AssistantChatMessages } from "./assistant-chat-ui";
 
 export function AssistantFloatingPanel() {
+  const isMobile = useIsMobile();
   const chat = useAssistantChatProps();
   const navigate = useNavigate();
   const open = useSessionSecondarySidebarStore((s) => s.open);
@@ -32,6 +34,7 @@ export function AssistantFloatingPanel() {
 
   if (
     typeof document === "undefined" ||
+    isMobile ||
     !open ||
     panel !== "assistant" ||
     presentation !== "floating"

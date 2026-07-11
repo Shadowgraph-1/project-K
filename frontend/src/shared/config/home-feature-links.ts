@@ -22,7 +22,7 @@ export type HomeFeatureLink = {
 export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
   {
     id: "mcp",
-    path: "/MCP",
+    path: "/mcp",
     title: "MCP",
     description:
       "Tools для проектов, задач и поиска — из агента или внешнего сервера с JWT.",
@@ -42,7 +42,7 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
   },
   {
     id: "kono-ai",
-    path: "/KonoAI",
+    path: "/konoAI",
     title: "AI-компаньон",
     description:
       "Боковой чат рядом с задачами: вопросы по проекту, не уходя со страницы.",
@@ -52,7 +52,7 @@ export const HOME_FEATURE_LINKS: readonly HomeFeatureLink[] = [
   },
   {
     id: "api",
-    path: "/API",
+    path: "/api",
     title: "API ключи",
     description:
       "OpenRouter, Groq, LM Studio и другие LLM с вызовом функций в одном месте.",

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
-import { linearContextMenuContentClass } from "@/pages/session/ui/tasks/task-context-menu";
+import { linearContextMenuContentClass } from "@/pages/session/ui/tasks/ui/shared/task-context-menu";
 import {
   ContextMenu,
   ContextMenuContent,

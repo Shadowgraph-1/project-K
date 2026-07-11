@@ -411,6 +411,17 @@ html.session-theme-active.dark .session-empty-state {
   min-height: 0;
 }
 
+@media (max-width: 767px) {
+  .session-kanban-board {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .session-kanban-column {
+    width: min(82vw, 18rem);
+  }
+}
+
 .session-kanban-column-header {
   display: flex;
   height: 3.125rem;
@@ -568,39 +579,5 @@ html.session-theme-active.dark .session-empty-state {
   line-height: 1rem;
 }
 
-.timeline-flow-panel {
-  border-radius: 0.5rem;
-  box-shadow: 0 0 0 1px color-mix(in oklch, var(--border) 75%, transparent);
-}
-
-.timeline-flow-grid {
-  min-width: max(100%, 36rem);
-  display: flex;
-}
-
-.timeline-flow-segment {
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-}
-
-.timeline-flow-segment + .timeline-flow-segment {
-  box-shadow: inset 1px 0 0 color-mix(in oklch, var(--border) 60%, transparent);
-}
-
-.timeline-flow-segment:hover,
-.timeline-flow-segment--active {
-  background-color: color-mix(in oklch, var(--muted) 35%, transparent);
-}
-
-.timeline-flow-segment--empty:hover,
-.timeline-flow-segment--empty.timeline-flow-segment--active {
-  background-color: color-mix(in oklch, var(--muted) 20%, transparent);
-}
-
-.timeline-flow-segment:focus-visible {
-  outline: 1px solid color-mix(in oklch, var(--foreground) 25%, transparent);
-  outline-offset: -1px;
-  z-index: 1;
-}
+/* Date timeline overview uses Tailwind pills in TaskTimeline.tsx */
 

@@ -52,10 +52,10 @@ const MCP_FEATURES = [
     iconClassName: "size-6",
     title: "Вызов инструментов",
     description:
-      "MCP в приложении работает через вызов функций (tools) вашей LLM.",
+      "MCP в приложении работает через вызов функций вашей LLM.",
     bullets: [
-      "12 инструментов: проекты, задачи, подзадачи, комментарии, поиск",
-      "Нужна модель с поддержкой tools",
+      "12 действий: проекты, задачи, подзадачи, комментарии, поиск",
+      "Нужна модель с поддержкой вызова функций",
       "Ключ провайдера — в разделе API ключи",
       "Внешний MCP-сервер — отдельный stdio-процесс",
     ],
@@ -137,7 +137,7 @@ export function McpSettingsLandingView() {
           <h1 className="mt-4 text-balance text-3xl font-medium leading-[1.1] tracking-tight text-foreground sm:text-4xl lg:text-5xl">
             Управляйте Kono
             <br />
-            <span className="text-muted-foreground">через MCP tools.</span>
+            <span className="text-muted-foreground">через MCP.</span>
           </h1>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-muted-foreground">
@@ -267,49 +267,66 @@ export function McpSettingsLandingView() {
       </section>
 
       <section className="border-t border-border py-12 sm:py-16">
-        <div className="mb-10 max-w-lg">
-          <h2 className="text-2xl font-medium tracking-tight text-foreground sm:text-3xl">
-            Доступные инструменты
-          </h2>
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            {MCP_TOOLS.length} tools для Kono AI и внешнего MCP-сервера.
+        <div className="mb-8 flex flex-col gap-2 sm:mb-10 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-lg">
+            <h2 className="text-2xl font-medium tracking-tight text-foreground sm:text-3xl">
+              Что умеет MCP
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Одинаковый набор действий в Kono AI и во внешнем MCP-сервере.
+            </p>
+          </div>
+          <p className="shrink-0 text-xs tabular-nums text-muted-foreground">
+            {MCP_TOOLS.length} действий
           </p>
         </div>
 
-        <div className="space-y-10">
-          {toolsByCategory.map(({ category, label, tools }) => (
-            <div key={category}>
-              <h3 className="mb-4 text-sm font-medium uppercase tracking-wide text-muted-foreground">
-                {label}
-              </h3>
-              <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="overflow-hidden rounded-xl border border-border/60">
+          {toolsByCategory.map(({ category, label, tools }, groupIndex) => (
+            <div
+              key={category}
+              className={cn(
+                groupIndex > 0 && "border-t border-border/50",
+              )}
+            >
+              <div className="border-b border-primary/10 px-4 py-2.5">
+                <p className="text-xs text-primary">{label}</p>
+              </div>
+              <ul className="divide-y divide-border/40">
                 {tools.map((tool) => {
                   const Icon = tool.icon;
                   return (
-                    <div key={tool.name} className="flex items-start gap-3">
+                    <li
+                      key={tool.name}
+                      className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/25"
+                    >
                       {Icon ? (
                         <Icon
-                          className="mt-0.5 size-[18px] shrink-0 text-muted-foreground/50"
+                          className="mt-0.5 size-4 shrink-0 text-muted-foreground/45"
                           aria-hidden
                         />
-                      ) : null}
-                      <div>
-                        <p className="font-mono text-sm font-medium text-foreground/80">
-                          {tool.name}
+                      ) : (
+                        <span className="size-4 shrink-0" aria-hidden />
+                      )}
+                      <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[minmax(0,11rem)_minmax(0,1fr)] sm:items-baseline sm:gap-6">
+                        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <code className="truncate font-mono text-[13px] text-foreground/85">
+                            {tool.name}
+                          </code>
                           {tool.destructive ? (
-                            <span className="ml-1.5 font-sans text-[10px] font-normal text-rose-600 dark:text-rose-400">
-                              destructive
+                            <span className="text-[10px] text-rose-600 dark:text-rose-400">
+                              необратимо
                             </span>
                           ) : null}
-                        </p>
-                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                        </div>
+                        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground sm:mt-0">
                           {tool.description}
                         </p>
                       </div>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           ))}
         </div>

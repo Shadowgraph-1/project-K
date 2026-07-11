@@ -35,9 +35,12 @@ export function McpInstallBlock({ tabs, className, hint }: McpInstallBlockProps)
 
   return (
     <div className={cn("w-full", className)}>
-      <div className="overflow-hidden rounded-xl border border-border/60 transition-colors hover:border-border">
-        <div className="flex items-center border-b border-border/50 px-4 py-2.5">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1" role="tablist">
+      <div className="overflow-hidden rounded-xl border border-border/60 text-left transition-colors hover:border-border">
+        <div className="flex items-center gap-2 border-b border-primary/10 px-4 py-2.5">
+          <div
+            className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1"
+            role="tablist"
+          >
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -48,33 +51,30 @@ export function McpInstallBlock({ tabs, className, hint }: McpInstallBlockProps)
                 className={cn(
                   "cursor-pointer text-xs transition-colors duration-200",
                   tab.id === activeId
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground/70",
+                    ? "text-primary"
+                    : "text-primary/40 hover:text-primary/70",
                 )}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-        </div>
-        <button
-          type="button"
-          onClick={() => void copy()}
-          className="group relative flex w-full min-w-0 items-center px-4 py-3 text-left font-mono text-xs sm:text-sm"
-        >
-          <code
-            className="no-scrollbar w-full min-w-0 overflow-x-auto whitespace-pre text-foreground/70"
-            style={{
-              maskImage:
-                "linear-gradient(to right, black calc(100% - 56px), transparent calc(100% - 40px))",
-            }}
+          <button
+            type="button"
+            onClick={() => void copy()}
+            aria-label="Копировать"
+            title="Копировать"
+            className="flex size-6 shrink-0 items-center justify-center rounded-md text-primary/40 transition-colors hover:bg-primary/5 hover:text-primary"
           >
-            {activeTab.code}
-          </code>
-          <span className="pointer-events-none absolute right-4 top-1/2 flex size-5 -translate-y-1/2 items-center justify-center text-muted-foreground transition-colors group-hover:text-foreground">
-            <Copy className="size-4" aria-hidden />
-          </span>
-        </button>
+            <Copy className="size-3.5" aria-hidden />
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <pre className="m-0 min-w-0 p-4 text-left font-mono text-[13px] leading-relaxed text-foreground/80">
+            <code className="block whitespace-pre">{activeTab.code}</code>
+          </pre>
+        </div>
       </div>
       {hint ? (
         <p className="mt-3 text-center text-xs text-muted-foreground">{hint}</p>

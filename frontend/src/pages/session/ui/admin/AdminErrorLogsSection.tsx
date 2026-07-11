@@ -1,10 +1,13 @@
-import { ShieldAlert } from "lucide-react";
-
-import { AdminErrorLogsSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 import { Button } from "@/shared/ui/button";
 import { cn } from "@/shared/lib/utils";
+import { AdminErrorLogsSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
 
-import { adminOutlineBtn, adminSurface, formatDateTime } from "./admin-page-shared";
+import {
+  adminSectionHeader,
+  adminSectionTitle,
+  adminSurface,
+  formatDateTime,
+} from "./admin-page-shared";
 
 type ErrorLogEntry = {
   id: string;
@@ -29,19 +32,23 @@ export function AdminErrorLogsSection({
   onClear,
 }: AdminErrorLogsSectionProps) {
   return (
-    <div className="pt-2">
-      <div className="flex min-h-12 items-center justify-between gap-2 px-3 pb-2">
-        <div className="flex items-center gap-2">
-          <ShieldAlert className="size-4 text-muted-foreground" />
-          <h4 className="text-base font-medium text-foreground/75">
-            Журнал ошибок
-          </h4>
+    <section className={adminSurface}>
+      <div className={cn(adminSectionHeader, "justify-between")}>
+        <div className="flex min-w-0 items-center gap-2">
+          <h2 className={adminSectionTitle}>Журнал ошибок</h2>
+          {logs.length > 0 ? (
+            <span className="text-[11px] tabular-nums text-muted-foreground">
+              {logs.length}
+            </span>
+          ) : null}
         </div>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className={cn(adminOutlineBtn, "h-7 px-3 text-xs")}
+          className={cn(
+            "h-7 px-2 text-xs text-muted-foreground hover:text-destructive",
+          )}
           disabled={isClearing || logs.length === 0}
           onClick={onClear}
         >
@@ -49,41 +56,46 @@ export function AdminErrorLogsSection({
         </Button>
       </div>
 
-      <div className={cn(adminSurface, "overflow-hidden")}>
-        {loading ? (
-          <AdminErrorLogsSkeleton />
-        ) : logs.length === 0 ? (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-            Ошибок пока нет — сюда попадают 5xx с сервера (до 200 записей в
-            памяти)
-          </p>
-        ) : (
-          <div className="divide-y divide-border/10">
-            {logs.map((entry) => (
-              <div
-                key={entry.id}
-                className="space-y-2 p-4 text-sm transition-colors hover:bg-muted/20"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-xs text-muted-foreground">
-                    {formatDateTime(entry.timestamp)}
-                  </span>
-                  <span className="rounded-md bg-muted/50 px-1.5 py-0.5 font-mono text-xs">
-                    {entry.method}
-                  </span>
-                  <span className="rounded-md bg-destructive/10 px-1.5 py-0.5 text-xs text-destructive">
-                    {entry.statusCode}
-                  </span>
-                </div>
-                <p className="font-mono text-xs text-muted-foreground">
-                  {entry.url}
-                </p>
-                <p>{entry.message}</p>
+      {loading ? (
+        <AdminErrorLogsSkeleton />
+      ) : logs.length === 0 ? (
+        <p className="px-4 py-8 text-center text-[13px] text-muted-foreground">
+          Ошибок нет. Сюда попадают 5xx (до 200 записей в памяти).
+        </p>
+      ) : (
+        <ul className="divide-y divide-border/40">
+          {logs.map((entry) => (
+            <li
+              key={entry.id}
+              className="space-y-1.5 px-4 py-3 transition-colors hover:bg-muted/25"
+            >
+              <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px]">
+                <time className="tabular-nums text-muted-foreground/55">
+                  {formatDateTime(entry.timestamp)}
+                </time>
+                <span className="text-muted-foreground/40" aria-hidden>
+                  ·
+                </span>
+                <span className="font-mono text-foreground/80">
+                  {entry.method}
+                </span>
+                <span className="text-muted-foreground/40" aria-hidden>
+                  ·
+                </span>
+                <span className="font-medium tabular-nums text-red-600 dark:text-red-400">
+                  {entry.statusCode}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+              <p className="truncate font-mono text-[11px] text-muted-foreground/70">
+                {entry.url}
+              </p>
+              <p className="text-[13px] leading-relaxed text-foreground/90">
+                {entry.message}
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

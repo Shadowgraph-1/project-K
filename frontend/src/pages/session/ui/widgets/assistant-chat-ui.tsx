@@ -81,8 +81,8 @@ function buildChatTurns(
 
 function UserChatMessage({ children }: { children: string }) {
   return (
-    <div className="flex justify-end">
-      <div className="max-w-[min(100%,92%)] rounded-lg bg-muted px-3 py-2">
+    <div className="flex w-full justify-end">
+      <div className="max-w-[min(100%,85%)] rounded-2xl rounded-br-md bg-muted px-3.5 py-2.5">
         <p className="m-0 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word text-foreground">
           {children}
         </p>
@@ -99,14 +99,21 @@ function AssistantChatMessage({
   pending?: AssistantPendingTurn["status"];
 }) {
   return (
-    <div className="flex justify-start">
-      <div className="flex max-w-full items-start gap-2">
+    <div className="flex w-full justify-start gap-2.5">
+      <div
+        className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted"
+        aria-hidden
+      >
         {pending ? (
-          <Spinner className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
-        ) : null}
+          <Spinner className="size-3.5 text-muted-foreground" />
+        ) : (
+          <Bot className="size-3.5 text-muted-foreground" />
+        )}
+      </div>
+      <div className="min-w-0 max-w-[min(100%,calc(100%-2.5rem))] flex-1 pt-0.5">
         <p
           className={cn(
-            "m-0 max-w-full text-sm leading-relaxed whitespace-pre-wrap wrap-break-word",
+            "m-0 text-sm leading-relaxed whitespace-pre-wrap wrap-break-word",
             pending ? "text-muted-foreground" : "text-foreground",
           )}
         >
@@ -130,7 +137,7 @@ export function AssistantChatMessages({ chat }: { chat: AssistantChatProps }) {
   });
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
       {chat.error ? (
         <div
           role="alert"
@@ -140,42 +147,46 @@ export function AssistantChatMessages({ chat }: { chat: AssistantChatProps }) {
         </div>
       ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto pr-0.5 [scrollbar-gutter:stable]">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto [scrollbar-gutter:stable]">
         {turns.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-4 text-center">
-            <div className="flex size-10 items-center justify-center rounded-full bg-muted">
+          <div className="flex flex-1 flex-col items-center justify-center gap-3 px-2 text-center">
+            <div className="flex size-11 items-center justify-center rounded-full bg-muted">
               <Bot className="size-5 text-muted-foreground" />
             </div>
-            <div className="space-y-1">
+            <div className="max-w-sm space-y-1.5">
               <p className="text-sm font-medium text-foreground">Kono AI</p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs leading-relaxed text-muted-foreground">
                 Спросите про задачи или попросите создать через MCP
               </p>
-              <p className="text-[11px] text-muted-foreground/70">
+              <p className="text-[11px] leading-relaxed text-muted-foreground/70">
                 История чата доступна только в этой сессии и сбрасывается после
                 перезагрузки страницы
               </p>
             </div>
           </div>
-        ) : null}
-
-        {turns.map((turn, index) => (
-          <div
-            key={`${index}-${turn.user}-${turn.assistant ?? ""}-${turn.pending ?? "done"}`}
-            className="flex flex-col gap-3"
-          >
-            {turn.user ? <UserChatMessage>{turn.user}</UserChatMessage> : null}
-            {turn.assistant ? (
-              <AssistantChatMessage pending={turn.pending}>
-                {turn.pending
-                  ? turn.assistant
-                  : normalizeAssistantText(turn.assistant)}
-              </AssistantChatMessage>
-            ) : null}
+        ) : (
+          <div className="flex flex-col gap-5 py-1">
+            {turns.map((turn, index) => (
+              <div
+                key={`${index}-${turn.user}-${turn.assistant ?? ""}-${turn.pending ?? "done"}`}
+                className="flex flex-col gap-3"
+              >
+                {turn.user ? (
+                  <UserChatMessage>{turn.user}</UserChatMessage>
+                ) : null}
+                {turn.assistant ? (
+                  <AssistantChatMessage pending={turn.pending}>
+                    {turn.pending
+                      ? turn.assistant
+                      : normalizeAssistantText(turn.assistant)}
+                  </AssistantChatMessage>
+                ) : null}
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
-    </>
+    </div>
   );
 }
 

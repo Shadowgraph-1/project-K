@@ -17,16 +17,16 @@ import { ContextMenuSeparator } from "@/shared/ui/context-menu";
 import {
   TaskDateContextMenuFields,
   type TaskDateField,
-} from "@/pages/session/ui/tasks/task-date-picker";
+} from "@/pages/session/ui/tasks/ui/shared/task-date-picker";
 import {
   ContextMenuActionItem,
   TaskDeleteFieldIcon,
-} from "@/pages/session/ui/tasks/task-context-menu";
+} from "@/pages/session/ui/tasks/ui/shared/task-context-menu";
 import {
   TaskPriorityContextMenuSub,
   TaskStatusContextMenuSub,
-} from "@/pages/session/ui/tasks/task-picker-menus";
-import { normalizeTaskPriority } from "@/pages/session/ui/tasks/task-priority-icons";
+} from "@/pages/session/ui/tasks/ui/shared/task-picker-menus";
+import { normalizeTaskPriority } from "@/pages/session/ui/tasks/ui/shared/task-priority-icons";
 import { canPerformWorkspaceAction } from "@/shared/lib/workspace-permissions";
 
 type SidebarTaskContextMenuItemsProps = {

@@ -109,45 +109,51 @@ function Session() {
         />
       ) : (
         <>
-          <SessionPageHeader title="Проекты" className="pb-4" />
+          <SessionPageHeader
+            title="Проекты"
+            className="flex-col gap-3 pb-4 sm:flex-row sm:items-end"
+            actions={
+              <div className="flex items-center gap-2">
+                {owned.length > 0 ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={deleteAllWorkspaces.isPending}
+                    onClick={handleDeleteAllWorkspaces}
+                    className="h-8 shrink-0 px-2.5 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    Удалить все
+                  </Button>
+                ) : null}
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 shrink-0 gap-1.5 rounded-full px-3 text-xs"
+                  onClick={() => navigate(SESSION_PATHS.workspaceNew)}
+                >
+                  <Plus className="size-3.5" aria-hidden />
+                  Создать
+                </Button>
+              </div>
+            }
+          />
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="min-h-0 flex-1 space-y-3 overflow-auto">
               <WorkspaceListSection
-                title="Мои проекты"
+                title="Мои"
                 items={owned}
                 taskStatsByWorkspaceId={taskStatsByWorkspaceId}
                 showColumnHeader={owned.length > 0}
-                headerAction={
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-xs ring-1 ring-border/40"
-                      onClick={() => navigate(SESSION_PATHS.workspaceNew)}
-                    >
-                      <Plus className="size-3.5" aria-hidden />
-                      Создать проект
-                    </Button>
-                    {owned.length > 0 ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={deleteAllWorkspaces.isPending}
-                        onClick={handleDeleteAllWorkspaces}
-                        className="h-7 shrink-0 gap-1.5 rounded-full px-3 text-xs ring-1 ring-border/40"
-                      >
-                        Удалить все
-                      </Button>
-                    ) : null}
-                  </div>
-                }
+                count={owned.length}
               />
               <WorkspaceListSection
-                title="Совместная работа"
+                title="Совместные"
+                description="Проекты, куда вас пригласили"
                 items={shared}
                 taskStatsByWorkspaceId={taskStatsByWorkspaceId}
+                showColumnHeader={shared.length > 0}
+                count={shared.length}
               />
             </div>
           </div>

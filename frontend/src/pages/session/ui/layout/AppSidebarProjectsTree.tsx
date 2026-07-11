@@ -23,9 +23,9 @@ import {
   ContextMenuContent,
   ContextMenuTrigger,
 } from "@/shared/ui/context-menu";
-import { TaskStatusIcon } from "@/pages/session/ui/tasks/task-status-icons";
+import { TaskStatusIcon } from "@/pages/session/ui/tasks/ui/shared/task-status-icons";
 import { SidebarTreeSkeleton } from "@/pages/session/ui/skeletons/session-skeletons";
-import { linearContextMenuContentClass } from "@/pages/session/ui/tasks/task-context-menu";
+import { linearContextMenuContentClass } from "@/pages/session/ui/tasks/ui/shared/task-context-menu";
 import {
   SidebarTaskContextMenuItems,
   SidebarWorkspaceContextMenuItems,

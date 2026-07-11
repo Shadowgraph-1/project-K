@@ -1,7 +1,7 @@
 import { Skeleton } from "@/shared/ui/skeleton";
 import { cn } from "@/shared/lib/utils";
 import { sessionSurface } from "@/pages/session/lib/session-styles";
-import { TASK_ROW_GRID_COLUMNS } from "@/pages/session/ui/tasks/sessionWorkspaceTypes";
+import { TASK_ROW_GRID_COLUMNS } from "@/pages/session/ui/tasks/model/sessionWorkspaceTypes";
 
 const skeletonStatusProps = {
   role: "status" as const,
@@ -106,13 +106,14 @@ export function WorkspaceHubListSkeleton({ className }: { className?: string }) 
 
 function WorkspaceGridRowSkeleton() {
   return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <SkeletonBlock className="size-8 shrink-0 rounded-xl" />
+    <div className="flex items-center gap-2.5 px-4 py-2.5">
+      <SkeletonBlock className="size-7 shrink-0 rounded-md" />
       <div className="min-w-0 flex-1 space-y-1.5">
         <SkeletonBlock className="h-3.5 w-40 max-w-[50vw]" />
         <SkeletonBlock className="h-3 w-24" />
       </div>
-      <SkeletonBlock className="size-4 shrink-0 rounded-md" />
+      <SkeletonBlock className="hidden h-3 w-8 sm:block" />
+      <SkeletonBlock className="hidden h-3 w-10 sm:block" />
     </div>
   );
 }
@@ -127,11 +128,11 @@ export function WorkspaceGridSkeleton({ className }: { className?: string }) {
         <SkeletonBlock className="h-7 w-36" />
         <SkeletonBlock className="h-3 w-52" />
       </div>
-      <div className={cn(sessionSurface, "overflow-hidden")}>
-        <div className="border-b border-border/25 px-4 py-3">
-          <SkeletonBlock className="h-3.5 w-28" />
+      <div className="overflow-hidden rounded-xl border border-border/60">
+        <div className="border-b border-primary/10 px-4 py-2.5">
+          <SkeletonBlock className="h-3 w-20" />
         </div>
-        <div className="divide-y divide-border/25">
+        <div className="divide-y divide-border/40">
           {Array.from({ length: 4 }).map((_, index) => (
             <WorkspaceGridRowSkeleton key={index} />
           ))}
@@ -284,28 +285,34 @@ export function AdminHealthSkeleton() {
   return (
     <div
       {...skeletonStatusProps}
-      className={cn(sessionSurface, "flex items-center gap-3 px-4 py-3")}
+      className="flex items-center gap-3 overflow-hidden rounded-xl border border-border/60 px-4 py-3.5"
     >
-      <SkeletonBlock className="size-5 shrink-0 rounded-full" />
+      <SkeletonBlock className="size-8 shrink-0 rounded-full" />
       <div className="min-w-0 flex-1 space-y-1.5">
-        <SkeletonBlock className="h-3.5 w-44" />
-        <SkeletonBlock className="h-3 w-32" />
+        <SkeletonBlock className="h-3.5 w-40" />
+        <SkeletonBlock className="h-3 w-28" />
       </div>
-      <SkeletonBlock className="h-6 w-20 rounded-full" />
     </div>
   );
 }
 
 export function AdminMetricsSkeleton() {
+  const cellBorder = [
+    "border-b border-border/40 sm:border-r",
+    "border-b border-border/40",
+    "border-b border-border/40 sm:border-b-0 sm:border-r",
+    "",
+  ] as const;
+
   return (
-    <div
-      {...skeletonStatusProps}
-      className={cn(sessionSurface, "grid gap-2 p-3 sm:grid-cols-2 lg:grid-cols-3")}
-    >
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="space-y-2 rounded-xl p-3">
-          <SkeletonBlock className="h-3 w-20" />
-          <SkeletonBlock className="h-7 w-12" />
+    <div {...skeletonStatusProps} className="grid sm:grid-cols-2">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div
+          key={index}
+          className={cn("min-h-[4.75rem] space-y-1.5 px-4 py-3", cellBorder[index])}
+        >
+          <SkeletonBlock className="h-3 w-16" />
+          <SkeletonBlock className="h-6 w-12" />
         </div>
       ))}
     </div>
@@ -314,22 +321,15 @@ export function AdminMetricsSkeleton() {
 
 export function AdminFlagsSkeleton() {
   return (
-    <div
-      {...skeletonStatusProps}
-      className="grid gap-2 sm:grid-cols-2"
-    >
-      {Array.from({ length: 4 }).map((_, index) => (
-        <div
-          key={index}
-          className="rounded-2xl border border-primary/10 p-4"
-        >
-          <div className="flex items-start justify-between gap-2">
-            <SkeletonBlock className="h-3.5 w-24" />
-            <SkeletonBlock className="h-5 w-16 rounded-full" />
+    <div {...skeletonStatusProps} className="divide-y divide-border/40">
+      {Array.from({ length: 3 }).map((_, index) => (
+        <div key={index} className="flex items-start gap-3 px-4 py-3">
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <SkeletonBlock className="h-3.5 w-28" />
+            <SkeletonBlock className="h-3 w-24" />
+            <SkeletonBlock className="h-3 w-full max-w-sm" />
           </div>
-          <SkeletonBlock className="mt-2 h-3 w-32" />
-          <SkeletonBlock className="mt-3 h-3 w-full" />
-          <SkeletonBlock className="mt-1.5 h-3 w-[80%]" />
+          <SkeletonBlock className="h-7 w-12 shrink-0 rounded-full" />
         </div>
       ))}
     </div>
@@ -338,11 +338,11 @@ export function AdminFlagsSkeleton() {
 
 export function AdminUsersTableSkeleton() {
   return (
-    <div {...skeletonStatusProps} className="divide-y divide-border/10">
-      {Array.from({ length: 6 }).map((_, index) => (
+    <div {...skeletonStatusProps} className="divide-y divide-border/40">
+      {Array.from({ length: 5 }).map((_, index) => (
         <div
           key={index}
-          className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,2fr)_repeat(3,minmax(0,1fr))] gap-3 px-4 py-3"
+          className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,2fr)_repeat(3,minmax(0,1fr))] gap-3 px-4 py-2.5"
         >
           <SkeletonBlock className="h-3 w-8" />
           <SkeletonBlock className="h-3.5 w-24" />
@@ -358,16 +358,12 @@ export function AdminUsersTableSkeleton() {
 
 export function AdminErrorLogsSkeleton() {
   return (
-    <div {...skeletonStatusProps} className="divide-y divide-border/10">
+    <div {...skeletonStatusProps} className="divide-y divide-border/40">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="space-y-2 p-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <SkeletonBlock className="h-3 w-28" />
-            <SkeletonBlock className="h-5 w-12 rounded-md" />
-            <SkeletonBlock className="h-5 w-10 rounded-md" />
-          </div>
+        <div key={index} className="space-y-1.5 px-4 py-3">
+          <SkeletonBlock className="h-3 w-40" />
           <SkeletonBlock className="h-3 w-full max-w-md" />
-          <SkeletonBlock className="h-3.5 w-[80%]" />
+          <SkeletonBlock className="h-3.5 w-[70%]" />
         </div>
       ))}
     </div>
@@ -409,31 +405,39 @@ export function RequireAdminSkeleton() {
   );
 }
 
-export function SystemStatusTableSkeleton() {
+export function SystemStatusTableSkeleton({
+  embedded = false,
+}: {
+  embedded?: boolean;
+}) {
+  const rows = (
+    <div className="divide-y divide-border/40">
+      {Array.from({ length: 4 }).map((_, index) => (
+        <div key={index} className="flex items-center gap-3 px-4 py-3">
+          <SkeletonBlock className="size-2 shrink-0 rounded-full" />
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <SkeletonBlock className="h-3.5 w-28 max-w-[40%]" />
+            <SkeletonBlock className="h-3 w-40 max-w-[55%]" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div {...skeletonStatusProps} className="w-full">
+        {rows}
+      </div>
+    );
+  }
+
   return (
     <div
       {...skeletonStatusProps}
-      className="overflow-hidden rounded-2xl border border-border/70 bg-background/60"
+      className="overflow-hidden rounded-xl border border-border/60"
     >
-      <div className="border-b border-border/70 px-4 py-3">
-        <div className="flex gap-8">
-          <SkeletonBlock className="h-3 w-20" />
-          <SkeletonBlock className="h-3 w-16" />
-          <SkeletonBlock className="h-3 w-16" />
-          <SkeletonBlock className="h-3 w-16" />
-        </div>
-      </div>
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div
-          key={index}
-          className="flex items-center gap-6 border-b border-border/50 px-4 py-5 last:border-b-0"
-        >
-          <SkeletonBlock className="h-3.5 w-24" />
-          <SkeletonBlock className="mx-auto h-6 w-20 rounded-full" />
-          <SkeletonBlock className="mx-auto h-6 w-20 rounded-full" />
-          <SkeletonBlock className="mx-auto h-6 w-20 rounded-full" />
-        </div>
-      ))}
+      {rows}
     </div>
   );
 }

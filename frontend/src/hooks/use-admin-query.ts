@@ -8,6 +8,7 @@ import {
   fetchAdminOverview,
   fetchAdminUsers,
   updateAdminFeatureFlag,
+  type FeatureFlag,
   type FeatureFlagKey,
 } from "@/api/admin";
 import { queryKeys } from "@/shared/api/query-keys";
@@ -84,17 +85,31 @@ export function useClearAdminErrorLogsMutation() {
 
 export function useUpdateFeatureFlagMutation() {
   const queryClient = useQueryClient();
+  const flagsKey = queryKeys.admin.featureFlags();
 
   return useMutation({
     mutationFn: ({ key, enabled }: { key: FeatureFlagKey; enabled: boolean }) =>
       updateAdminFeatureFlag(key, enabled),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: queryKeys.admin.featureFlags(),
-      });
+    onMutate: async ({ key, enabled }) => {
+      await queryClient.cancelQueries({ queryKey: flagsKey });
+      const previous = queryClient.getQueryData<FeatureFlag[]>(flagsKey);
+
+      queryClient.setQueryData<FeatureFlag[]>(flagsKey, (current) =>
+        current?.map((flag) =>
+          flag.key === key ? { ...flag, enabled } : flag,
+        ),
+      );
+
+      return { previous };
     },
-    onError: () => {
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(flagsKey, context.previous);
+      }
       notify({ title: "Не удалось обновить флаг", variant: "error" });
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: flagsKey });
     },
   });
 }

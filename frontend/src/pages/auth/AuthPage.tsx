@@ -27,7 +27,7 @@ import { AUTH_PATHS, authPathWithRedirect } from "./auth-paths";
 type AuthMode = "login" | "register";
 
 const authInputClassName =
-  "h-10 rounded-lg border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white shadow-none placeholder:text-white/30 focus-visible:border-white/30 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 dark:bg-white/[0.04] dark:disabled:bg-white/[0.04]";
+  "h-11 rounded-lg border-white/15 bg-white/[0.04] px-3 py-2 text-base text-white shadow-none placeholder:text-white/30 focus-visible:border-white/30 focus-visible:ring-1 focus-visible:ring-white/20 focus-visible:ring-offset-0 sm:h-10 sm:text-sm dark:bg-white/[0.04] dark:disabled:bg-white/[0.04]";
 
 function AuthField({
   label,
@@ -172,7 +172,7 @@ function LoginPanel({
 
   return (
     <>
-      <h1 className="mb-10 text-center text-2xl font-medium tracking-tight text-white sm:text-3xl">
+      <h1 className="mb-6 text-center text-2xl font-medium tracking-tight text-white sm:mb-10 sm:text-3xl">
         Войти в ваш аккаунт
       </h1>
 
@@ -356,7 +356,7 @@ function RegisterPanel({
 
   return (
     <>
-      <h1 className="mb-10 text-center text-2xl font-medium tracking-tight text-white sm:text-3xl">
+      <h1 className="mb-6 text-center text-2xl font-medium tracking-tight text-white sm:mb-10 sm:text-3xl">
         Создать аккаунт
       </h1>
 
@@ -401,8 +401,8 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
 
   return (
     <div className="grid min-h-dvh bg-neutral-950 lg:grid-cols-2">
-      <div className="flex h-full min-h-dvh w-full flex-col overflow-y-auto">
-        <div className="flex w-full items-center justify-between p-5">
+      <div className="flex h-full min-h-dvh w-full min-w-0 flex-col overflow-y-auto pb-[env(safe-area-inset-bottom)]">
+        <div className="flex w-full items-center justify-between p-4 sm:p-5">
           <KonoLogo
             as="link"
             to="/"
@@ -412,9 +412,9 @@ export function AuthPage({ mode }: { mode: AuthMode }) {
           />
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center px-5 py-4">
+        <div className="flex flex-1 flex-col items-center justify-center px-4 py-4 sm:px-5">
           <div className="flex w-full grow items-center justify-center">
-            <div className="mx-auto flex w-full max-w-sm flex-col gap-6">
+            <div className="mx-auto flex w-full max-w-sm flex-col gap-4 sm:gap-6">
               {mode === "register" && isAuthenticated && user ? (
                 <div className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-sm text-white/60">
                   <p>

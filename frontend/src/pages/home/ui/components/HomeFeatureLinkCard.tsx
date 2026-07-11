@@ -29,7 +29,7 @@ function FeatureLinkIcon({ item }: HomeFeatureLinkCardProps) {
       >
         <path
           fill="currentColor"
-          d="M20 18v28h7.5V38.5L40.5 46h9L35.5 36 49.5 18H40.5L27.5 32.5V18H20z"
+          d="M18 15h9v13.6L40.5 15H50L35.8 31.4 50.5 49H40.8L27 35.4V49h-9V15z"
         />
       </svg>
     );

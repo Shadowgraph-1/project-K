@@ -7,6 +7,8 @@ import { SESSION_PATHS } from "../../model/sessionPaths";
 import { useRouteActive } from "../../lib/use-session-nav-active";
 import { SessionTooltip } from "./SessionTooltip";
 import { cn } from "@/shared/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useAgentMode } from "@/pages/session/model/AgentModeContext";
 import { useAuthStore } from "@/entities/user/model/useAuthStore";
 import { useSessionSecondarySidebarStore } from "@/shared/model/useSessionSecondarySidebarStore";
 import { useSessionThemeStore } from "@/shared/model/useSessionThemeStore";
@@ -48,8 +50,11 @@ function FooterIconButton({
 }
 
 export function SessionSidebarFooter() {
+  const isMobile = useIsMobile();
   const settingsActive = useRouteActive(SESSION_PATHS.settings);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { open: agentOpen, toggle: toggleAgent, setOpen: setAgentOpen } =
+    useAgentMode();
   const assistantOpen = useSessionSecondarySidebarStore((s) => s.open);
   const assistantPanel = useSessionSecondarySidebarStore((s) => s.panel);
   const setAssistantOpen = useSessionSecondarySidebarStore((s) => s.setOpen);
@@ -64,10 +69,11 @@ export function SessionSidebarFooter() {
   const setTheme = useSessionThemeStore((s) => s.setTheme);
   const isDark = theme === "dark";
 
-  const assistantActive =
-    assistantOpen &&
-    assistantPanel === "assistant" &&
-    assistantPresentation === "floating";
+  const assistantActive = isMobile
+    ? agentOpen
+    : assistantOpen &&
+      assistantPanel === "assistant" &&
+      assistantPresentation === "floating";
 
   return (
     <div className="flex items-center gap-1">
@@ -92,10 +98,16 @@ export function SessionSidebarFooter() {
             label="Kono AI"
             active={assistantActive}
             onClick={() => {
+              if (isMobile) {
+                toggleAgent();
+                setAssistantOpen(false);
+                return;
+              }
               if (assistantActive) {
                 setAssistantOpen(false);
                 return;
               }
+              setAgentOpen(false);
               openAssistantFloating();
             }}
           >

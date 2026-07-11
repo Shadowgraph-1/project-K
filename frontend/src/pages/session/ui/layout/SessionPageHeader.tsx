@@ -26,7 +26,7 @@ export function SessionPageHeader({
       className={cn(
         "flex w-full justify-between gap-3",
         isToolbar
-          ? "items-center pb-3"
+          ? "flex-col items-stretch gap-2 pb-3 sm:flex-row sm:items-center"
           : "flex-col gap-4 pb-6 sm:flex-row sm:items-end",
         className,
       )}
@@ -47,8 +47,10 @@ export function SessionPageHeader({
       {actions ? (
         <div
           className={cn(
-            "flex shrink-0 items-center gap-2",
-            !isToolbar && "self-end",
+            "flex items-center gap-2",
+            isToolbar
+              ? "min-w-0 overflow-x-auto pb-0.5 sm:shrink-0 sm:overflow-visible"
+              : "shrink-0 self-end",
           )}
         >
           {actions}

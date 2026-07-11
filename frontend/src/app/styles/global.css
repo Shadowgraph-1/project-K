@@ -37,6 +37,13 @@
     scrollbar-gutter: stable;
   }
 
+  html,
+  body,
+  #root {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;

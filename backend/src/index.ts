@@ -26,6 +26,7 @@ import searchRoutes from "./routes/search.routes.js";
 import { API_DESCRIPTION, OPENAPI_TAGS } from "./openapi/description.js";
 import { env } from "./config/env.js";
 import { prisma } from "./db/prisma.js";
+import { isCorsOriginAllowed } from "./utils/cors-origin.js";
 import { loggerOptions } from "./utils/logger.js";
 import { initFeatureFlagsCache } from "./services/feature-flags.service.js";
 
@@ -44,8 +45,9 @@ await app.register(cookie, {
 
 await app.register(cors, {
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
-    if (env.CORS_ORIGINS.includes(origin)) return cb(null, true);
+    if (isCorsOriginAllowed(origin, env.CORS_ORIGINS, env.NODE_ENV)) {
+      return cb(null, true);
+    }
     cb(new Error("CORS blocked"), false);
   },
   credentials: true,

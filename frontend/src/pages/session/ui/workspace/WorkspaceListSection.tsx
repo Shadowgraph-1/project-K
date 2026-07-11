@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import type { Workspace } from "@/entities/workspace/model/workspace";
-import { sessionSurface } from "@/pages/session/lib/session-styles";
 import { cn } from "@/shared/lib/utils";
 
 import WorkspaceCard, { type WorkspaceTaskStats } from "./WorkspaceCard";
@@ -14,6 +13,7 @@ type WorkspaceListSectionProps = {
   taskStatsByWorkspaceId: ReadonlyMap<string, WorkspaceTaskStats>;
   showColumnHeader?: boolean;
   headerAction?: ReactNode;
+  count?: number;
 };
 
 const EMPTY_TASK_STATS: WorkspaceTaskStats = { total: 0, completed: 0 };
@@ -25,16 +25,26 @@ export function WorkspaceListSection({
   taskStatsByWorkspaceId,
   showColumnHeader = false,
   headerAction,
+  count,
 }: WorkspaceListSectionProps) {
   if (items.length === 0 && !headerAction) return null;
 
+  const itemCount = count ?? items.length;
+
   return (
-    <section className={cn(sessionSurface, "overflow-hidden text-card-foreground")}>
-      <div className="flex items-start justify-between gap-2 px-4 py-3">
-        <div className="min-w-0">
-          <h2 className="text-sm font-medium text-foreground">{title}</h2>
+    <section className="overflow-hidden rounded-xl border border-border/60 text-left text-card-foreground">
+      <div className="flex items-center gap-2 border-b border-primary/10 px-4 py-2.5">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <h2 className="text-xs text-primary">{title}</h2>
+            {itemCount > 0 ? (
+              <span className="text-[11px] tabular-nums text-muted-foreground">
+                {itemCount}
+              </span>
+            ) : null}
+          </div>
           {description ? (
-            <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
+            <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground">
               {description}
             </p>
           ) : null}
@@ -46,18 +56,18 @@ export function WorkspaceListSection({
         <div
           className={cn(
             WORKSPACE_LIST_GRID,
-            "bg-muted/20 px-4 py-2 text-[10px] font-medium uppercase tracking-wide text-muted-foreground",
+            "hidden border-b border-border/40 px-4 py-2 text-[11px] text-muted-foreground sm:grid",
           )}
         >
           <span>Название</span>
-          <span>Задачи</span>
-          <span>Готово</span>
+          <span className="text-right">Задачи</span>
+          <span className="text-right">Готово</span>
           <span />
         </div>
       ) : null}
 
       {items.length > 0 ? (
-        <ul className="flex list-none flex-col divide-y divide-border/25">
+        <ul className="flex list-none flex-col divide-y divide-border/40">
           {items.map((item) => (
             <WorkspaceCard
               key={item.id}
@@ -68,7 +78,11 @@ export function WorkspaceListSection({
             />
           ))}
         </ul>
-      ) : null}
+      ) : (
+        <p className="px-4 py-6 text-center text-xs text-muted-foreground">
+          Пока пусто
+        </p>
+      )}
     </section>
   );
 }

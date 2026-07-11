@@ -11,12 +11,12 @@ export type SessionPageFrameVariant =
   | "tasks-detail";
 
 const VARIANT_CLASS: Record<SessionPageFrameVariant, string> = {
-  hub: "overflow-auto px-6 pb-6 pt-4 [scrollbar-gutter:stable] sm:pt-6",
-  flush: "overflow-auto p-6 [scrollbar-gutter:stable]",
-  projects: "overflow-hidden px-6 pb-6 pt-4 [scrollbar-gutter:stable]",
-  "workspace-new": "overflow-y-auto p-6 [scrollbar-gutter:stable]",
-  tasks: "overflow-auto p-6 [scrollbar-gutter:stable]",
-  "tasks-detail": "overflow-hidden p-0 [scrollbar-gutter:stable]",
+  hub: "overflow-auto px-3 pb-4 pt-3 [scrollbar-gutter:stable] sm:px-6 sm:pb-6 sm:pt-6",
+  flush: "overflow-auto p-3 [scrollbar-gutter:stable] sm:p-6",
+  projects: "min-w-0 overflow-x-hidden overflow-y-auto px-3 pb-4 pt-3 [scrollbar-gutter:stable] sm:px-6 sm:pb-6 sm:pt-4",
+  "workspace-new": "overflow-y-auto p-3 [scrollbar-gutter:stable] sm:p-6",
+  tasks: "min-w-0 overflow-auto p-3 [scrollbar-gutter:stable] sm:p-6",
+  "tasks-detail": "min-w-0 overflow-hidden p-0 [scrollbar-gutter:stable]",
 };
 
 type SessionPageFrameProps = {

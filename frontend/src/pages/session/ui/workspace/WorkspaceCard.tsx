@@ -21,6 +21,7 @@ import { notifyConfirm } from "@/shared/lib/notifyConfirm";
 import { WORKSPACE_LIST_GRID } from "./workspaceListLayout";
 import { useDeleteWorkspaceMutation } from "@/entities/workspace/model/use-workspace-query";
 import type { Workspace } from "@/entities/workspace/model/workspace";
+
 export type WorkspaceTaskStats = {
   total: number;
   completed: number;
@@ -92,7 +93,7 @@ function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
     <li
       className={cn(
         WORKSPACE_LIST_GRID,
-        "group relative min-h-12 cursor-pointer px-4 py-2 text-sm transition-colors hover:bg-background/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+        "group relative min-h-11 cursor-pointer px-4 py-2.5 text-sm transition-colors hover:bg-muted/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
       )}
       tabIndex={0}
       role="button"
@@ -100,12 +101,12 @@ function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
       onClick={handleOpen}
       onKeyDown={handleOpenKeyDown}
     >
-      <div className="relative flex min-w-0 items-center gap-2">
-        <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
+      <div className="relative flex min-w-0 items-center gap-2.5">
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-muted/60 text-muted-foreground">
           {item.kind === "shared" ? (
-            <Users className="size-4" />
+            <Users className="size-3.5" aria-hidden />
           ) : (
-            <Box className="size-4" />
+            <Box className="size-3.5" aria-hidden />
           )}
         </span>
 
@@ -113,7 +114,6 @@ function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
           <span className="block truncate text-sm font-medium text-foreground">
             {item.title}
           </span>
-
           {item.hint?.trim() ? (
             <span className="mt-0.5 block truncate text-xs text-muted-foreground">
               {item.hint.trim()}
@@ -122,17 +122,44 @@ function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
         </div>
       </div>
 
-      <span className="relative text-sm tabular-nums text-muted-foreground">
+      <span className="relative hidden text-right text-sm tabular-nums text-muted-foreground sm:block">
         {total > 0 ? total : "—"}
       </span>
 
-      <span className="relative text-sm tabular-nums text-muted-foreground">
-        {completionPercent !== null ? `${completionPercent}%` : "—"}
+      <div className="relative hidden sm:block">
+        {completionPercent !== null ? (
+          <div className="flex flex-col items-end gap-1">
+            <span className="text-xs tabular-nums text-muted-foreground">
+              {completionPercent}%
+            </span>
+            <div
+              className="h-1 w-full max-w-[5.5rem] overflow-hidden rounded-full bg-emerald-500/15"
+              aria-hidden
+            >
+              <div
+                className="h-full rounded-full bg-emerald-500 transition-[width]"
+                style={{ width: `${completionPercent}%` }}
+              />
+            </div>
+          </div>
+        ) : (
+          <span className="block text-right text-sm tabular-nums text-muted-foreground">
+            —
+          </span>
+        )}
+      </div>
+
+      <span className="relative text-xs tabular-nums text-muted-foreground sm:hidden">
+        {total > 0
+          ? completionPercent !== null
+            ? `${completionPercent}% · ${total}`
+            : `${total}`
+          : "—"}
       </span>
 
       {canDelete ? (
         <div
-          className="relative flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100"
+          className="relative flex items-center justify-end opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
@@ -161,7 +188,7 @@ function WorkspaceCard({ item, taskStats }: WorkspaceCardProps) {
           </DropdownMenu>
         </div>
       ) : (
-        <span aria-hidden />
+        <span className="hidden sm:block" aria-hidden />
       )}
     </li>
   );

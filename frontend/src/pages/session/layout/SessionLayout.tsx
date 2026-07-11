@@ -5,11 +5,11 @@ import { TooltipProvider } from "@/shared/ui/tooltip";
 import { SidebarProvider, SidebarInset } from "@/shared/ui/sidebar";
 import { useConnectionStatus } from "@/hooks/use-connection-status";
 import { ConnectionEmptyState } from "@/pages/offline/ConnectionEmptyState";
+import { cn } from "@/shared/lib/utils";
 
 import AppSidebar from "../ui/layout/AppSidebar";
 import { AuthGate } from "../ui/layout/AuthGate";
 import { SessionShellHeader } from "../ui/layout/SessionShellHeader";
-import { AgentModeFab } from "../ui/widgets/AgentModeFab";
 import {
   AgentModeProvider,
   useAgentMode,
@@ -24,6 +24,7 @@ function SessionMainContent() {
   const { anyDown, online, retryConnection } = useConnectionStatus();
   const { open: agentInlineOpen } = useAgentMode();
 
+  // Agent panel is a sibling below the header — keep main empty while open.
   if (agentInlineOpen) return null;
 
   if (anyDown) {
@@ -43,9 +44,17 @@ function SessionLayoutContent() {
   useSessionThemeSync();
   useCloseAgentModeOnNavigate();
 
+  const { open: agentInlineOpen } = useAgentMode();
+
   const sessionMain = (
     <AuthGate>
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "flex min-h-0 min-w-0 flex-col overflow-hidden",
+          // When agent is open, header stays compact; agent panel takes the rest.
+          agentInlineOpen ? "shrink-0" : "flex-1",
+        )}
+      >
         <SessionShellHeader />
         <SessionMainContent />
       </div>
@@ -67,8 +76,6 @@ function SessionLayoutContent() {
             <div className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               <AssistantChatProvider main={sessionMain} />
             </div>
-
-            <AgentModeFab />
           </SidebarInset>
         </SidebarProvider>
       </TooltipProvider>
